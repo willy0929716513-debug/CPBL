@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04 10:28 (台灣時間)",
+  "generated_at": "2026-06-04 10:31 (台灣時間)",
   "game_date": "2026-06-04",
   "picks": [
     {
@@ -73,8 +73,8 @@
       "bet_label": "樂天桃猿 獨贏",
       "bp": 1.58,
       "stake": 106.0,
-      "edge": 0.1558,
-      "conf": 0.577,
+      "edge": 0.1563,
+      "conf": 0.578,
       "tier": 3
     }
   ],
@@ -92,5 +92,5 @@
       "market_total": 7.5
     }
   },
-  "demo_mode": true
+  "demo_mode": false
 }
