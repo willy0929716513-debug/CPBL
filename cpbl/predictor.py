@@ -248,7 +248,10 @@ class PredictionModel:
 # ──────────────────────────────────────────────────────────────────
 
 def _pitcher_score(p: dict) -> float:
-    """先發投手綜合評分 (0~100)。涵蓋 11 個指標 + 近況趨勢 + 洋將加成。"""
+    """
+    先發投手綜合評分 (0~100)。
+    V8 升級：優先使用 K%/BB%（比 K/9 更精準），兼容舊格式。
+    """
     if not p:
         return 50.0
     s = 50.0
@@ -261,41 +264,52 @@ def _pitcher_score(p: dict) -> float:
     bb9   = p.get("bb9",   3.2)
     babip = p.get("babip", 0.300)
     lob   = p.get("lob_pct",   72.0)
-    k_bb  = p.get("k_bb_pct",  13.0)
     wpa   = p.get("wpa",   0.0)
     re24  = p.get("re24",  0.0)
     r3    = p.get("recent_3_era",  era)
     r5    = p.get("recent_5_era",  era)
     r10   = p.get("recent_10_era", era)
 
-    # xFIP 最能預測未來表現（排除守備及全壘打幸運）
+    # ── V8 優先用 K% / BB%（比 K/9 更精準）──────────────────────
+    # CPBL 聯盟平均：K%≈20%, BB%≈8.5%
+    if p.get("k_pct") and p.get("bb_pct"):
+        k_pct  = p["k_pct"]
+        bb_pct = p["bb_pct"]
+        s += (k_pct  - 20.0) * 0.70   # 每 1% K 差距 ≈ 0.7分
+        s -= (bb_pct -  8.5) * 1.10   # 每 1% BB 差距 ≈ 1.1分
+        k_bb = k_pct - bb_pct
+        s += (k_bb  - 11.5) * 0.30    # K-BB%（聯盟平均約11.5）
+    else:
+        # 退回 K/9 / BB/9
+        k_bb = p.get("k_bb_pct", k9 - bb9 * 0.8)
+        s += (k9  - 7.5) * 1.2
+        s -= (bb9 - 3.2) * 1.8
+        s += (k_bb - 13.0) * 0.25
+
+    # ── xFIP（最能預測未來，排除守備+HR幸運）────────────────────
     s += (LEAGUE_AVG_ERA - xfip) * 6.0
-    # FIP 排除守備影響
+    # FIP（排除守備影響）
     s += (LEAGUE_AVG_ERA - fip)  * 4.0
-    # ERA 實際成績
+    # ERA（實際成績，權重最低）
     s += (LEAGUE_AVG_ERA - era)  * 2.5
-    # WHIP 跑壘者上壘率
+    # WHIP
     s += (1.30 - whip) * 12.0
-    # 三振 / 四壞球效率
-    s += (k9  - 7.5) * 1.2
-    s -= (bb9 - 3.2) * 1.8
-    s += (k_bb - 13.0) * 0.25
-    # BABIP 幸運/倒楣指標（高BABIP=不幸→預期改善）
+    # BABIP（高=受害=預期改善 → 正分）
     s += (babip - 0.300) * 20.0
-    # LOB% 得點圈壓制率（聯盟平均約 72%）
+    # LOB%
     s += (lob - 72.0) * 0.15
-    # 貢獻值指標
+    # WPA / RE24
     s += wpa  * 1.2
     s += re24 * 0.06
 
-    # 近況趨勢（近3場最重）
+    # ── 近況趨勢（近3場最重）───────────────────────────────────
     recent_era = r3 * 0.50 + r5 * 0.30 + r10 * 0.20
-    s += (era - recent_era) * 3.5   # 正值 = 近況好於季均
+    s += (era - recent_era) * 3.5
 
-    # 洋投評分加成（取代固定值，依實際指標計算）
+    # ── 洋投加成 ────────────────────────────────────────────────
     if p.get("foreign"):
         fs = foreign_score(p)
-        s += (fs - 50.0) * 0.10  # 中位分=50 → 不增不減；越高加越多
+        s += (fs - 50.0) * 0.10
 
     return max(10.0, min(90.0, s))
 

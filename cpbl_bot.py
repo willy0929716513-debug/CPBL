@@ -18,6 +18,7 @@ import cpbl.feature_store as fs_module
 import cpbl.market        as market_module
 import cpbl.clv           as clv_module
 import cpbl.bayesian      as bayesian_module
+import cpbl.stats_scraper as stats_scraper
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("cpbl_bot")
@@ -308,14 +309,24 @@ def main():
         log.info("Demo: %d games", len(games))
     else:
         games = []
-        try:
-            games = scraper.fetch_schedule(today)
-            if not games:
-                raise ValueError("no games parsed from scraper")
-            log.info("Scraped %d 一軍 games from cpbl.com.tw", len(games))
-        except Exception as e:
-            log.warning("Scraper failed (%s)", e)
 
+        # 1a. ESPN API（不受 CPBL WAF 封鎖）
+        try:
+            games = stats_scraper.fetch_schedule_multi(today)
+        except Exception as e:
+            log.warning("ESPN schedule failed: %s", e)
+
+        # 1b. CPBL 官網爬蟲
+        if not games:
+            try:
+                games = scraper.fetch_schedule(today)
+                if not games:
+                    raise ValueError("no games parsed from scraper")
+                log.info("Scraped %d 一軍 games from cpbl.com.tw", len(games))
+            except Exception as e:
+                log.warning("Scraper failed (%s)", e)
+
+        # 1c. 備援：schedule.json 手動維護賽程
         if not games:
             sched_path = os.path.join(os.path.dirname(__file__), "data", "schedule.json")
             try:
@@ -335,17 +346,24 @@ def main():
             except Exception as ef:
                 log.warning("Schedule file read failed (%s)", ef)
 
-    # ── 2. 投手成績（即時 → 快取 → mock）────────────────────────────────────
+    # ── 2. 投手成績（ESPN → CPBL官網 → 快取 → mock）──────────────────────────
     pitcher_cache_path = os.path.join(os.path.dirname(__file__), "data", "pitcher_stats.json")
     merged_pitchers = copy.deepcopy(PITCHERS)
+    # 確保所有 mock 投手都有衍生指標
+    for p in merged_pitchers.values():
+        stats_scraper.enrich_pitcher(p)
 
     if not DEMO_MODE:
         live_stats = {}
-        try:
-            live_stats = scraper.fetch_pitcher_stats(today.year)
-        except Exception as e:
-            log.warning("Live pitcher stats: %s", e)
 
+        # 2a. 多來源抓取（ESPN + CPBL 官網）
+        try:
+            live_stats = stats_scraper.fetch_all_pitcher_stats(today.year)
+            log.info("Live pitcher stats: %d players (multi-source)", len(live_stats))
+        except Exception as e:
+            log.warning("Multi-source pitcher stats failed: %s", e)
+
+        # 2b. 退回快取
         if not live_stats and os.path.exists(pitcher_cache_path):
             try:
                 with open(pitcher_cache_path, encoding="utf-8") as f:
@@ -355,13 +373,16 @@ def main():
             except Exception:
                 pass
 
+        # 2c. 合併到 mock（real data > mock fallback）
         updated_cnt = 0
         for name, live in live_stats.items():
-            if name in merged_pitchers:
-                for k, v in live.items():
-                    if isinstance(v, (int, float)):
-                        merged_pitchers[name][k] = v
-                updated_cnt += 1
+            if name not in merged_pitchers:
+                merged_pitchers[name] = {}
+            for k, v in live.items():
+                if isinstance(v, (int, float)):
+                    merged_pitchers[name][k] = v
+            stats_scraper.enrich_pitcher(merged_pitchers[name])
+            updated_cnt += 1
         if updated_cnt:
             log.info("Pitcher stats: %d players updated with live data", updated_cnt)
             try:
