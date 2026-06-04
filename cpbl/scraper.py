@@ -100,12 +100,12 @@ class CPBLScraper:
         except ImportError as e:
             raise RuntimeError("playwright not installed") from e
 
-        url = (
-            f"{BASE}/schedule/lists"
-            f"?year={game_date.year}"
-            f"&month={game_date.month:02d}"
-            f"&kind=A"
-        )
+        # 嘗試兩種 URL 格式（/schedule/lists 和 /schedule）
+        urls = [
+            f"{BASE}/schedule/lists?year={game_date.year}&month={game_date.month:02d}&kind=A",
+            f"{BASE}/schedule?year={game_date.year}&month={game_date.month:02d}&kind=A",
+        ]
+
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
@@ -118,16 +118,58 @@ class CPBLScraper:
                 extra_http_headers={"Accept-Language": "zh-TW,zh;q=0.9"},
             )
             page = ctx.new_page()
-            page.goto(url, wait_until="networkidle", timeout=30_000)
-            # 等待賽程 div 出現（最多 10 秒）
-            try:
-                page.wait_for_selector("div.game, table.schedule-table", timeout=10_000)
-            except Exception:
-                pass
-            html = page.content()
+
+            html = ""
+            for url in urls:
+                try:
+                    page.goto(url, wait_until="networkidle", timeout=30_000)
+                    # 等待賽程 div 出現
+                    try:
+                        page.wait_for_selector("div.date, div.game, .ScheduleTableList", timeout=8_000)
+                    except Exception:
+                        log.warning("Playwright: selector timeout for %s", url)
+                    html = page.content()
+
+                    # debug：記錄找到的關鍵 element 數量
+                    from bs4 import BeautifulSoup as _BS
+                    _s = _BS(html, "html.parser")
+                    n_date = len(_s.find_all("div", class_="date"))
+                    n_game = len(_s.find_all("div", class_="game"))
+                    n_tr   = len(_s.select("table tbody tr"))
+                    log.info("Playwright(%s): div.date=%d div.game=%d tr=%d",
+                             url.split("?")[0], n_date, n_game, n_tr)
+
+                    if n_game > 0:
+                        break   # 找到賽程就不再嘗試第二個 URL
+                except Exception as e:
+                    log.warning("Playwright URL %s failed: %s", url, e)
+
             browser.close()
 
-        return self._parse_schedule(html, game_date)
+        if not html:
+            return []
+        games = self._parse_schedule(html, game_date)
+
+        # 若仍為 0，印出 div.date 的 data-date 值供 debug
+        if not games:
+            from bs4 import BeautifulSoup as _BS
+            _s = _BS(html, "html.parser")
+            dates_found = [
+                d.get("data-date", "?")
+                for d in _s.find_all("div", class_="date")
+            ]
+            log.warning("Playwright: 0 games parsed. div.date data-date values: %s (looking for %s)",
+                        dates_found[:15], game_date.day)
+            # 額外嘗試：找任何含有球隊名稱的 div
+            team_hits = [
+                d.get_text(strip=True)[:40]
+                for d in _s.find_all("div")
+                if any(t in (d.get_text() or "") for t in ("富邦", "樂天", "中信", "統一", "台鋼"))
+            ]
+            if team_hits:
+                log.info("Playwright: found team-related divs: %s", team_hits[:6])
+
+        return games
 
     # ── HTML 解析（支援 div 結構與 table 結構） ────
     def _parse_schedule(self, html: str, game_date: date) -> list[dict]:
@@ -152,8 +194,11 @@ class CPBLScraper:
         day = game_date.day
         ds  = str(game_date)
 
-        # days 25-30 可能出現兩次（月曆跨月），取最後一個（當月）
-        day_divs = soup.find_all("div", class_="date", attrs={"data-date": str(day)})
+        # data-date 可能是 "4"、"04" 或 integer 4，都嘗試
+        for fmt in (str(day), f"{day:02d}"):
+            day_divs = soup.find_all("div", class_="date", attrs={"data-date": fmt})
+            if day_divs:
+                break
         if not day_divs:
             return games
 
