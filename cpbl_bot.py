@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPBL Protector Bot V7 — ML + ELO + Market + RL Memory + Monte Carlo"""
+"""CPBL Protector Bot V8 — Ensemble + CLV + Feature Store + Bayesian + Market Move"""
 import os, json, logging, datetime, requests, sys, copy
 sys.path.insert(0, ".")
 
@@ -9,9 +9,15 @@ from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
 from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP
-import cpbl.memory as mem_module
-import cpbl.agent as agent_module
-import cpbl.simulator as simulator
+import cpbl.memory        as mem_module
+import cpbl.agent         as agent_module
+import cpbl.simulator     as simulator
+import cpbl.ensemble      as ensemble_module
+import cpbl.matchup       as matchup_module
+import cpbl.feature_store as fs_module
+import cpbl.market        as market_module
+import cpbl.clv           as clv_module
+import cpbl.bayesian      as bayesian_module
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("cpbl_bot")
@@ -117,14 +123,18 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
 
     TIER_LABEL = agent_module.TIER_LABEL
 
-    # V7 記憶摘要
+    # V8 記憶摘要
     mem_line = ""
     if memory and memory.get("total_games", 0) > 0:
-        acc = mem_module.accuracy(memory)
-        roi = memory.get("roi_units", 0.0)
+        acc    = mem_module.accuracy(memory)
+        r_acc  = mem_module.rolling_accuracy(memory)
+        roi    = memory.get("roi_units", 0.0)
+        clv_s  = clv_module.summary(clv_records)
+        clv_str = f"CLV均值{clv_s['avg_clv']*100:+.1f}%" if clv_s["n"] > 0 else ""
         mem_line = (
-            f"\n🧠 V7 RL: {memory['total_games']}局 "
-            f"準確率{acc*100:.0f}% ROI{roi:+.1f}u | "
+            f"\n🧠 V8: {memory['total_games']}局 "
+            f"全期{acc*100:.0f}% 近50場{r_acc*100:.0f}% ROI{roi:+.1f}u "
+            f"{clv_str} | "
             f"連{'✅' if memory.get('streak_correct',0) > memory.get('streak_wrong',0) else '❌'}"
             f"{max(memory.get('streak_correct',0), memory.get('streak_wrong',0))}"
         )
@@ -132,7 +142,7 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     rec_count = len(picks)
     lines = [
         "⚾ **CPBL V7 分析報告**",
-        f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅傷兵 ✅近況 ✅MC ✅RL",
+        f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅MC ✅Ensemble ✅CLV ✅Matchup ✅RLv8",
         f"📊 歷史: {hist_str}{mem_line}",
         "",
         f"**今日 {len(all_preds)} 場賽事 — {'推薦 ' + str(rec_count) + ' 場下注' if rec_count else '今日無推薦下注'}**",
@@ -219,8 +229,8 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     lines += [
         "",
         "━" * 22,
-        "V7: ELO + 9因子 · MC模擬 · RL自適應 · Kelly(25%)",
-        "先發ERA · 牛棚疲勞 · 打線wRC+ · 主客場 · 天氣 · 球場PF",
+        "V8: Ensemble(ELO+ML+Market+MC) · Bayesian · CLV · Matchup Matrix",
+        "Risk-Adj EV · Feature Store · Market Move · Cold-start Guard · RL Decay",
         f"📡 場中分析: 執行 Live Monitor 取得即時推薦",
     ]
 
@@ -268,19 +278,29 @@ def main():
     now_tw = datetime.datetime.now(TW)
     today     = now_tw.date()
     today_str = str(today)
-    log.info("CPBL Bot V7 — %s  demo=%s", today, DEMO_MODE)
+    log.info("CPBL Bot V8 — %s  demo=%s", today, DEMO_MODE)
 
     elo     = ELOSystem()
     model   = PredictionModel(elo)
     scraper = CPBLScraper()
     fetcher = OddsFetcher()
 
-    # ── 0. 載入 RL 記憶 ──────────────────────────────────────────────────────
-    memory = mem_module.load()
-    log.info("Memory: %d局 準確率%.0f%% | %s",
+    # ── 0. 載入 RL 記憶 + V8 Feature Store + CLV + Market Moves ────────────
+    memory        = mem_module.load()
+    feature_store = fs_module.load()
+    clv_records   = clv_module.load()
+    market_data   = market_module.load()
+    log.info("Memory: %d局 準確率%.0f%% rolling50=%.0f%% | %s",
              memory.get("total_games", 0),
              mem_module.accuracy(memory) * 100,
+             mem_module.rolling_accuracy(memory) * 100,
              mem_module.weight_str(memory))
+    clv_sum = clv_module.summary(clv_records)
+    if clv_sum["n"] > 0:
+        log.info("CLV: n=%d avg=%.3f pos_pct=%.0f%% corr=%.2f",
+                 clv_sum["n"], clv_sum["avg_clv"],
+                 clv_sum["positive_clv_pct"] * 100,
+                 clv_sum["clv_win_corr"])
 
     # ── 1. Schedule ──────────────────────────────────────────────────────────
     if DEMO_MODE:
@@ -392,16 +412,53 @@ def main():
         if not pred:
             continue
 
-        # ── Monte Carlo 模擬 ──
+        # ── V8 Matchup Matrix ─────────────────────────────────────────────
+        mu = matchup_module.game_matchup(away, home, ap_name, hp_name)
+        log.info("Matchup %s@%s: net_adv=%.1f (home_bat=%.1f away_bat=%.1f)",
+                 away, home, mu["net_advantage"],
+                 mu["home_bat_adv"], mu["away_bat_adv"])
+
+        # ── V8 Feature Store 疲勞懲罰 ─────────────────────────────────────
+        home_fatigue = fs_module.fatigue_penalty(feature_store, home)
+        away_fatigue = fs_module.fatigue_penalty(feature_store, away)
+        log.info("Fatigue %s=%.1f %s=%.1f", home, home_fatigue, away, away_fatigue)
+
+        # ── Monte Carlo 模擬 ──────────────────────────────────────────────
         mc = simulator.simulate(pred, n=MC_N)
         log.info("MC %s@%s: mean=%.3f std=%.3f ci=[%.3f,%.3f] uncertain=%s",
                  away, home, mc["mean_prob"], mc["std_dev"],
                  mc["ci_90"][0], mc["ci_90"][1], mc["uncertain"])
 
-        hp   = pred["home_win_prob"]
-        ap   = pred["away_win_prob"]
-        conf = pred["confidence"] / 100.0
-        of   = pred.get("factors", {}).get("odds", {}) or {}
+        # ── V8 Market Movement Detection ──────────────────────────────────
+        game_key = f"{away}@{home}_{today_str}"
+        market_data = market_module.record_move(market_data, game_key, odds)
+        market_sig  = market_module.analyze(market_data, game_key)
+        if market_sig["signals"]:
+            log.info("Market %s: %s", game_key,
+                     " | ".join(market_sig["signals"]))
+
+        # ── V8 Ensemble ───────────────────────────────────────────────────
+        of       = pred.get("factors", {}).get("odds", {}) or {}
+        mkt_prob = float(of.get("market_home_prob") or 0) / 100.0
+        # 疲勞補正注入 ensemble 之前先調整 model_prob
+        fatigue_adj = (home_fatigue - away_fatigue) * 0.008
+        adj_model   = max(0.05, min(0.95, pred["home_win_prob"] + fatigue_adj
+                                   + mu["net_advantage"] * 0.004))
+        ens = ensemble_module.ensemble(
+            elo_prob    = pred["elo_base"],
+            model_prob  = adj_model,
+            market_prob = mkt_prob if mkt_prob > 0 else 0.5,
+            mc_mean     = mc["mean_prob"],
+            memory      = memory,
+        )
+        log.info("Ensemble %s@%s: %.4f (ELO=%.3f ML=%.3f mkt=%.3f MC=%.3f bayes×%.2f)",
+                 away, home, ens["prob"],
+                 pred["elo_base"], adj_model,
+                 mkt_prob, mc["mean_prob"], ens["bayesian_adj"])
+
+        hp     = ens["prob"]
+        ap     = 1.0 - hp
+        conf   = pred["confidence"] / 100.0
         h_odds = float(of.get("curr_home_odds") or 0)
         a_odds = float(of.get("curr_away_odds") or 0)
 
@@ -410,6 +467,8 @@ def main():
             "market_total":  float(of.get("total_line") or 8.5),
             "mc_mean":       mc["mean_prob"],
             "mc_std":        mc["std_dev"],
+            "ensemble":      ens,
+            "matchup":       mu,
         }
 
         asp_data = {**merged_pitchers.get(ap_name, {}), "name": ap_name} if ap_name else {}
@@ -432,18 +491,32 @@ def main():
             curr_home_odds=h_odds,
             curr_away_odds=a_odds,
             market_total=float(of.get("total_line") or 8.5),
-            signals=of.get("signals", []),
+            signals=of.get("signals", []) + market_sig.get("signals", []),
             factors=pred.get("factors", {}),
             mc=mc,
+            ensemble=ens,
+            matchup=mu,
+            market_signal=market_sig,
+            fatigue={"home": home_fatigue, "away": away_fatigue},
         )
 
-        # ── V7 Decision Agent ──
-        decision = agent_module.decide(g_for_pred, pred, mc=mc, demo_mode=DEMO_MODE)
+        # ── V8 Decision Agent ─────────────────────────────────────────────
+        decision = agent_module.decide(
+            g_for_pred, pred,
+            mc=mc, demo_mode=DEMO_MODE,
+            memory=memory, ensemble=ens, market_sig=market_sig,
+        )
         best_pick = None
         if decision:
             pick = {**base, **decision}
             picks.append(pick)
             best_pick = pick
+            # CLV 登錄（開盤賠率 vs 下注時賠率）
+            entry_odds = h_odds if decision["side"] == "home" else a_odds
+            clv_records = clv_module.add_entry(
+                clv_records, today_str, game_key,
+                entry_odds, decision["side"],
+            )
 
         # ── 參考方向（無論是否推薦都記錄）──
         if hp >= ap:
@@ -456,7 +529,7 @@ def main():
             ref_odds  = a_odds
 
         ref_edge = calc_edge(max(hp, ap), ref_odds) if ref_odds > 1 else 0
-        adj_conf = round(min(0.95, conf + mc.get("conf_boost", 0.0)), 3)
+        adj_conf  = round(min(0.95, conf + mc.get("conf_boost", 0.0)), 3)
 
         all_preds.append({**base,
             "ref_label":   ref_label,
@@ -468,9 +541,14 @@ def main():
             "recommended": best_pick is not None,
         })
 
-    picks.sort(key=lambda x: x["edge"], reverse=True)
+    picks.sort(key=lambda x: x.get("ra_ev", x["edge"]), reverse=True)  # V8: sort by risk-adj EV
     all_preds.sort(key=lambda x: (not x["recommended"], -abs(x["home_win_prob"] - 0.5)))
     log.info("Picks: %d from %d games", len(picks), len(games))
+
+    # ── V8 儲存 Feature Store + CLV ──────────────────────────────────────────
+    fs_module.save(feature_store)
+    clv_module.save(clv_records)
+    market_module.save(market_data)
 
     # ── 5. Gist history + RL 更新 ────────────────────────────────────────────
     gid, history = load_gist()
@@ -519,15 +597,8 @@ def main():
         "recent_history":  recent,
         "game_preds":      game_preds,
         "demo_mode":       DEMO_MODE,
-        "v7_memory": {
-            "total_games":    memory.get("total_games", 0),
-            "accuracy":       round(mem_module.accuracy(memory), 3),
-            "roi_units":      memory.get("roi_units", 0.0),
-            "weights":        mem_module.weight_str(memory),
-            "calibration":    mem_module.calibration_str(memory),
-            "streak_correct": memory.get("streak_correct", 0),
-            "streak_wrong":   memory.get("streak_wrong", 0),
-        },
+        "v8_memory":       mem_module.v8_summary(memory),
+        "v8_clv":          clv_module.summary(clv_records),
     }
     with open(JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2, default=str)
