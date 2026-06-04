@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """CPBL Protector Bot — 按照 mlb_bot 模式"""
-import os, json, logging, datetime, requests, sys
+import os, json, logging, datetime, requests, sys, copy
 sys.path.insert(0, ".")
 
 from cpbl.scraper import CPBLScraper
@@ -8,7 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
-from cpbl.mock_data import PITCHERS, VENUE_FACTORS
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("cpbl_bot")
@@ -252,7 +252,45 @@ def main():
             except Exception as ef:
                 log.warning("Schedule file read failed (%s)", ef)
 
-    # 2. Odds
+    # 2. 投手成績（嘗試抓最新，失敗則用快取或 mock）
+    pitcher_cache_path = os.path.join(os.path.dirname(__file__), "data", "pitcher_stats.json")
+    merged_pitchers = copy.deepcopy(PITCHERS)
+
+    if not DEMO_MODE:
+        live_stats = {}
+        try:
+            live_stats = scraper.fetch_pitcher_stats(today.year)
+        except Exception as e:
+            log.warning("Live pitcher stats: %s", e)
+
+        if not live_stats and os.path.exists(pitcher_cache_path):
+            try:
+                with open(pitcher_cache_path, encoding="utf-8") as f:
+                    cache = json.load(f)
+                live_stats = cache.get("stats", {})
+                log.info("Pitcher stats: loaded from cache (%s)", cache.get("updated_at", "?"))
+            except Exception:
+                pass
+
+        updated = 0
+        for name, live in live_stats.items():
+            if name in merged_pitchers:
+                for k, v in live.items():
+                    if isinstance(v, (int, float)):
+                        merged_pitchers[name][k] = v
+                updated += 1
+        if updated:
+            log.info("Pitcher stats: %d players updated with live data", updated)
+            try:
+                os.makedirs(os.path.dirname(pitcher_cache_path), exist_ok=True)
+                with open(pitcher_cache_path, "w", encoding="utf-8") as f:
+                    json.dump({"updated_at": now_tw.strftime("%Y-%m-%d %H:%M"),
+                               "year": today.year, "stats": live_stats},
+                              f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
+    # 3. Odds
     if DEMO_MODE:
         all_odds = {f"{g['away']}-{g['home']}": MOCK_ODDS.get(f"{g['away']}-{g['home']}", {}) for g in games}
     else:
@@ -280,7 +318,12 @@ def main():
             except Exception:
                 pass
 
-        pred = model.predict(g, weather, odds)
+        # 確保 predictor 知道先發投手名字（含 fallback 到 ace）
+        ap_name_pre = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
+        hp_name_pre = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
+        g_for_pred  = {**g, "away_pitcher": ap_name_pre, "home_pitcher": hp_name_pre}
+
+        pred = model.predict(g_for_pred, weather, odds, pitchers=merged_pitchers)
         if not pred: continue
 
         hp   = pred["home_win_prob"]
@@ -295,8 +338,8 @@ def main():
             "market_total":  float(of.get("total_line") or 8.5),
         }
 
-        ap_name = g.get("away_pitcher") or ""
-        hp_name = g.get("home_pitcher") or ""
+        ap_name = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
+        hp_name = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
         asp_data = {**PITCHERS.get(ap_name, {}), "name": ap_name} if ap_name else {}
         hsp_data = {**PITCHERS.get(hp_name, {}), "name": hp_name} if hp_name else {}
 

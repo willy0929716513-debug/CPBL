@@ -41,11 +41,14 @@ class PredictionModel:
         self.elo = elo or ELOSystem()
 
     def predict(self, game: dict, weather: dict | None = None,
-                odds_data: dict | None = None) -> dict:
+                odds_data: dict | None = None,
+                pitchers: dict | None = None) -> dict:
         ht = game["home"]
         at = game["away"]
         if not ht or not at:
             return {}
+
+        pitcher_db = pitchers if pitchers is not None else PITCHERS
 
         # Pitcher name lookup — accept string or dict
         hp_name = game.get("home_pitcher") or ""
@@ -54,8 +57,8 @@ class PredictionModel:
             hp_name = game["home_sp"]
         if not ap_name and isinstance(game.get("away_sp"), str):
             ap_name = game["away_sp"]
-        hp = PITCHERS.get(hp_name, {})
-        ap = PITCHERS.get(ap_name, {})
+        hp = pitcher_db.get(hp_name, {})
+        ap = pitcher_db.get(ap_name, {})
 
         factors: dict[str, dict] = {}
 
@@ -271,9 +274,10 @@ def _pitcher_score(p: dict) -> float:
     recent_era = r3 * 0.50 + r5 * 0.30 + r10 * 0.20
     s += (era - recent_era) * 3.5   # 正值 = 近況好於季均
 
-    # 洋將加成（CPBL 外籍投手平均優於本土）
+    # 洋投評分加成（取代固定值，依實際指標計算）
     if p.get("foreign"):
-        s += FOREIGN_PREMIUM
+        fs = foreign_score(p)
+        s += (fs - 50.0) * 0.10  # 中位分=50 → 不增不減；越高加越多
 
     return max(10.0, min(90.0, s))
 
@@ -302,6 +306,38 @@ def _trend_label(season_era: float, recent_era: float) -> str:
     if d > 0.5:  return "🔥 上升中"
     if d < -0.5: return "❄️ 下滑中"
     return "➡️ 穩定"
+
+
+def foreign_score(p: dict) -> float:
+    """
+    洋投綜合評分 0-100
+    ERA 25% | WHIP 20% | K-BB% 20% | 近5場狀態 20% | BABIP+LOB 10% | 主客場(lob) 5%
+    """
+    if not p or not p.get("foreign"):
+        return 0.0
+    era   = p.get("era", 4.5)
+    whip  = p.get("whip", 1.40)
+    kbb   = p.get("k_bb_pct", 10.0)
+    r5    = p.get("recent_5_era", era)
+    babip = p.get("babip", 0.300)
+    lob   = p.get("lob_pct", 72.0)
+
+    era_s   = max(0, min(100, (5.0 - era)  / 4.0  * 100))
+    whip_s  = max(0, min(100, (1.7 - whip) / 0.80 * 100))
+    kbb_s   = max(0, min(100, kbb / 25.0   * 100))
+    form_s  = max(0, min(100, (5.0 - r5)   / 4.0  * 100))
+    babip_s = max(0, min(100, (0.340 - babip) / 0.08 * 100))
+    lob_s   = max(0, min(100, (lob - 60)   / 30.0 * 100))
+
+    return round(
+        era_s   * 0.25 +
+        whip_s  * 0.20 +
+        kbb_s   * 0.20 +
+        form_s  * 0.20 +
+        babip_s * 0.10 +
+        lob_s   * 0.05,
+        1
+    )
 
 
 def _lineup_score(team: str) -> float:

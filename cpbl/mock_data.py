@@ -41,14 +41,11 @@ PITCHERS = {
         "recent_3_era": 2.10, "recent_5_era": 2.45, "recent_10_era": 2.98,
         "gs": 14, "innings": 86.2, "wpa": 1.8, "re24": 12.4,
     },
-    "羅力": {
-        "team": "AEL", "foreign": True,
-        "era": 2.45, "whip": 1.08, "fip": 2.61, "xfip": 2.78,
-        "k9": 9.1, "bb9": 2.2, "h9": 7.2, "hr9": 0.6,
-        "babip": 0.280, "lob_pct": 78.5, "k_bb_pct": 19.2,
-        "recent_3_era": 1.80, "recent_5_era": 2.10, "recent_10_era": 2.38,
-        "gs": 15, "innings": 92.0, "wpa": 3.2, "re24": 21.7,
-    },
+    "德保拉": {"team":"AEL","foreign":True,"era":2.18,"whip":0.98,"fip":2.32,"xfip":2.45,"k9":9.2,"bb9":2.0,"h9":6.8,"hr9":0.5,"babip":0.272,"lob_pct":80.2,"k_bb_pct":21.5,"recent_3_era":1.95,"recent_5_era":2.08,"recent_10_era":2.20,"gs":15,"innings":95.1,"wpa":3.8,"re24":26.4},
+    "克迪":   {"team":"AEL","foreign":True,"era":3.24,"whip":1.22,"fip":3.38,"xfip":3.45,"k9":8.1,"bb9":2.8,"h9":8.3,"hr9":0.8,"babip":0.295,"lob_pct":74.0,"k_bb_pct":15.2,"recent_3_era":2.85,"recent_5_era":3.10,"recent_10_era":3.20,"gs":14,"innings":83.2,"wpa":1.4,"re24":9.6},
+    "羅戈":   {"team":"AEL","foreign":True,"era":3.88,"whip":1.38,"fip":4.02,"xfip":3.95,"k9":7.2,"bb9":3.4,"h9":9.2,"hr9":1.0,"babip":0.312,"lob_pct":70.5,"k_bb_pct":11.5,"recent_3_era":4.20,"recent_5_era":4.05,"recent_10_era":3.92,"gs":13,"innings":76.0,"wpa":0.2,"re24":1.8},
+    "黃博多": {"team":"AEL","foreign":True,"era":4.12,"whip":1.42,"fip":4.28,"xfip":4.18,"k9":6.8,"bb9":3.6,"h9":9.5,"hr9":1.1,"babip":0.318,"lob_pct":69.2,"k_bb_pct":9.8,"recent_3_era":3.90,"recent_5_era":4.00,"recent_10_era":4.10,"gs":12,"innings":69.1,"wpa":-0.3,"re24":-2.5},
+    "菲力士": {"team":"AEL","foreign":True,"era":3.52,"whip":1.28,"fip":3.65,"xfip":3.72,"k9":8.5,"bb9":3.0,"h9":8.5,"hr9":0.9,"babip":0.300,"lob_pct":72.8,"k_bb_pct":16.2,"recent_3_era":3.20,"recent_5_era":3.38,"recent_10_era":3.48,"gs":13,"innings":79.2,"wpa":0.8,"re24":5.5},
     "胡智為": {
         "team": "AEL", "foreign": False,
         "era": 4.89, "whip": 1.48, "fip": 4.72, "xfip": 4.58,
@@ -66,14 +63,10 @@ PITCHERS = {
         "recent_3_era": 2.80, "recent_5_era": 3.10, "recent_10_era": 3.55,
         "gs": 14, "innings": 83.2, "wpa": 0.9, "re24": 5.2,
     },
-    "Ryan Tuck": {
-        "team": "CT", "foreign": True,
-        "era": 2.89, "whip": 1.12, "fip": 3.01, "xfip": 3.12,
-        "k9": 8.9, "bb9": 2.5, "h9": 7.5, "hr9": 0.7,
-        "babip": 0.285, "lob_pct": 76.3, "k_bb_pct": 17.4,
-        "recent_3_era": 3.50, "recent_5_era": 3.20, "recent_10_era": 3.05,
-        "gs": 15, "innings": 90.1, "wpa": 2.1, "re24": 14.8,
-    },
+    "布雷克": {"team":"CT","foreign":True,"era":2.78,"whip":1.08,"fip":2.92,"xfip":3.05,"k9":9.0,"bb9":2.2,"h9":7.4,"hr9":0.6,"babip":0.280,"lob_pct":77.5,"k_bb_pct":19.8,"recent_3_era":2.50,"recent_5_era":2.65,"recent_10_era":2.75,"gs":15,"innings":91.2,"wpa":2.8,"re24":19.5},
+    "飛力獅": {"team":"CT","foreign":True,"era":3.42,"whip":1.25,"fip":3.55,"xfip":3.62,"k9":8.2,"bb9":3.0,"h9":8.6,"hr9":0.9,"babip":0.298,"lob_pct":73.2,"k_bb_pct":14.8,"recent_3_era":3.10,"recent_5_era":3.28,"recent_10_era":3.38,"gs":14,"innings":84.0,"wpa":1.0,"re24":7.2},
+    "梅賽斯": {"team":"CT","foreign":True,"era":3.65,"whip":1.32,"fip":3.78,"xfip":3.82,"k9":7.8,"bb9":3.2,"h9":8.9,"hr9":1.0,"babip":0.308,"lob_pct":71.8,"k_bb_pct":12.8,"recent_3_era":3.40,"recent_5_era":3.55,"recent_10_era":3.62,"gs":13,"innings":78.1,"wpa":0.5,"re24":3.8},
+    "雷伊":   {"team":"CT","foreign":True,"era":4.05,"whip":1.40,"fip":4.18,"xfip":4.12,"k9":7.0,"bb9":3.5,"h9":9.3,"hr9":1.1,"babip":0.315,"lob_pct":70.0,"k_bb_pct":10.5,"recent_3_era":3.80,"recent_5_era":3.95,"recent_10_era":4.02,"gs":12,"innings":71.0,"wpa":-0.1,"re24":-0.8},
     "林其緯": {
         "team": "CT", "foreign": False,
         "era": 4.21, "whip": 1.38, "fip": 4.35, "xfip": 4.28,
@@ -91,14 +84,10 @@ PITCHERS = {
         "recent_3_era": 2.10, "recent_5_era": 2.65, "recent_10_era": 3.10,
         "gs": 14, "innings": 86.0, "wpa": 1.5, "re24": 10.2,
     },
-    "Manny Banuelos": {
-        "team": "FG", "foreign": True,
-        "era": 3.01, "whip": 1.15, "fip": 3.12, "xfip": 3.20,
-        "k9": 8.6, "bb9": 2.6, "h9": 7.8, "hr9": 0.7,
-        "babip": 0.287, "lob_pct": 75.5, "k_bb_pct": 16.8,
-        "recent_3_era": 2.40, "recent_5_era": 2.80, "recent_10_era": 2.95,
-        "gs": 15, "innings": 89.2, "wpa": 2.5, "re24": 17.3,
-    },
+    "富藍戈": {"team":"FG","foreign":True,"era":2.95,"whip":1.14,"fip":3.08,"xfip":3.18,"k9":8.7,"bb9":2.5,"h9":7.7,"hr9":0.7,"babip":0.288,"lob_pct":76.2,"k_bb_pct":17.8,"recent_3_era":2.68,"recent_5_era":2.82,"recent_10_era":2.92,"gs":15,"innings":88.2,"wpa":2.2,"re24":15.5},
+    "威爾森": {"team":"FG","foreign":True,"era":3.42,"whip":1.26,"fip":3.55,"xfip":3.62,"k9":8.0,"bb9":2.9,"h9":8.5,"hr9":0.8,"babip":0.298,"lob_pct":73.5,"k_bb_pct":14.5,"recent_3_era":3.15,"recent_5_era":3.30,"recent_10_era":3.38,"gs":14,"innings":83.0,"wpa":1.0,"re24":7.0},
+    "力亞士": {"team":"FG","foreign":True,"era":3.78,"whip":1.35,"fip":3.92,"xfip":3.88,"k9":7.5,"bb9":3.3,"h9":9.0,"hr9":1.0,"babip":0.310,"lob_pct":71.5,"k_bb_pct":12.2,"recent_3_era":3.50,"recent_5_era":3.65,"recent_10_era":3.75,"gs":13,"innings":77.1,"wpa":0.4,"re24":3.0},
+    "安倍悠大":{"team":"FG","foreign":True,"era":3.52,"whip":1.28,"fip":3.65,"xfip":3.70,"k9":8.2,"bb9":3.0,"h9":8.6,"hr9":0.9,"babip":0.300,"lob_pct":72.8,"k_bb_pct":15.0,"recent_3_era":3.28,"recent_5_era":3.40,"recent_10_era":3.48,"gs":13,"innings":80.0,"wpa":0.9,"re24":6.2},
     "曾仁和": {
         "team": "FG", "foreign": False,
         "era": 5.12, "whip": 1.55, "fip": 5.08, "xfip": 4.92,
@@ -116,14 +105,11 @@ PITCHERS = {
         "recent_3_era": 1.50, "recent_5_era": 1.80, "recent_10_era": 2.40,
         "gs": 15, "innings": 94.2, "wpa": 4.1, "re24": 28.5,
     },
-    "Zach Lee": {
-        "team": "WL", "foreign": True,
-        "era": 3.45, "whip": 1.28, "fip": 3.58, "xfip": 3.65,
-        "k9": 7.9, "bb9": 3.0, "h9": 8.8, "hr9": 0.9,
-        "babip": 0.305, "lob_pct": 72.8, "k_bb_pct": 13.8,
-        "recent_3_era": 4.20, "recent_5_era": 3.90, "recent_10_era": 3.68,
-        "gs": 14, "innings": 81.1, "wpa": 0.6, "re24": 3.8,
-    },
+    "威能帝": {"team":"WL","foreign":True,"era":2.88,"whip":1.12,"fip":3.01,"xfip":3.10,"k9":8.8,"bb9":2.4,"h9":7.6,"hr9":0.7,"babip":0.285,"lob_pct":76.8,"k_bb_pct":18.2,"recent_3_era":2.60,"recent_5_era":2.75,"recent_10_era":2.85,"gs":15,"innings":90.2,"wpa":2.4,"re24":16.8},
+    "魔爾曼": {"team":"WL","foreign":True,"era":3.55,"whip":1.28,"fip":3.68,"xfip":3.75,"k9":8.0,"bb9":3.1,"h9":8.8,"hr9":0.9,"babip":0.305,"lob_pct":72.5,"k_bb_pct":13.5,"recent_3_era":3.25,"recent_5_era":3.42,"recent_10_era":3.52,"gs":14,"innings":82.1,"wpa":0.7,"re24":4.9},
+    "麥斯威尼":{"team":"WL","foreign":True,"era":3.82,"whip":1.35,"fip":3.95,"xfip":3.98,"k9":7.5,"bb9":3.3,"h9":9.0,"hr9":1.0,"babip":0.308,"lob_pct":71.2,"k_bb_pct":11.8,"recent_3_era":3.55,"recent_5_era":3.70,"recent_10_era":3.78,"gs":13,"innings":77.2,"wpa":0.3,"re24":2.1},
+    "艾菩樂": {"team":"WL","foreign":True,"era":4.18,"whip":1.44,"fip":4.32,"xfip":4.25,"k9":6.9,"bb9":3.7,"h9":9.6,"hr9":1.2,"babip":0.322,"lob_pct":68.8,"k_bb_pct":9.5,"recent_3_era":3.95,"recent_5_era":4.08,"recent_10_era":4.15,"gs":12,"innings":70.0,"wpa":-0.4,"re24":-3.2},
+    "榊原元稀":{"team":"WL","foreign":True,"era":3.32,"whip":1.20,"fip":3.45,"xfip":3.52,"k9":8.4,"bb9":2.8,"h9":8.2,"hr9":0.8,"babip":0.292,"lob_pct":74.5,"k_bb_pct":16.5,"recent_3_era":3.05,"recent_5_era":3.20,"recent_10_era":3.28,"gs":14,"innings":85.0,"wpa":1.2,"re24":8.2},
     "楊志龍": {
         "team": "WL", "foreign": False,
         "era": 4.56, "whip": 1.42, "fip": 4.61, "xfip": 4.52,
@@ -141,14 +127,10 @@ PITCHERS = {
         "recent_3_era": 4.80, "recent_5_era": 4.50, "recent_10_era": 4.10,
         "gs": 13, "innings": 78.1, "wpa": 0.2, "re24": 1.5,
     },
-    "Scott McGough": {
-        "team": "TSG", "foreign": True,
-        "era": 2.56, "whip": 1.06, "fip": 2.68, "xfip": 2.82,
-        "k9": 9.5, "bb9": 2.0, "h9": 7.1, "hr9": 0.6,
-        "babip": 0.275, "lob_pct": 77.8, "k_bb_pct": 21.5,
-        "recent_3_era": 3.80, "recent_5_era": 3.20, "recent_10_era": 2.80,
-        "gs": 15, "innings": 91.0, "wpa": 3.5, "re24": 23.8,
-    },
+    "後勁":   {"team":"TSG","foreign":True,"era":2.65,"whip":1.05,"fip":2.78,"xfip":2.92,"k9":9.3,"bb9":2.1,"h9":7.0,"hr9":0.6,"babip":0.275,"lob_pct":78.5,"k_bb_pct":20.8,"recent_3_era":2.38,"recent_5_era":2.52,"recent_10_era":2.62,"gs":15,"innings":93.0,"wpa":3.2,"re24":22.0},
+    "石萬金": {"team":"TSG","foreign":True,"era":3.52,"whip":1.28,"fip":3.65,"xfip":3.72,"k9":8.1,"bb9":3.0,"h9":8.5,"hr9":0.9,"babip":0.300,"lob_pct":73.0,"k_bb_pct":14.8,"recent_3_era":3.25,"recent_5_era":3.40,"recent_10_era":3.48,"gs":14,"innings":82.2,"wpa":0.9,"re24":6.5},
+    "布坎南": {"team":"TSG","foreign":True,"era":3.82,"whip":1.36,"fip":3.95,"xfip":3.98,"k9":7.4,"bb9":3.4,"h9":9.1,"hr9":1.0,"babip":0.312,"lob_pct":71.0,"k_bb_pct":11.5,"recent_3_era":3.55,"recent_5_era":3.70,"recent_10_era":3.78,"gs":13,"innings":77.0,"wpa":0.3,"re24":2.5},
+    "櫻井周斗":{"team":"TSG","foreign":True,"era":3.40,"whip":1.24,"fip":3.52,"xfip":3.58,"k9":8.3,"bb9":2.9,"h9":8.4,"hr9":0.8,"babip":0.295,"lob_pct":73.8,"k_bb_pct":15.5,"recent_3_era":3.15,"recent_5_era":3.28,"recent_10_era":3.36,"gs":14,"innings":84.0,"wpa":1.1,"re24":7.5},
     "廖任磊": {
         "team": "TSG", "foreign": False,
         "era": 4.34, "whip": 1.41, "fip": 4.48, "xfip": 4.40,
@@ -158,14 +140,11 @@ PITCHERS = {
         "gs": 12, "innings": 68.2, "wpa": -0.6, "re24": -4.3,
     },
     # ── 味全龍 ──────────────────────────────────
-    "約翰甘特": {
-        "team": "WC", "foreign": True,
-        "era": 1.49, "whip": 0.95, "fip": 1.82, "xfip": 2.10,
-        "k9": 9.4, "bb9": 1.8, "h9": 6.5, "hr9": 0.5,
-        "babip": 0.268, "lob_pct": 82.0, "k_bb_pct": 22.1,
-        "recent_3_era": 1.20, "recent_5_era": 1.38, "recent_10_era": 1.50,
-        "gs": 14, "innings": 90.2, "wpa": 4.1, "re24": 28.5,
-    },
+    "甘特":   {"team":"WC","foreign":True,"era":1.49,"whip":0.95,"fip":1.82,"xfip":2.10,"k9":9.4,"bb9":1.8,"h9":6.5,"hr9":0.5,"babip":0.268,"lob_pct":82.0,"k_bb_pct":22.1,"recent_3_era":1.20,"recent_5_era":1.38,"recent_10_era":1.50,"gs":14,"innings":90.2,"wpa":4.1,"re24":28.5},
+    "鋼龍":   {"team":"WC","foreign":True,"era":2.85,"whip":1.10,"fip":2.98,"xfip":3.08,"k9":8.9,"bb9":2.3,"h9":7.5,"hr9":0.7,"babip":0.282,"lob_pct":77.0,"k_bb_pct":19.2,"recent_3_era":2.58,"recent_5_era":2.72,"recent_10_era":2.82,"gs":14,"innings":89.0,"wpa":2.5,"re24":17.5},
+    "艾璞樂": {"team":"WC","foreign":True,"era":3.62,"whip":1.30,"fip":3.75,"xfip":3.80,"k9":7.8,"bb9":3.2,"h9":8.9,"hr9":0.9,"babip":0.308,"lob_pct":72.0,"k_bb_pct":13.2,"recent_3_era":3.35,"recent_5_era":3.50,"recent_10_era":3.58,"gs":13,"innings":78.2,"wpa":0.6,"re24":4.2},
+    "梅賽斯WC":{"team":"WC","foreign":True,"era":3.32,"whip":1.22,"fip":3.45,"xfip":3.52,"k9":8.5,"bb9":2.8,"h9":8.3,"hr9":0.8,"babip":0.295,"lob_pct":74.0,"k_bb_pct":16.8,"recent_3_era":3.05,"recent_5_era":3.20,"recent_10_era":3.28,"gs":14,"innings":83.2,"wpa":1.1,"re24":7.8},
+    "馬丁尼茲":{"team":"WC","foreign":True,"era":4.02,"whip":1.40,"fip":4.15,"xfip":4.10,"k9":7.2,"bb9":3.5,"h9":9.2,"hr9":1.1,"babip":0.312,"lob_pct":70.2,"k_bb_pct":10.8,"recent_3_era":3.78,"recent_5_era":3.92,"recent_10_era":3.98,"gs":12,"innings":72.0,"wpa":-0.1,"re24":-0.5},
     "陳子豪": {
         "team": "WC", "foreign": False,
         "era": 3.55, "whip": 1.28, "fip": 3.68, "xfip": 3.74,
@@ -174,6 +153,16 @@ PITCHERS = {
         "recent_3_era": 3.20, "recent_5_era": 3.40, "recent_10_era": 3.60,
         "gs": 13, "innings": 81.0, "wpa": 1.2, "re24": 8.8,
     },
+}
+
+# 各隊預設先發（無明確排班時使用 ace 數據供參考）
+TEAM_DEFAULT_SP = {
+    "AEL": "德保拉",  # ERA 2.18
+    "CT":  "布雷克",  # ERA 2.78
+    "FG":  "富藍戈",  # ERA 2.95
+    "WL":  "威能帝",  # ERA 2.88
+    "TSG": "後勁",    # ERA 2.65
+    "WC":  "甘特",    # ERA 1.49
 }
 
 # ──────────────────────────────────────────────
@@ -380,8 +369,8 @@ def get_today_games(game_date: date = None) -> list:
             "away": "FG",  "away_name": "富邦悍將",
             "home": "TSG", "home_name": "台鋼雄鷹",
             "venue": "澄清湖棒球場",
-            "away_pitcher": "鄭錫謙",
-            "home_pitcher": "羅力",
+            "away_pitcher": "富藍戈",
+            "home_pitcher": "後勁",
             "status": "預定",
             "away_score": None, "home_score": None,
         },
@@ -391,8 +380,8 @@ def get_today_games(game_date: date = None) -> list:
             "away": "FG",  "away_name": "富邦悍將",
             "home": "WL",  "home_name": "樂天桃猿",
             "venue": "桃園棒球場",
-            "away_pitcher": "鄭錫謙",
-            "home_pitcher": "林晨樺",
+            "away_pitcher": "富藍戈",
+            "home_pitcher": "威能帝",
             "status": "預定",
             "away_score": None, "home_score": None,
         },
@@ -402,8 +391,8 @@ def get_today_games(game_date: date = None) -> list:
             "away": "WC",  "away_name": "味全龍",
             "home": "CT",  "home_name": "統一7-ELEVEn獅",
             "venue": "台南棒球場",
-            "away_pitcher": "約翰甘特",
-            "home_pitcher": "陳冠宇",
+            "away_pitcher": "甘特",
+            "home_pitcher": "布雷克",
             "status": "預定",
             "away_score": None, "home_score": None,
         },

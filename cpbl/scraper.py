@@ -302,6 +302,81 @@ class CPBLScraper:
 
         return games
 
+    # ── 投手成績 ──────────────────────────────────
+    def fetch_pitcher_stats(self, year: int) -> dict[str, dict]:
+        """
+        嘗試從 CPBL 官網抓一軍先發投手最新成績。
+        回傳 {中文姓名: {era, whip, k9, bb9, innings, ...}}
+        失敗時回傳 {}，由呼叫端 fallback 到 mock 數據。
+        """
+        url = f"{BASE}/stats/player?kind=P&year={year}&kindType=SP"
+        try:
+            self._session.headers["Referer"] = f"{BASE}/stats"
+            resp = self._session.get(url, timeout=12)
+            resp.raise_for_status()
+            stats = self._parse_pitcher_stats(resp.text)
+            if stats:
+                log.info("Pitcher stats: %d players fetched from cpbl.com.tw", len(stats))
+            return stats
+        except Exception as e:
+            log.warning("Pitcher stats fetch failed: %s", e)
+            return {}
+
+    def _parse_pitcher_stats(self, html: str) -> dict[str, dict]:
+        """解析 CPBL 投手成績表，支援多種欄位命名。"""
+        soup = BeautifulSoup(html, "html.parser")
+        stats: dict[str, dict] = {}
+
+        for table in soup.find_all("table"):
+            # 取欄位標頭
+            thead = table.find("thead") or table.find("tr")
+            if not thead:
+                continue
+            headers = [th.get_text(strip=True) for th in thead.find_all(["th", "td"])]
+            if not any(k in headers for k in ("ERA", "防禦率", "WHIP", "姓名", "投手")):
+                continue
+
+            idx = {h: i for i, h in enumerate(headers)}
+            name_col = next((idx[k] for k in ("姓名", "球員", "Name", "投手") if k in idx), None)
+            era_col  = next((idx[k] for k in ("ERA", "防禦率") if k in idx), None)
+            whip_col = idx.get("WHIP")
+            k9_col   = next((idx[k] for k in ("K/9", "三振/9", "SO/9") if k in idx), None)
+            bb9_col  = next((idx[k] for k in ("BB/9", "四壞/9") if k in idx), None)
+            ip_col   = next((idx[k] for k in ("IP", "局數", "投球局數") if k in idx), None)
+            gs_col   = next((idx[k] for k in ("GS", "先發") if k in idx), None)
+
+            if name_col is None or era_col is None:
+                continue
+
+            for row in table.select("tbody tr, tr"):
+                cols = [td.get_text(strip=True) for td in row.find_all(["td"])]
+                if len(cols) <= max(c for c in (name_col, era_col) if c is not None):
+                    continue
+                name = cols[name_col].strip()
+                if not name or name in ("合計", "平均", "Total", ""):
+                    continue
+                try:
+                    era = float(cols[era_col])
+                except (ValueError, IndexError):
+                    continue
+                p: dict = {"era": era}
+                for attr, col in (("whip", whip_col), ("k9", k9_col),
+                                  ("bb9", bb9_col), ("gs", gs_col)):
+                    if col is not None:
+                        try:
+                            p[attr] = float(cols[col])
+                        except (ValueError, IndexError):
+                            pass
+                if ip_col is not None:
+                    try:
+                        raw = cols[ip_col].replace("⅓", ".3").replace("⅔", ".7")
+                        p["innings"] = float(raw)
+                    except (ValueError, IndexError):
+                        pass
+                stats[name] = p
+
+        return stats
+
     # ── 天氣 ──────────────────────────────────────
     def fetch_weather(self, venue: str) -> Optional[dict]:
         city = CITY_MAP.get(venue)
