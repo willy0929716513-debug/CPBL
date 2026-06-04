@@ -8,6 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("cpbl_bot")
@@ -81,17 +82,83 @@ def save_gist(gid, records):
 
 # ── Discord ────────────────────────────────────────────────────────────────
 
-def send_discord(picks, game_date):
+def send_discord(picks, game_date, history=None):
     if not DISCORD_URL or not picks: return
-    now_tw = datetime.datetime.now(TW).strftime("%H:%M")
-    lines  = [f"**⚾ CPBL 今日推薦 {game_date}** （{now_tw} 台灣時間）\n"]
+    now_tw   = datetime.datetime.now(TW)
+    time_str = now_tw.strftime("%m/%d %H:%M")
+
+    # Build history summary
+    hist_str = "尚無歷史記錄"
+    if history:
+        settled = [h for h in history if h.get("result") is not None]
+        if settled:
+            wins   = sum(1 for h in settled if h["result"] == "W")
+            ml_rec = [h for h in settled if h.get("bet_type") == "ML"]
+            rl_rec = [h for h in settled if h.get("bet_type") == "RL"]
+            tot_rec= [h for h in settled if h.get("bet_type") in ("TOT",)]
+            def wr(lst): return f"{sum(1 for x in lst if x['result']=='W')}/{len(lst)}" if lst else ""
+            parts  = [f"{wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)"]
+            if ml_rec:  parts.append(f"ML {wr(ml_rec)}")
+            if rl_rec:  parts.append(f"RL {wr(rl_rec)}")
+            if tot_rec: parts.append(f"TOT {wr(tot_rec)}")
+            hist_str = "  ".join(parts)
+
+    TIER_LABEL = {1: "💎 頂級", 2: "🔥 強力", 3: "⭐ 穩定"}
+
+    lines = [
+        "⚾ **CPBL V2 分析報告**",
+        f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅傷兵 ✅近況",
+        f"📊 歷史: {hist_str}",
+        "",
+        f"**推薦 {len(picks)} 場（💎強→⭐弱 排序）**",
+    ]
+
     for p in picks:
-        lines.append(
-            f"{TIER_EMOJI[p['tier']]} **{p['bet_label']}**  "
-            f"`賠率 {p['bp']}`  `邊際 {p['edge']*100:+.1f}%`  `信心 {p['conf']*100:.0f}%`\n"
-            f"  {p['away_cn']} @ {p['home_cn']}  "
-            f"勝率 {p['away_win_prob']*100:.0f}%/{p['home_win_prob']*100:.0f}%"
-        )
+        asp = p.get("away_sp") or {}
+        hsp = p.get("home_sp") or {}
+
+        def fmt_sp(pitcher: dict) -> str:
+            name = pitcher.get("name", "")
+            if not name:
+                return "TBD"
+            tag = "🌏" if pitcher.get("foreign") else ""
+            era = pitcher.get("era", "?")
+            r3  = pitcher.get("recent_3_era", era)
+            k9  = pitcher.get("k9", "?")
+            return f"{tag}{name}(ERA {era} 近3場ERA {r3} K/9:{k9})"
+
+        vf        = VENUE_FACTORS.get(p.get("venue", ""), {})
+        pf_str    = f" PF{vf.get('run_factor',1.0):.2f}" if vf else ""
+        venue_tag = f"🏟️{p.get('venue','')}{pf_str}" if p.get("venue") else ""
+        g_date    = p.get("game_date", game_date)
+        g_time    = p.get("game_time", p.get("time", ""))
+        hw        = round(p.get("home_win_prob", 0.5) * 100, 1)
+        market    = round(p.get("market_home_prob", 0), 1)   # already %
+        be_pct    = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
+        total     = p.get("market_total", "")
+
+        lines += [
+            "",
+            f"**{TIER_LABEL.get(p['tier'],'⭐ 穩定')}  {p['away_cn']} @ {p['home_cn']}**",
+            f"🗓️ {g_date} {g_time} (台灣時間) {venue_tag}",
+            f"⚾ 先發: {fmt_sp(asp)} — {fmt_sp(hsp)}",
+            f"💰 推薦: `{p['bet_label']}` @ **{p['bp']}**",
+            f"> 市場主隊: {market}% | 模型主隊: {hw}% | 盈虧平衡: {be_pct}%",
+            f"> Edge: **{p['edge']*100:+.1f}%** 信心{p['conf']*100:.0f}% | Kelly: ${p['stake']:.0f}",
+        ]
+        if total:
+            lines.append(f"> 大小分: {total}")
+        for sig in (p.get("signals") or [])[:2]:
+            lines.append(f"> {sig}")
+
+    lines += [
+        "",
+        "━" * 22,
+        "先發ERA+近況 · 牛棚疲勞 · 打線wRC+ · 主客場勝率",
+        "傷兵分級 · 天氣 · 球場PF · 對戰紀錄 · Kelly下注(25%)",
+        f"📡 場中分析: 執行 Live Monitor 取得即時推薦",
+    ]
+
     try:
         requests.post(DISCORD_URL, json={"content": "\n".join(lines)}, timeout=8)
         log.info("Discord sent (%d picks)", len(picks))
@@ -102,7 +169,8 @@ def send_discord(picks, game_date):
 
 def main():
     now_tw = datetime.datetime.now(TW)
-    today  = now_tw.date()
+    today     = now_tw.date()
+    today_str = str(today)
     log.info("CPBL Bot — %s  demo=%s", today, DEMO_MODE)
 
     elo     = ELOSystem()
@@ -165,16 +233,24 @@ def main():
             "market_total":  float(of.get("total_line") or 8.5),
         }
 
+        # Pitcher data with name included
+        ap_name = g.get("away_pitcher") or ""
+        hp_name = g.get("home_pitcher") or ""
+        asp_data = {**PITCHERS.get(ap_name, {}), "name": ap_name} if ap_name else {}
+        hsp_data = {**PITCHERS.get(hp_name, {}), "name": hp_name} if hp_name else {}
+
         base = dict(
             away=away, home=home,
             away_cn=g.get("away_name", away),
             home_cn=g.get("home_name", home),
+            game_date=today_str,
+            game_time=g.get("time", ""),
             time=g.get("time", ""),
             venue=g.get("venue", ""),
             home_win_prob=round(hp, 3),
             away_win_prob=round(ap, 3),
-            away_sp=g.get("away_sp") or {},
-            home_sp=g.get("home_sp") or {},
+            away_sp=asp_data,
+            home_sp=hsp_data,
             market_home_prob=float(of.get("market_home_prob") or 0),
             value_gap=float((of.get("analysis") or {}).get("value_gap", 0)),
             curr_home_odds=h_odds,
@@ -248,7 +324,7 @@ def main():
     log.info("Saved %s (%d picks)", JSON_PATH, len(picks))
 
     # 7. Discord
-    send_discord(picks, today)
+    send_discord(picks, today_str, history)
 
 
 if __name__ == "__main__":

@@ -106,7 +106,7 @@ const JSON_URL = "./picks_latest.json";
 const REPO     = "willy0929716513-debug/CPBL";
 const WORKFLOW = "cpbl_bot.yml";
 
-let allPicks=[], allHistory=[], liveGames=[], currentFilter="ALL", cardIdx=0;
+let allPicks=[], allHistory=[], liveGames=[], currentFilter="ALL", cardIdx=0, gameDate="";
 const TEAM_COLOR={AEL:"#3b82f6",CT:"#f59e0b",FG:"#ef4444",WL:"#8b5cf6",TSG:"#14b8a6"};
 const FACTOR_LABEL={starter:"先發投手",lineup:"打線",bullpen:"牛棚",odds:"賠率",
   home_away:"主客場",recent_form:"近況",h2h:"H2H",injuries:"傷兵",weather:"天氣",defense:"守備"};
@@ -120,6 +120,7 @@ async function loadData() {
     const data=await res.json();
     document.getElementById("gen-time").textContent="更新於 "+data.generated_at;
     allPicks=data.picks||[]; allHistory=data.recent_history||[]; liveGames=data.live_games||[];
+    gameDate=data.game_date||"";
     renderStats(); renderPicks(); renderLive(); updateTabCounts();
   } catch(e) {
     document.getElementById("picks-container").innerHTML=
@@ -188,6 +189,15 @@ function renderPicks() {
   el.innerHTML=list.map(renderCard).join("");
 }
 
+function fmtSP(pitcher) {
+  if(!pitcher||!pitcher.name) return "TBD";
+  const tag = pitcher.foreign ? "🌏" : "";
+  const era = pitcher.era != null ? `ERA ${pitcher.era}` : "";
+  const r3  = pitcher.recent_3_era != null ? ` 近3場ERA ${pitcher.recent_3_era}` : "";
+  const k9  = pitcher.k9 != null ? ` K/9:${pitcher.k9}` : "";
+  return `${tag}${pitcher.name}(${era}${r3}${k9})`;
+}
+
 function renderCard(p) {
   const uid="d"+(cardIdx++);
   const aw=Math.round((p.away_win_prob||0)*100), hw=100-aw;
@@ -195,24 +205,46 @@ function renderCard(p) {
   const edgeStr=((p.edge||0)*100).toFixed(1);
   const ac=TEAM_COLOR[p.away]||"#6b7280", hc=TEAM_COLOR[p.home]||"#6b7280";
   const asp=p.away_sp||{}, hsp=p.home_sp||{};
-  const spLine=(asp.name||hsp.name)?`<div class="mt-2 flex justify-between text-xs text-slate-400">
-    <span>🔷 ${asp.name||"TBD"}${asp.era?` <span class="text-slate-500">ERA ${asp.era}</span>`:""}</span>
-    <span>🔶 ${hsp.name||"TBD"}${hsp.era?` <span class="text-slate-500">ERA ${hsp.era}</span>`:""}</span>
-  </div>`:"";
-  const vg=p.value_gap||0;
-  const vc=vg>3?"text-emerald-400":vg<-3?"text-rose-400":"text-slate-400";
-  const oddsLine=p.curr_home_odds?`<div class="mt-2 flex flex-wrap gap-1.5 text-xs">
-    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">客 ${p.curr_away_odds}</span>
-    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">主 ${p.curr_home_odds}</span>
-    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">市場主隊 ${Math.round((p.market_home_prob||0)*100)}%</span>
-    <span class="bg-slate-800 ${vc} px-2 py-0.5 rounded">差距 ${vg>0?"+":""}${vg.toFixed(1)}%</span>
-  </div>`:"";
-  const sigs=(p.signals||[]).slice(0,3).map(s=>`<span class="bg-blue-950 text-blue-300 text-xs px-2 py-0.5 rounded">${s}</span>`).join(" ");
   const tc={1:"tier-1",2:"tier-2",3:"tier-3"}[p.tier]||"tier-3";
   const tl={1:"💎 Diamond",2:"🔥 Fire",3:"⭐ Star"}[p.tier]||"⭐ Star";
   const bm={ML:"badge-ml",RL:"badge-rl",TOT:"badge-tot"}[p.btype]||"badge-ml";
   const bl={ML:"ML 獨贏",RL:"RL 讓分",TOT:"大小分"}[p.btype]||p.btype;
   const cg=conf>=75?"from-emerald-600 to-emerald-400":conf>=65?"from-amber-600 to-amber-400":"from-rose-600 to-rose-400";
+
+  // Game date + time + venue
+  const gd = p.game_date || gameDate || "";
+  const gt = p.game_time || p.time || "";
+  const dtStr = [gd, gt].filter(Boolean).join(" ");
+  const venueLine = dtStr
+    ? `<div class="text-xs text-slate-500 mt-0.5">🗓️ ${dtStr}${p.venue?" · 🏟️"+p.venue:""}</div>`
+    : "";
+
+  // Starting pitcher line
+  const spLine = (asp.name || hsp.name) ? `
+  <div class="mt-2 bg-slate-800/50 rounded-lg px-2 py-1.5 text-xs text-slate-400">
+    <span class="text-slate-500">⚾ 先發 ›</span>
+    <span class="ml-1">${fmtSP(asp)}</span>
+    <span class="mx-1 text-slate-600">—</span>
+    <span>${fmtSP(hsp)}</span>
+  </div>` : "";
+
+  // Odds + probability line
+  const vg  = p.value_gap || 0;
+  const vc  = vg>3?"text-emerald-400":vg<-3?"text-rose-400":"text-slate-400";
+  const mkt = Math.round(p.market_home_prob || 0);   // already % (e.g. 60)
+  const be  = p.bp>1 ? (100/p.bp).toFixed(1) : "?";
+  const total= p.market_total ? `大小: ${p.market_total}` : "";
+  const oddsLine = p.curr_home_odds ? `<div class="mt-2 flex flex-wrap gap-1.5 text-xs">
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">客 ${p.curr_away_odds}</span>
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">主 ${p.curr_home_odds}</span>
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">市場主 ${mkt}%</span>
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">模型主 ${hw}%</span>
+    <span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded">盈虧平衡 ${be}%</span>
+    ${vg?`<span class="bg-slate-800 ${vc} px-2 py-0.5 rounded">差距 ${vg>0?"+":""}${vg.toFixed(1)}%</span>`:""}
+    ${total?`<span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded">${total}</span>`:""}
+  </div>` : "";
+
+  const sigs=(p.signals||[]).slice(0,3).map(s=>`<span class="bg-blue-950 text-blue-300 text-xs px-2 py-0.5 rounded">${s}</span>`).join(" ");
 
   return `<div class="card ${tc} p-4 mb-3">
   <div class="flex items-start justify-between gap-2">
@@ -222,18 +254,18 @@ function renderCard(p) {
         <span class="${bm}">${bl}</span>
       </div>
       <div class="text-base font-bold text-white">${p.away_cn} <span class="text-slate-500 font-normal text-sm">@</span> ${p.home_cn}</div>
-      <div class="text-xs text-slate-500 mt-0.5">${p.time||""}${p.venue?" · "+p.venue:""}</div>
+      ${venueLine}
     </div>
     <div class="text-right shrink-0">
       <div class="text-2xl font-bold text-emerald-400">$${p.stake||0}</div>
       <div class="text-xs text-slate-500">建議注額</div>
     </div>
   </div>
+  ${spLine}
   <div class="mt-3 bg-slate-800/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
     <div><span class="font-bold text-white">${p.bet_label}</span><span class="ml-2 text-slate-400 text-sm">@ ${p.bp}</span></div>
     <button onclick="copyText('${p.bet_label} @ ${p.bp}')" class="text-slate-500 hover:text-slate-300 text-xs">📋</button>
   </div>
-  ${spLine}
   <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
     <div class="bg-slate-800/60 rounded-lg p-2"><div class="font-bold text-emerald-400">+${edgeStr}%</div><div class="text-slate-500">邊際</div></div>
     <div class="bg-slate-800/60 rounded-lg p-2"><div class="font-bold text-amber-400">${conf}%</div><div class="text-slate-500">信心</div></div>
