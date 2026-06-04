@@ -97,22 +97,21 @@ def send_discord_no_games(game_date, reason="無法取得一軍賽程"):
         log.warning("Discord no-games: %s", e)
 
 
-def send_discord(picks, game_date, history=None):
-    if not DISCORD_URL or not picks: return
+def send_discord(picks, all_preds, game_date, history=None):
+    if not DISCORD_URL or not all_preds: return
     now_tw   = datetime.datetime.now(TW)
     time_str = now_tw.strftime("%m/%d %H:%M")
 
-    # Build history summary
     hist_str = "尚無歷史記錄"
     if history:
         settled = [h for h in history if h.get("result") is not None]
         if settled:
-            wins   = sum(1 for h in settled if h["result"] == "W")
-            ml_rec = [h for h in settled if h.get("bet_type") == "ML"]
-            rl_rec = [h for h in settled if h.get("bet_type") == "RL"]
-            tot_rec= [h for h in settled if h.get("bet_type") in ("TOT",)]
+            wins = sum(1 for h in settled if h["result"] == "W")
+            ml_rec  = [h for h in settled if h.get("bet_type") == "ML"]
+            rl_rec  = [h for h in settled if h.get("bet_type") == "RL"]
+            tot_rec = [h for h in settled if h.get("bet_type") in ("TOT",)]
             def wr(lst): return f"{sum(1 for x in lst if x['result']=='W')}/{len(lst)}" if lst else ""
-            parts  = [f"{wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)"]
+            parts = [f"{wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)"]
             if ml_rec:  parts.append(f"ML {wr(ml_rec)}")
             if rl_rec:  parts.append(f"RL {wr(rl_rec)}")
             if tot_rec: parts.append(f"TOT {wr(tot_rec)}")
@@ -120,51 +119,76 @@ def send_discord(picks, game_date, history=None):
 
     TIER_LABEL = {1: "💎 頂級", 2: "🔥 強力", 3: "⭐ 穩定"}
 
+    rec_count = len(picks)
     lines = [
         "⚾ **CPBL V2 分析報告**",
         f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅傷兵 ✅近況",
         f"📊 歷史: {hist_str}",
         "",
-        f"**推薦 {len(picks)} 場（💎強→⭐弱 排序）**",
+        f"**今日 {len(all_preds)} 場賽事 — {'推薦 ' + str(rec_count) + ' 場下注' if rec_count else '今日無推薦下注'}**",
     ]
 
+    def fmt_sp(pitcher: dict) -> str:
+        name = pitcher.get("name", "")
+        if not name: return "TBD"
+        tag = "🌏" if pitcher.get("foreign") else ""
+        era = pitcher.get("era", "?")
+        r3  = pitcher.get("recent_3_era", era)
+        k9  = pitcher.get("k9", "?")
+        return f"{tag}{name}(ERA {era} 近3場ERA {r3} K/9:{k9})"
+
+    # ── 推薦下注的場次 ──
+    pick_keys = {(p["away"], p["home"]) for p in picks}
     for p in picks:
         asp = p.get("away_sp") or {}
         hsp = p.get("home_sp") or {}
-
-        def fmt_sp(pitcher: dict) -> str:
-            name = pitcher.get("name", "")
-            if not name:
-                return "TBD"
-            tag = "🌏" if pitcher.get("foreign") else ""
-            era = pitcher.get("era", "?")
-            r3  = pitcher.get("recent_3_era", era)
-            k9  = pitcher.get("k9", "?")
-            return f"{tag}{name}(ERA {era} 近3場ERA {r3} K/9:{k9})"
-
         vf        = VENUE_FACTORS.get(p.get("venue", ""), {})
         pf_str    = f" PF{vf.get('run_factor',1.0):.2f}" if vf else ""
         venue_tag = f"🏟️{p.get('venue','')}{pf_str}" if p.get("venue") else ""
-        g_date    = p.get("game_date", game_date)
         g_time    = p.get("game_time", p.get("time", ""))
         hw        = round(p.get("home_win_prob", 0.5) * 100, 1)
-        market    = round(p.get("market_home_prob", 0), 1)   # already %
+        aw        = round(p.get("away_win_prob", 0.5) * 100, 1)
+        market    = round(p.get("market_home_prob", 0), 1)
         be_pct    = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
         total     = p.get("market_total", "")
-
         lines += [
             "",
             f"**{TIER_LABEL.get(p['tier'],'⭐ 穩定')}  {p['away_cn']} @ {p['home_cn']}**",
-            f"🗓️ {g_date} {g_time} (台灣時間) {venue_tag}",
+            f"🗓️ {game_date} {g_time} {venue_tag}",
             f"⚾ 先發: {fmt_sp(asp)} — {fmt_sp(hsp)}",
             f"💰 推薦: `{p['bet_label']}` @ **{p['bp']}**",
-            f"> 市場主隊: {market}% | 模型主隊: {hw}% | 盈虧平衡: {be_pct}%",
+            f"> 勝率: 客 {aw}% vs 主 {hw}% | 市場主隊: {market}% | 盈虧平衡: {be_pct}%",
             f"> Edge: **{p['edge']*100:+.1f}%** 信心{p['conf']*100:.0f}% | Kelly: ${p['stake']:.0f}",
         ]
         if total:
             lines.append(f"> 大小分: {total}")
         for sig in (p.get("signals") or [])[:2]:
             lines.append(f"> {sig}")
+
+    # ── 僅供參考（不推薦）的場次 ──
+    ref_preds = [pr for pr in all_preds if not pr.get("recommended")]
+    if ref_preds:
+        lines += ["", "━" * 18, "📊 **今日其他比賽（僅供參考，不建議下注）**"]
+        for pr in ref_preds:
+            asp = pr.get("away_sp") or {}
+            hsp = pr.get("home_sp") or {}
+            g_time = pr.get("game_time", pr.get("time", ""))
+            hw = round(pr.get("home_win_prob", 0.5) * 100, 1)
+            aw = round(pr.get("away_win_prob", 0.5) * 100, 1)
+            # 決定優勢方
+            if hw >= aw:
+                adv = f"主隊 **{pr['home_cn']}** 勝算略高 ({hw}% vs {aw}%)"
+            else:
+                adv = f"客隊 **{pr['away_cn']}** 勝算略高 ({aw}% vs {hw}%)"
+            vf  = VENUE_FACTORS.get(pr.get("venue", ""), {})
+            vt  = f"🏟️{pr.get('venue','')}" if pr.get("venue") else ""
+            lines += [
+                "",
+                f"**{pr['away_cn']} @ {pr['home_cn']}**  🗓️ {g_time} {vt}",
+                f"⚾ 先發: {fmt_sp(asp)} — {fmt_sp(hsp)}",
+                f"> {adv}",
+                f"> ⚠️ 兩隊差距不足，不建議下注",
+            ]
 
     lines += [
         "",
@@ -176,7 +200,7 @@ def send_discord(picks, game_date, history=None):
 
     try:
         requests.post(DISCORD_URL, json={"content": "\n".join(lines)}, timeout=8)
-        log.info("Discord sent (%d picks)", len(picks))
+        log.info("Discord sent (%d picks, %d predictions)", len(picks), len(all_preds))
     except Exception as e:
         log.warning("Discord: %s", e)
 
@@ -239,8 +263,9 @@ def main():
             log.warning("Odds failed: %s", e)
             all_odds = {}
 
-    # 3. Predict + generate picks
-    picks      = []
+    # 3. Predict + generate picks & predictions
+    picks      = []   # 推薦下注（邊際 + 信心足夠）
+    all_preds  = []   # 所有比賽預測（含不推薦的）
     game_preds = {}
 
     for g in games:
@@ -270,7 +295,6 @@ def main():
             "market_total":  float(of.get("total_line") or 8.5),
         }
 
-        # Pitcher data with name included
         ap_name = g.get("away_pitcher") or ""
         hp_name = g.get("home_pitcher") or ""
         asp_data = {**PITCHERS.get(ap_name, {}), "name": ap_name} if ap_name else {}
@@ -298,14 +322,16 @@ def main():
                      if isinstance(v, (int, float))},
         )
 
-        for p_win, dec_odds, label, team_name in [
-            (hp, h_odds, f"{g.get('home_name', home)} 獨贏", "ML"),
-            (ap, a_odds, f"{g.get('away_name', away)} 獨贏", "ML"),
+        # 找最佳邊際方向（主客中取較大的 edge）
+        best_pick = None
+        for p_win, dec_odds, label in [
+            (hp, h_odds, f"{g.get('home_name', home)} 獨贏"),
+            (ap, a_odds, f"{g.get('away_name', away)} 獨贏"),
         ]:
             if dec_odds > 1.0:
                 e_val = calc_edge(p_win, dec_odds)
                 if e_val >= EDGE_MIN and conf >= CONF_MIN:
-                    picks.append({**base,
+                    pick = {**base,
                         "btype": "ML",
                         "bet_label": label,
                         "bp": round(dec_odds, 2),
@@ -313,9 +339,37 @@ def main():
                         "edge": round(e_val, 4),
                         "conf": round(conf, 3),
                         "tier": get_tier(conf),
-                    })
+                        "recommended": True,
+                    }
+                    picks.append(pick)
+                    if best_pick is None or e_val > best_pick["edge"]:
+                        best_pick = pick
+
+        # 無論是否推薦，都記錄預測供參考
+        # 找勝算較高的一方作為「參考方向」
+        if hp >= ap:
+            ref_label = f"{g.get('home_name', home)} 勝算較高"
+            ref_prob  = round(hp * 100, 1)
+            ref_odds  = h_odds
+        else:
+            ref_label = f"{g.get('away_name', away)} 勝算較高"
+            ref_prob  = round(ap * 100, 1)
+            ref_odds  = a_odds
+
+        ref_edge = calc_edge(max(hp, ap), ref_odds) if ref_odds > 1 else 0
+
+        all_preds.append({**base,
+            "ref_label":     ref_label,
+            "ref_prob":      ref_prob,
+            "ref_odds":      round(ref_odds, 2),
+            "ref_edge":      round(ref_edge, 4),
+            "conf":          round(conf, 3),
+            "tier":          get_tier(conf),
+            "recommended":   best_pick is not None,
+        })
 
     picks.sort(key=lambda x: x["edge"], reverse=True)
+    all_preds.sort(key=lambda x: (not x["recommended"], -abs(x["home_win_prob"] - 0.5)))
     log.info("Picks: %d from %d games", len(picks), len(games))
 
     # 4. Preserve existing live_games
@@ -346,25 +400,26 @@ def main():
     # 6. Write picks_latest.json
     os.makedirs("docs", exist_ok=True)
     out = {
-        "generated_at":   now_tw.strftime("%Y-%m-%d %H:%M") + " (台灣時間)",
-        "game_date":      today_str,
-        "picks":          picks,
-        "live_games":     existing.get("live_games", []),
+        "generated_at":    now_tw.strftime("%Y-%m-%d %H:%M") + " (台灣時間)",
+        "game_date":       today_str,
+        "picks":           picks,
+        "predictions":     all_preds,   # 所有比賽預測（含不推薦）
+        "live_games":      existing.get("live_games", []),
         "live_updated_at": existing.get("live_updated_at", ""),
         "live_updated_ts": existing.get("live_updated_ts", 0),
-        "recent_history": recent,
-        "game_preds":     game_preds,
-        "demo_mode":      DEMO_MODE,
+        "recent_history":  recent,
+        "game_preds":      game_preds,
+        "demo_mode":       DEMO_MODE,
     }
     with open(JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2, default=str)
-    log.info("Saved %s (%d picks)", JSON_PATH, len(picks))
+    log.info("Saved %s (%d picks, %d predictions)", JSON_PATH, len(picks), len(all_preds))
 
-    # 7. Discord
-    if picks:
-        send_discord(picks, today_str, history)
+    # 7. Discord — 有比賽就發（不論是否有推薦）
+    if all_preds:
+        send_discord(picks, all_preds, today_str, history)
     elif not games and not DEMO_MODE:
-        send_discord_no_games(today_str, "今日無賽事或無推薦（爬蟲封鎖 + 備份日程無比賽）")
+        send_discord_no_games(today_str, "今日無賽事（備份日程未填或真的休兵）")
 
 
 if __name__ == "__main__":

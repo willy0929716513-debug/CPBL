@@ -131,8 +131,8 @@ const JSON_URL = "./picks_latest.json";
 const REPO     = "willy0929716513-debug/CPBL";
 const WORKFLOW = "cpbl_bot.yml";
 
-let allPicks=[], allHistory=[], liveGames=[], currentFilter="ALL", cardIdx=0, gameDate="";
-const TEAM_COLOR={AEL:"#3b82f6",CT:"#f59e0b",FG:"#ef4444",WL:"#8b5cf6",TSG:"#14b8a6"};
+let allPicks=[], allPredictions=[], allHistory=[], liveGames=[], currentFilter="ALL", cardIdx=0, gameDate="";
+const TEAM_COLOR={AEL:"#3b82f6",CT:"#f59e0b",FG:"#ef4444",WL:"#8b5cf6",TSG:"#14b8a6",WC:"#e31937"};
 const FACTOR_LABEL={starter:"先發投手",lineup:"打線",bullpen:"牛棚",odds:"賠率",
   home_away:"主客場",recent_form:"近況",h2h:"H2H",injuries:"傷兵",weather:"天氣",defense:"守備"};
 
@@ -145,7 +145,7 @@ async function loadData() {
     if(!res.ok) throw new Error("HTTP "+res.status);
     const data=await res.json();
     document.getElementById("gen-time").textContent="更新於 "+data.generated_at;
-    allPicks=data.picks||[]; allHistory=data.recent_history||[]; liveGames=data.live_games||[];
+    allPicks=data.picks||[]; allPredictions=data.predictions||[]; allHistory=data.recent_history||[]; liveGames=data.live_games||[];
     gameDate=data.game_date||"";
     renderStats(); renderPicks(); renderLive(); updateTabCounts();
   } catch(e) {
@@ -197,9 +197,10 @@ function setFilter(f) {
 function updateTabCounts() {
   const cnt={ML:0,RL:0,TOT:0};
   allPicks.forEach(p=>{if(cnt[p.btype]!==undefined)cnt[p.btype]++;});
+  const total = allPredictions.length || allPicks.length;
   document.querySelectorAll(".tab-btn").forEach(b=>{
     const f=b.dataset.f;
-    if(f==="ALL"){b.textContent=`全部 (${allPicks.length})`;return;}
+    if(f==="ALL"){b.textContent=`全部 (${total})`;return;}
     if(f==="LIVE"){b.textContent=`🔴 場中 (${liveGames.length})`;return;}
     const lbl={ML:"🎯 ML 獨贏",RL:"📐 RL 讓分",TOT:"📊 大小分"}[f]||f;
     b.textContent=`${lbl} (${cnt[f]||0})`;
@@ -467,6 +468,90 @@ async function doRun(){
   btn.disabled=false;btn.textContent="確認執行";
 }
 document.getElementById("run-overlay").addEventListener("click",function(e){if(e.target===this)closeRunModal();});
+
+// ── Picks + Predictions ───────────────────────────────────
+function renderPicks() {
+  const container = document.getElementById("picks-container");
+  if (currentFilter === "LIVE") return;
+  cardIdx = 0;
+  let html = "";
+
+  if (currentFilter === "ALL") {
+    const nonRec = allPredictions.filter(p => !p.recommended);
+    if (allPicks.length) {
+      html += allPicks.map(p => renderCard(p)).join("");
+    }
+    if (nonRec.length) {
+      if (allPicks.length) {
+        html += `<div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1 mt-2">📊 今日其他比賽（僅供參考）</div>`;
+      }
+      html += nonRec.map(p => renderRefCard(p)).join("");
+    }
+    if (!allPicks.length && !nonRec.length) {
+      html = `<div class="card p-10 text-center text-slate-500">今日無分析資料<br><small class="text-slate-600 mt-2 block">請先執行預測機器人</small></div>`;
+    }
+  } else {
+    const filtered = allPicks.filter(p => p.btype === currentFilter);
+    html = filtered.length
+      ? filtered.map(p => renderCard(p)).join("")
+      : `<div class="card p-10 text-center text-slate-500">無 ${currentFilter} 推薦</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderRefCard(p) {
+  const hw = Math.round((p.home_win_prob||0)*100);
+  const aw = Math.round((p.away_win_prob||0)*100);
+  const ac = TEAM_COLOR[p.away]||"#6b7280";
+  const hc = TEAM_COLOR[p.home]||"#6b7280";
+  const asp = p.away_sp||{};
+  const hsp = p.home_sp||{};
+  const gd = (p.game_date||gameDate||"").replace(/^\d{4}-/,"");
+  const gt = p.game_time||p.time||"";
+  const dtStr = [gd,gt].filter(Boolean).join(" ");
+  const venueLine = dtStr
+    ? `<div class="text-xs text-slate-500 mt-1">🗓️ ${dtStr}${p.venue?" · 🏟️ "+p.venue:""}</div>` : "";
+  const spLine = (asp.name||hsp.name) ? `
+  <div class="mt-2 rounded-xl overflow-hidden border border-slate-700/50">
+    <div class="bg-slate-800/40 px-3 py-1 text-xs text-slate-500 font-medium">⚾ 先發投手</div>
+    <div class="bg-slate-800/20 px-3 py-2 space-y-1.5">
+      <div class="flex items-baseline gap-2 text-xs"><span class="shrink-0 text-slate-600 font-medium w-4">客</span><span class="leading-relaxed">${fmtSP(asp)}</span></div>
+      <div class="flex items-baseline gap-2 text-xs"><span class="shrink-0 text-slate-600 font-medium w-4">主</span><span class="leading-relaxed">${fmtSP(hsp)}</span></div>
+    </div>
+  </div>` : "";
+  const advTeam = hw >= aw ? p.home_cn : p.away_cn;
+  const advPct  = Math.max(hw, aw);
+  const defPct  = Math.min(hw, aw);
+
+  return `<div class="card p-4 mb-3" style="border-left:4px solid #475569">
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex-1 min-w-0">
+      <div class="text-base font-bold text-slate-300 leading-tight">${p.away_cn} <span class="text-slate-600 font-normal text-sm">@</span> ${p.home_cn}</div>
+      ${venueLine}
+    </div>
+    <div class="shrink-0 bg-amber-950/60 border border-amber-700/50 rounded-lg px-2.5 py-1 text-center">
+      <div class="text-xs font-bold text-amber-400">不建議</div>
+      <div class="text-xs text-amber-500/70">下注</div>
+    </div>
+  </div>
+  ${spLine}
+  <div class="mt-3 prob-bar">
+    <div style="width:${aw}%;background:${ac};min-width:${aw>5?0:24}px" class="flex items-center justify-center text-xs font-bold text-white/90">${aw>8?aw+"%":""}</div>
+    <div style="width:${hw}%;background:${hc};min-width:${hw>5?0:24}px" class="flex items-center justify-center text-xs font-bold text-white/90">${hw>8?hw+"%":""}</div>
+  </div>
+  <div class="mt-1 flex justify-between text-xs text-slate-600">
+    <span>${p.away_cn}</span><span>${p.home_cn}</span>
+  </div>
+  <div class="mt-2 bg-slate-800/40 rounded-xl px-3 py-2 text-sm">
+    <b class="text-slate-200">${advTeam}</b><span class="text-slate-400"> 勝算較高 (${advPct}% vs ${defPct}%)</span>
+  </div>
+  <div class="mt-2 flex items-center gap-2 bg-amber-950/40 border border-amber-800/30 rounded-lg px-3 py-2">
+    <span class="text-amber-400 text-sm">⚠️</span>
+    <span class="text-amber-300/80 text-xs">兩隊差距不足，不建議下注</span>
+  </div>
+</div>`;
+}
 
 // ── Utilities ─────────────────────────────────────────────
 function copyText(t){
