@@ -98,5 +98,45 @@
     "home_prob_curr": 0.4587,
     "home_move": 0.0,
     "public_home_pct": 44.0
+  },
+  "SBH@GNT_2026-06-05": {
+    "open_home_odds": 0.0,
+    "open_away_odds": 0.0,
+    "curr_home_odds": 0.0,
+    "curr_away_odds": 0.0,
+    "home_prob_open": 0.5,
+    "home_prob_curr": 0.5,
+    "home_move": 0.0,
+    "public_home_pct": 50.0
+  },
+  "ORX@HNS_2026-06-05": {
+    "open_home_odds": 0.0,
+    "open_away_odds": 0.0,
+    "curr_home_odds": 0.0,
+    "curr_away_odds": 0.0,
+    "home_prob_open": 0.5,
+    "home_prob_curr": 0.5,
+    "home_move": 0.0,
+    "public_home_pct": 50.0
+  },
+  "LGT@SSL_2026-06-05": {
+    "open_home_odds": 2.18,
+    "open_away_odds": 1.72,
+    "curr_home_odds": 2.18,
+    "curr_away_odds": 1.72,
+    "home_prob_open": 0.4587,
+    "home_prob_curr": 0.4587,
+    "home_move": 0.0,
+    "public_home_pct": 44.0
+  },
+  "SSG@KIA_2026-06-05": {
+    "open_home_odds": 0.0,
+    "open_away_odds": 0.0,
+    "curr_home_odds": 0.0,
+    "curr_away_odds": 0.0,
+    "home_prob_open": 0.5,
+    "home_prob_curr": 0.5,
+    "home_move": 0.0,
+    "public_home_pct": 50.0
   }
 }
