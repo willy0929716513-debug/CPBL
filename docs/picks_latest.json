@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-06-04 09:28 (台灣時間)",
+  "game_date": "2026-06-04",
+  "picks": [
+    {
+      "away": "FG",
+      "home": "WL",
+      "away_cn": "富邦悍將",
+      "home_cn": "樂天桃猿",
+      "time": "18:35",
+      "venue": "桃園棒球場",
+      "home_win_prob": 0.789,
+      "away_win_prob": 0.211,
+      "away_sp": {},
+      "home_sp": {},
+      "market_home_prob": 60.8,
+      "value_gap": 21.3,
+      "curr_home_odds": 1.58,
+      "curr_away_odds": 2.45,
+      "market_total": 8.5,
+      "signals": [
+        "📈 模型比市場高估主隊 21% (Value)",
+        "📉 主隊賠率縮短 1.65→1.58 (莊家看好主隊)"
+      ],
+      "factors": {},
+      "btype": "ML",
+      "bet_label": "樂天桃猿 獨贏",
+      "bp": 1.58,
+      "stake": 106.0,
+      "edge": 0.1558,
+      "conf": 0.577,
+      "tier": 3
+    }
+  ],
+  "live_games": [],
+  "live_updated_at": "",
+  "live_updated_ts": 0,
+  "recent_history": [],
+  "game_preds": {
+    "WL|FG": {
+      "home_win_prob": 0.789,
+      "market_total": 8.5
+    },
+    "AEL|TSG": {
+      "home_win_prob": 0.672,
+      "market_total": 7.5
+    }
+  },
+  "demo_mode": true
+}
