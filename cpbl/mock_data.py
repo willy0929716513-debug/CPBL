@@ -41,6 +41,22 @@ PITCHERS = {
         "recent_3_era": 2.10, "recent_5_era": 2.45, "recent_10_era": 2.98,
         "gs": 14, "innings": 86.2, "wpa": 1.8, "re24": 12.4,
     },
+    "吳哲源": {
+        "team": "AEL", "foreign": False,
+        "era": 3.42, "whip": 1.28, "fip": 3.55, "xfip": 3.60,
+        "k9": 7.8, "bb9": 3.0, "h9": 8.5, "hr9": 0.9,
+        "babip": 0.298, "lob_pct": 72.8, "k_bb_pct": 14.0,
+        "recent_3_era": 3.10, "recent_5_era": 3.28, "recent_10_era": 3.38,
+        "gs": 13, "innings": 76.0, "wpa": 0.8, "re24": 5.5,
+    },
+    "張進德": {
+        "team": "AEL", "foreign": False,
+        "era": 4.05, "whip": 1.40, "fip": 4.18, "xfip": 4.12,
+        "k9": 7.0, "bb9": 3.5, "h9": 9.3, "hr9": 1.0,
+        "babip": 0.315, "lob_pct": 70.2, "k_bb_pct": 10.8,
+        "recent_3_era": 3.80, "recent_5_era": 3.95, "recent_10_era": 4.00,
+        "gs": 12, "innings": 68.2, "wpa": -0.1, "re24": -0.5,
+    },
     "德保拉": {"team":"AEL","foreign":True,"era":2.18,"whip":0.98,"fip":2.32,"xfip":2.45,"k9":9.2,"bb9":2.0,"h9":6.8,"hr9":0.5,"babip":0.272,"lob_pct":80.2,"k_bb_pct":21.5,"recent_3_era":1.95,"recent_5_era":2.08,"recent_10_era":2.20,"gs":15,"innings":95.1,"wpa":3.8,"re24":26.4},
     "克迪":   {"team":"AEL","foreign":True,"era":3.24,"whip":1.22,"fip":3.38,"xfip":3.45,"k9":8.1,"bb9":2.8,"h9":8.3,"hr9":0.8,"babip":0.295,"lob_pct":74.0,"k_bb_pct":15.2,"recent_3_era":2.85,"recent_5_era":3.10,"recent_10_era":3.20,"gs":14,"innings":83.2,"wpa":1.4,"re24":9.6},
     "羅戈":   {"team":"AEL","foreign":True,"era":3.88,"whip":1.38,"fip":4.02,"xfip":3.95,"k9":7.2,"bb9":3.4,"h9":9.2,"hr9":1.0,"babip":0.312,"lob_pct":70.5,"k_bb_pct":11.5,"recent_3_era":4.20,"recent_5_era":4.05,"recent_10_era":3.92,"gs":13,"innings":76.0,"wpa":0.2,"re24":1.8},
@@ -75,6 +91,22 @@ PITCHERS = {
         "recent_3_era": 3.80, "recent_5_era": 3.95, "recent_10_era": 4.10,
         "gs": 12, "innings": 70.2, "wpa": -0.4, "re24": -2.1,
     },
+    "潘威倫": {
+        "team": "CT", "foreign": False,
+        "era": 3.78, "whip": 1.33, "fip": 3.90, "xfip": 3.85,
+        "k9": 7.2, "bb9": 2.8, "h9": 9.0, "hr9": 0.9,
+        "babip": 0.308, "lob_pct": 72.5, "k_bb_pct": 13.5,
+        "recent_3_era": 3.50, "recent_5_era": 3.65, "recent_10_era": 3.72,
+        "gs": 14, "innings": 85.2, "wpa": 0.4, "re24": 2.8,
+    },
+    "廖俊儒": {
+        "team": "CT", "foreign": False,
+        "era": 4.38, "whip": 1.43, "fip": 4.52, "xfip": 4.45,
+        "k9": 6.8, "bb9": 3.8, "h9": 9.4, "hr9": 1.1,
+        "babip": 0.322, "lob_pct": 69.5, "k_bb_pct": 9.5,
+        "recent_3_era": 4.20, "recent_5_era": 4.30, "recent_10_era": 4.35,
+        "gs": 11, "innings": 62.0, "wpa": -0.5, "re24": -3.5,
+    },
     # ── 富邦悍將 ──────────────────────────────
     "李東洛": {
         "team": "FG", "foreign": False,
@@ -104,6 +136,14 @@ PITCHERS = {
         "recent_3_era": 7.50, "recent_5_era": 6.30, "recent_10_era": 5.80,
         "gs": 11, "innings": 63.0, "wpa": -2.1, "re24": -14.8,
     },
+    "劉基鴻": {
+        "team": "FG", "foreign": False,
+        "era": 4.10, "whip": 1.39, "fip": 4.22, "xfip": 4.15,
+        "k9": 7.1, "bb9": 3.4, "h9": 9.1, "hr9": 1.0,
+        "babip": 0.318, "lob_pct": 70.8, "k_bb_pct": 11.2,
+        "recent_3_era": 3.90, "recent_5_era": 4.00, "recent_10_era": 4.08,
+        "gs": 12, "innings": 68.1, "wpa": -0.2, "re24": -1.5,
+    },
     # ── 樂天桃猿 ──────────────────────────────
     "林晨樺": {
         "team": "WL", "foreign": False,
@@ -125,6 +165,22 @@ PITCHERS = {
         "babip": 0.318, "lob_pct": 69.4, "k_bb_pct": 9.9,
         "recent_3_era": 3.90, "recent_5_era": 4.20, "recent_10_era": 4.45,
         "gs": 12, "innings": 69.0, "wpa": -0.8, "re24": -5.2,
+    },
+    "羅嘉仁": {
+        "team": "WL", "foreign": False,
+        "era": 3.62, "whip": 1.30, "fip": 3.75, "xfip": 3.80,
+        "k9": 7.8, "bb9": 3.2, "h9": 8.9, "hr9": 0.9,
+        "babip": 0.308, "lob_pct": 72.0, "k_bb_pct": 13.2,
+        "recent_3_era": 3.40, "recent_5_era": 3.52, "recent_10_era": 3.58,
+        "gs": 13, "innings": 79.0, "wpa": 0.6, "re24": 4.2,
+    },
+    "吳承諺": {
+        "team": "WL", "foreign": False,
+        "era": 4.22, "whip": 1.42, "fip": 4.35, "xfip": 4.28,
+        "k9": 6.9, "bb9": 3.8, "h9": 9.4, "hr9": 1.1,
+        "babip": 0.325, "lob_pct": 69.2, "k_bb_pct": 9.5,
+        "recent_3_era": 4.00, "recent_5_era": 4.12, "recent_10_era": 4.18,
+        "gs": 11, "innings": 62.2, "wpa": -0.3, "re24": -2.0,
     },
     # ── 台鋼雄鷹 ──────────────────────────────
     "黃子鵬": {
@@ -155,6 +211,14 @@ PITCHERS = {
         "recent_3_era": 5.10, "recent_5_era": 4.80, "recent_10_era": 4.50,
         "gs": 12, "innings": 68.2, "wpa": -0.6, "re24": -4.3,
     },
+    "黃龍義": {
+        "team": "TSG", "foreign": False,
+        "era": 4.18, "whip": 1.40, "fip": 4.30, "xfip": 4.22,
+        "k9": 7.0, "bb9": 3.6, "h9": 9.3, "hr9": 1.1,
+        "babip": 0.320, "lob_pct": 70.0, "k_bb_pct": 10.5,
+        "recent_3_era": 3.95, "recent_5_era": 4.08, "recent_10_era": 4.15,
+        "gs": 12, "innings": 70.1, "wpa": -0.3, "re24": -2.2,
+    },
     # ── 味全龍 ──────────────────────────────────
     "甘特":   {"team":"WC","foreign":True,"era":1.49,"whip":0.95,"fip":1.82,"xfip":2.10,"k9":9.4,"bb9":1.8,"h9":6.5,"hr9":0.5,"babip":0.268,"lob_pct":82.0,"k_bb_pct":22.1,"recent_3_era":1.20,"recent_5_era":1.38,"recent_10_era":1.50,"gs":14,"innings":90.2,"wpa":4.1,"re24":28.5},
     "鋼龍":   {"team":"WC","foreign":True,"era":2.85,"whip":1.10,"fip":2.98,"xfip":3.08,"k9":8.9,"bb9":2.3,"h9":7.5,"hr9":0.7,"babip":0.282,"lob_pct":77.0,"k_bb_pct":19.2,"recent_3_era":2.58,"recent_5_era":2.72,"recent_10_era":2.82,"gs":14,"innings":89.0,"wpa":2.5,"re24":17.5},
@@ -168,6 +232,14 @@ PITCHERS = {
         "babip": 0.302, "lob_pct": 73.5, "k_bb_pct": 14.0,
         "recent_3_era": 3.20, "recent_5_era": 3.40, "recent_10_era": 3.60,
         "gs": 13, "innings": 81.0, "wpa": 1.2, "re24": 8.8,
+    },
+    "劉冠宇": {
+        "team": "WC", "foreign": False,
+        "era": 3.88, "whip": 1.36, "fip": 4.00, "xfip": 3.95,
+        "k9": 7.4, "bb9": 3.3, "h9": 9.0, "hr9": 1.0,
+        "babip": 0.312, "lob_pct": 71.5, "k_bb_pct": 12.0,
+        "recent_3_era": 3.65, "recent_5_era": 3.78, "recent_10_era": 3.85,
+        "gs": 13, "innings": 77.0, "wpa": 0.3, "re24": 2.0,
     },
 }
 
