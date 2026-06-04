@@ -1,0 +1,50 @@
+name: CPBL Bot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run CPBL Bot
+        env:
+          CPBL_DEMO:        "0"
+          ODDS_API_KEY:     ${{ secrets.ODDS_API_KEY }}
+          DISCORD_WEBHOOK:  ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN:         ${{ secrets.GIST_TOKEN }}
+        run: python cpbl_bot.py
+
+      - name: Commit picks_latest.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/picks_latest.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore: update picks_latest.json [skip ci]"
+            git pull --rebase -X ours origin HEAD || true
+            git push origin HEAD
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          force_orphan: true

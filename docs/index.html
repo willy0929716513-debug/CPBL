@@ -3,177 +3,354 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CPBL 預測 2026-06-03</title>
+<title>CPBL Protector ⚾</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-a{color:inherit;text-decoration:none}
-/* header */
-header{background:#1e293b;border-bottom:2px solid #334155;padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-header h1{font-size:1.35rem;font-weight:800;color:#f8fafc;flex:1;min-width:200px}
-.hbtn{background:#0ea5e9;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s}
-.hbtn:hover{background:#0284c7}
-.hbtn.hist{background:#334155}
-.hbtn.hist:hover{background:#475569}
-/* sub bar */
-.sub{font-size:.78rem;color:#64748b;padding:8px 24px;background:#1e293b;border-bottom:1px solid #0f172a}
-/* layout */
-.layout{display:flex;max-width:1200px;margin:0 auto;padding:24px 16px;gap:24px;align-items:flex-start}
-/* main content */
-.content{flex:1;min-width:0}
-h2{font-size:.85rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;margin-bottom:24px}
-/* game card */
-.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;transition:border-color .2s}
-.card:hover{border-color:#475569}
-.card-meta{font-size:.72rem;color:#475569;margin-bottom:8px}
-.matchup{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.team{flex:1}.team.right{text-align:right}
-.tname{font-size:1rem;font-weight:700}
-.pitcher{font-size:.75rem;color:#94a3b8;margin-top:2px}
-.prob{font-size:1.25rem;font-weight:800;margin-top:4px}
-.vs-col{flex-shrink:0}
-.vs{font-size:.65rem;color:#475569;font-weight:700;background:#0f172a;padding:6px 8px;border-radius:6px}
-.bar{display:flex;height:20px;border-radius:10px;overflow:hidden;margin-bottom:10px}
-.bar div{transition:width .3s}
-.winner{font-size:.85rem;color:#cbd5e1;text-align:center;padding:7px 12px;background:#0f172a;border-radius:8px;margin-bottom:8px}
-.winner strong{color:#fbbf24}
-.odds-row{display:flex;flex-wrap:wrap;gap:5px;font-size:.72rem;color:#94a3b8;border-top:1px solid #334155;padding-top:8px}
-.odds-row span{background:#0f172a;padding:3px 8px;border-radius:6px}
-.odds-row b{color:#e2e8f0}
-.sig{background:#1e3a5f!important;color:#60a5fa!important}
-.no-pred{color:#475569;padding:16px;text-align:center}
-/* sidebar */
-.sidebar{width:240px;flex-shrink:0}
-.scard{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:16px}
-.scard h3{font-size:.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
-.date-list{list-style:none}
-.date-list li{margin-bottom:4px}
-.date-list a{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:7px;font-size:.82rem;color:#cbd5e1;background:#0f172a;transition:background .15s}
-.date-list a:hover,.date-list a.active{background:#1e40af;color:#fff}
-.date-list .cnt{font-size:.7rem;color:#64748b}
-.date-list a.active .cnt{color:#93c5fd}
-/* trigger modal */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
-.overlay.open{display:flex}
-.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:28px;width:420px;max-width:95vw}
-.modal h3{font-size:1.1rem;font-weight:700;color:#f8fafc;margin-bottom:8px}
-.modal p{font-size:.83rem;color:#94a3b8;margin-bottom:16px;line-height:1.5}
-.modal input{width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#e2e8f0;font-size:.9rem;margin-bottom:12px;outline:none}
-.modal input:focus{border-color:#0ea5e9}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end}
-.modal-btns button{padding:8px 18px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer}
-.btn-cancel{background:#334155;color:#e2e8f0}.btn-cancel:hover{background:#475569}
-.btn-ok{background:#0ea5e9;color:#fff}.btn-ok:hover{background:#0284c7}
-#trigger-status{font-size:.82rem;margin-top:10px;min-height:20px;text-align:center}
-/* empty / footer */
-.empty{color:#475569;padding:40px;text-align:center;font-size:1rem}
-footer{text-align:center;padding:24px;color:#334155;font-size:.75rem;border-top:1px solid #1e293b;margin-top:8px}
-@media(max-width:680px){.layout{flex-direction:column}.sidebar{width:100%}.grid{grid-template-columns:1fr}}
+body{background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif,system-ui,sans-serif}
+.card{background:#1e293b;border:1px solid #334155;border-radius:.75rem}
+.tier-1{border-left:3px solid #38bdf8}
+.tier-2{border-left:3px solid #f97316}
+.tier-3{border-left:3px solid #a78bfa}
+.badge-ml{background:#064e3b;color:#6ee7b7;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700}
+.badge-rl{background:#1e3a5f;color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700}
+.badge-tot{background:#3b0764;color:#c4b5fd;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700}
+.detail-section{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.detail-section.open{max-height:1200px}
+.tab-active{background:#1d4ed8!important;color:#fff!important}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+.prob-bar{display:flex;height:20px;border-radius:10px;overflow:hidden}
 </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-<header>
-  <h1>⚾ CPBL 中華職棒 賽前預測</h1>
-  <button class="hbtn hist" onclick="location.href='index.html'">最新預測</button>
-  
-  <button class="hbtn" onclick="openTrigger()">▶ 立即觸發預測</button>
-</header>
-<div class="sub">
-  預測模型：先發投手 32% ／ 打線 18% ／ 牛棚 13% ／ 賠率 10% ／ 主客場 8% ／ 近況 7% ／ H2H 5% ／ 其他 7%
-</div>
-
-<div class="layout">
-  <div class="content">
-    <h2>📅 2026-06-03 （最新） · 0 場賽事</h2>
-    <div class="grid">
-      <p class="empty">今日無賽事資料</p>
+<header class="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-700/50">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+    <div class="flex-1 min-w-0">
+      <h1 class="text-lg font-bold text-white">⚾ CPBL Protector</h1>
+      <div class="text-xs text-slate-500" id="gen-time">載入中…</div>
+    </div>
+    <div class="flex gap-2 items-center">
+      <button onclick="toggleHistory()" class="text-xs px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300">📋 歷史</button>
+      <button onclick="openRunModal()" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold">▶ 執行</button>
+      <button onclick="loadData()" class="text-xs px-2 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300" title="重新整理"><span id="ri">↻</span></button>
     </div>
   </div>
+</header>
 
-  <aside class="sidebar">
-    <div class="scard">
-      <h3>歷史紀錄</h3>
-      <ul class="date-list">
-        <li><a href="#" class="active">2026-06-03 （最新）<span class="cnt">0 場</span></a></li>
-      </ul>
+<div class="max-w-3xl mx-auto px-4 py-4 space-y-4">
+
+  <div class="card p-4" id="stats-panel" style="display:none">
+    <div class="grid grid-cols-3 gap-3 mb-3 text-center">
+      <div class="bg-slate-800/60 rounded-lg p-2">
+        <div class="text-2xl font-bold text-emerald-400" id="s-wr">—</div>
+        <div class="text-xs text-slate-500">勝率</div>
+      </div>
+      <div class="bg-slate-800/60 rounded-lg p-2">
+        <div class="text-2xl font-bold" id="s-roi">—</div>
+        <div class="text-xs text-slate-500">ROI</div>
+      </div>
+      <div class="bg-slate-800/60 rounded-lg p-2">
+        <div class="text-lg font-bold text-slate-200" id="s-rec">—</div>
+        <div class="text-xs text-slate-500">勝/總</div>
+      </div>
     </div>
-  </aside>
+    <div id="form-strip" class="flex flex-wrap gap-1 pt-2 border-t border-slate-700/40 min-h-4"></div>
+  </div>
+
+  <div class="flex gap-2 overflow-x-auto pb-1">
+    <button class="tab-btn tab-active whitespace-nowrap text-sm px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300 font-medium" data-f="ALL" onclick="setFilter('ALL')">全部</button>
+    <button class="tab-btn whitespace-nowrap text-sm px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300" data-f="ML" onclick="setFilter('ML')">🎯 ML 獨贏</button>
+    <button class="tab-btn whitespace-nowrap text-sm px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300" data-f="RL" onclick="setFilter('RL')">📐 RL 讓分</button>
+    <button class="tab-btn whitespace-nowrap text-sm px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300" data-f="TOT" onclick="setFilter('TOT')">📊 大小分</button>
+    <button class="tab-btn whitespace-nowrap text-sm px-4 py-1.5 rounded-lg bg-slate-700 text-slate-300" data-f="LIVE" onclick="setFilter('LIVE')">🔴 場中</button>
+  </div>
+
+  <div id="picks-container"><div class="card p-8 text-center text-slate-500">載入中…</div></div>
+
+  <div id="live-section" style="display:none">
+    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">🔴 場中比賽</h2>
+    <div id="live-container" class="space-y-3"></div>
+  </div>
+
 </div>
 
-<footer>自動更新 每日 10:00（台灣時間）&nbsp;·&nbsp; 僅供參考，請理性投注 &nbsp;·&nbsp; 資料來源：cpbl.com.tw / The Odds API</footer>
+<!-- History drawer -->
+<div id="hist-overlay" class="fixed inset-0 bg-black/70 z-30 hidden" onclick="toggleHistory()">
+  <div class="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-slate-900 border-l border-slate-700 overflow-y-auto p-4" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-white">歷史紀錄</h2>
+      <button onclick="toggleHistory()" class="text-slate-400 hover:text-white text-lg">✕</button>
+    </div>
+    <div id="hist-list" class="space-y-2 text-sm"></div>
+  </div>
+</div>
 
-<!-- Trigger Modal -->
-<div id="modal-overlay" class="overlay">
-  <div class="modal">
-    <h3>▶ 立即觸發預測</h3>
-    <p>需要 GitHub Personal Access Token（細粒度，只需 <b>Actions: Write</b> 權限）。<br>Token 只存在你的瀏覽器 localStorage，不會上傳。</p>
-    <input id="pat-input" type="password" placeholder="ghp_xxxxxxxxxxxx 或 github_pat_xxx">
-    <div id="trigger-status"></div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeTrigger()">取消</button>
-      <button class="btn-ok" id="btn-trigger-ok" onclick="doTrigger()">確認觸發</button>
+<!-- Run modal -->
+<div id="run-overlay" class="fixed inset-0 bg-black/70 z-30 hidden items-center justify-center">
+  <div class="card w-full max-w-md mx-4 p-6">
+    <h3 class="font-bold text-white text-lg mb-2">▶ 立即執行預測</h3>
+    <p class="text-sm text-slate-400 mb-4">需要 GitHub PAT（<b class="text-slate-200">workflow: write</b> 權限），Token 存在瀏覽器 localStorage。</p>
+    <input id="pat-inp" type="password" placeholder="ghp_xxxx…"
+      class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500 mb-3">
+    <div id="run-st" class="text-sm text-center mb-3 min-h-5"></div>
+    <div class="flex gap-2 justify-end">
+      <button onclick="closeRunModal()" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-slate-200">取消</button>
+      <button onclick="doRun()" id="run-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm text-white font-semibold">確認執行</button>
     </div>
   </div>
 </div>
 
 <script>
+const JSON_URL = "./picks_latest.json";
+const REPO     = "willy0929716513-debug/CPBL";
+const WORKFLOW = "cpbl_bot.yml";
 
-const REPO = 'OWNER/REPO';
-const WF   = 'cpbl_daily.yml';
+let allPicks=[], allHistory=[], liveGames=[], currentFilter="ALL", cardIdx=0;
+const TEAM_COLOR={AEL:"#3b82f6",CT:"#f59e0b",FG:"#ef4444",WL:"#8b5cf6",TSG:"#14b8a6"};
+const FACTOR_LABEL={starter:"先發投手",lineup:"打線",bullpen:"牛棚",odds:"賠率",
+  home_away:"主客場",recent_form:"近況",h2h:"H2H",injuries:"傷兵",weather:"天氣",defense:"守備"};
 
-function openTrigger() {
-  document.getElementById('modal-overlay').classList.add('open');
-  const saved = localStorage.getItem('gh_pat') || '';
-  document.getElementById('pat-input').value = saved;
-  document.getElementById('trigger-status').textContent = '';
-}
-function closeTrigger() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-async function doTrigger() {
-  const token = document.getElementById('pat-input').value.trim();
-  if (!token) { alert('請輸入 Personal Access Token'); return; }
-  localStorage.setItem('gh_pat', token);
-  const btn = document.getElementById('btn-trigger-ok');
-  btn.disabled = true;
-  btn.textContent = '觸發中…';
-  const el = document.getElementById('trigger-status');
+async function loadData() {
+  const ri=document.getElementById("ri");
+  ri.classList.add("spin");
   try {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO}/actions/workflows/${WF}/dispatches`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ref: 'main' }),
-      }
-    );
-    if (res.status === 204) {
-      el.style.color = '#22c55e';
-      el.textContent = '✅ 已成功觸發！預測約需 2 分鐘完成，之後重新整理頁面。';
-      setTimeout(closeTrigger, 3000);
-    } else {
-      const j = await res.json().catch(() => ({}));
-      el.style.color = '#ef4444';
-      el.textContent = '❌ 失敗：' + (j.message || res.status);
-    }
+    const res=await fetch(JSON_URL+"?t="+Date.now());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    document.getElementById("gen-time").textContent="更新於 "+data.generated_at;
+    allPicks=data.picks||[]; allHistory=data.recent_history||[]; liveGames=data.live_games||[];
+    renderStats(); renderPicks(); renderLive(); updateTabCounts();
   } catch(e) {
-    el.style.color = '#ef4444';
-    el.textContent = '❌ 網路錯誤：' + e.message;
+    document.getElementById("picks-container").innerHTML=
+      `<div class="card p-8 text-center text-rose-400">載入失敗：${e.message}<br><small class="text-slate-500 mt-1 block">請先執行預測機器人</small></div>`;
   }
-  btn.disabled = false;
-  btn.textContent = '確認觸發';
+  ri.classList.remove("spin");
 }
-document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeTrigger();
-});
 
+function renderStats() {
+  const panel=document.getElementById("stats-panel");
+  if(!allHistory.length){panel.style.display="none";return;}
+  panel.style.display="";
+  const settled=allHistory.filter(h=>h.result!==null);
+  const wins=settled.filter(h=>h.result==="W").length;
+  const stake=settled.reduce((s,h)=>s+(h.stake||0),0);
+  const pnl=settled.reduce((s,h)=>{
+    if(h.result==="W") return s+(h.stake||0)*((h.bp||1.8)-1);
+    if(h.result==="L") return s-(h.stake||0);
+    return s;
+  },0);
+  const wr=settled.length?(wins/settled.length*100).toFixed(1)+"%":"—";
+  const roi=stake?((pnl/stake)*100).toFixed(1):null;
+  document.getElementById("s-wr").textContent=wr;
+  document.getElementById("s-rec").textContent=`${wins}/${settled.length}`;
+  const re=document.getElementById("s-roi");
+  re.textContent=roi!==null?(roi>=0?"+":"")+roi+"%":"—";
+  re.className="text-2xl font-bold "+(roi===null?"text-slate-400":parseFloat(roi)>=0?"text-emerald-400":"text-rose-400");
+  document.getElementById("form-strip").innerHTML=settled.slice(-20).map(h=>{
+    const [bg,fg,lbl]=h.result==="W"?["#065f46","#6ee7b7","W"]:["#7f1d1d","#fca5a5","L"];
+    return `<span style="width:14px;height:14px;border-radius:3px;background:${bg};color:${fg};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${lbl}</span>`;
+  }).join("");
+}
+
+function setFilter(f) {
+  currentFilter=f;
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("tab-active",b.dataset.f===f));
+  if(f==="LIVE"){
+    document.getElementById("picks-container").innerHTML="";
+    document.getElementById("live-section").style.display="";
+  } else {
+    document.getElementById("live-section").style.display=(liveGames.length&&f==="ALL")?"":"none";
+    renderPicks();
+  }
+}
+
+function updateTabCounts() {
+  const cnt={ML:0,RL:0,TOT:0};
+  allPicks.forEach(p=>{if(cnt[p.btype]!==undefined)cnt[p.btype]++;});
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    const f=b.dataset.f;
+    if(f==="ALL"){b.textContent=`全部 (${allPicks.length})`;return;}
+    if(f==="LIVE"){b.textContent=`🔴 場中 (${liveGames.length})`;return;}
+    const lbl={ML:"🎯 ML 獨贏",RL:"📐 RL 讓分",TOT:"📊 大小分"}[f]||f;
+    b.textContent=`${lbl} (${cnt[f]||0})`;
+  });
+}
+
+function renderPicks() {
+  cardIdx=0;
+  const el=document.getElementById("picks-container");
+  const list=currentFilter==="ALL"?allPicks:allPicks.filter(p=>p.btype===currentFilter);
+  if(!list.length){
+    el.innerHTML=`<div class="card p-8 text-center text-slate-500">${allPicks.length?"此分類無推薦":"今日無符合門檻的推薦（邊際不足）"}</div>`;
+    return;
+  }
+  el.innerHTML=list.map(renderCard).join("");
+}
+
+function renderCard(p) {
+  const uid="d"+(cardIdx++);
+  const aw=Math.round((p.away_win_prob||0)*100), hw=100-aw;
+  const conf=Math.round((p.conf||0)*100);
+  const edgeStr=((p.edge||0)*100).toFixed(1);
+  const ac=TEAM_COLOR[p.away]||"#6b7280", hc=TEAM_COLOR[p.home]||"#6b7280";
+  const asp=p.away_sp||{}, hsp=p.home_sp||{};
+  const spLine=(asp.name||hsp.name)?`<div class="mt-2 flex justify-between text-xs text-slate-400">
+    <span>🔷 ${asp.name||"TBD"}${asp.era?` <span class="text-slate-500">ERA ${asp.era}</span>`:""}</span>
+    <span>🔶 ${hsp.name||"TBD"}${hsp.era?` <span class="text-slate-500">ERA ${hsp.era}</span>`:""}</span>
+  </div>`:"";
+  const vg=p.value_gap||0;
+  const vc=vg>3?"text-emerald-400":vg<-3?"text-rose-400":"text-slate-400";
+  const oddsLine=p.curr_home_odds?`<div class="mt-2 flex flex-wrap gap-1.5 text-xs">
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">客 ${p.curr_away_odds}</span>
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">主 ${p.curr_home_odds}</span>
+    <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">市場主隊 ${Math.round((p.market_home_prob||0)*100)}%</span>
+    <span class="bg-slate-800 ${vc} px-2 py-0.5 rounded">差距 ${vg>0?"+":""}${vg.toFixed(1)}%</span>
+  </div>`:"";
+  const sigs=(p.signals||[]).slice(0,3).map(s=>`<span class="bg-blue-950 text-blue-300 text-xs px-2 py-0.5 rounded">${s}</span>`).join(" ");
+  const tc={1:"tier-1",2:"tier-2",3:"tier-3"}[p.tier]||"tier-3";
+  const tl={1:"💎 Diamond",2:"🔥 Fire",3:"⭐ Star"}[p.tier]||"⭐ Star";
+  const bm={ML:"badge-ml",RL:"badge-rl",TOT:"badge-tot"}[p.btype]||"badge-ml";
+  const bl={ML:"ML 獨贏",RL:"RL 讓分",TOT:"大小分"}[p.btype]||p.btype;
+  const cg=conf>=75?"from-emerald-600 to-emerald-400":conf>=65?"from-amber-600 to-amber-400":"from-rose-600 to-rose-400";
+
+  return `<div class="card ${tc} p-4 mb-3">
+  <div class="flex items-start justify-between gap-2">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap mb-1">
+        <span class="text-xs font-bold text-slate-300">${tl}</span>
+        <span class="${bm}">${bl}</span>
+      </div>
+      <div class="text-base font-bold text-white">${p.away_cn} <span class="text-slate-500 font-normal text-sm">@</span> ${p.home_cn}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${p.time||""}${p.venue?" · "+p.venue:""}</div>
+    </div>
+    <div class="text-right shrink-0">
+      <div class="text-2xl font-bold text-emerald-400">$${p.stake||0}</div>
+      <div class="text-xs text-slate-500">建議注額</div>
+    </div>
+  </div>
+  <div class="mt-3 bg-slate-800/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+    <div><span class="font-bold text-white">${p.bet_label}</span><span class="ml-2 text-slate-400 text-sm">@ ${p.bp}</span></div>
+    <button onclick="copyText('${p.bet_label} @ ${p.bp}')" class="text-slate-500 hover:text-slate-300 text-xs">📋</button>
+  </div>
+  ${spLine}
+  <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+    <div class="bg-slate-800/60 rounded-lg p-2"><div class="font-bold text-emerald-400">+${edgeStr}%</div><div class="text-slate-500">邊際</div></div>
+    <div class="bg-slate-800/60 rounded-lg p-2"><div class="font-bold text-amber-400">${conf}%</div><div class="text-slate-500">信心</div></div>
+    <div class="bg-slate-800/60 rounded-lg p-2"><div class="font-bold text-blue-400">${hw}%</div><div class="text-slate-500">主隊勝率</div></div>
+  </div>
+  <div class="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+    <div class="h-full rounded-full bg-gradient-to-r ${cg}" style="width:${conf}%"></div>
+  </div>
+  <div class="mt-2 prob-bar">
+    <div style="width:${aw}%;background:${ac}" class="flex items-center pl-2 text-xs font-bold text-white/80">${aw}%</div>
+    <div style="width:${hw}%;background:${hc}" class="flex items-center justify-end pr-2 text-xs font-bold text-white/80">${hw}%</div>
+  </div>
+  ${oddsLine}
+  ${sigs?`<div class="mt-2 flex flex-wrap gap-1">${sigs}</div>`:""}
+  <button onclick="toggleDetail('${uid}',this)" class="mt-3 w-full text-xs text-slate-500 hover:text-slate-300 py-1 border-t border-slate-700/40">▼ 展開詳情</button>
+  <div id="${uid}" class="detail-section"><div class="pt-3">${renderFactors(p.factors)}</div></div>
+</div>`;
+}
+
+function renderFactors(f) {
+  if(!f) return "";
+  const entries=Object.entries(f).filter(([,v])=>typeof v==="number");
+  if(!entries.length) return "";
+  return `<div class="grid grid-cols-2 gap-1.5 text-xs">`+entries.map(([k,v])=>{
+    const pct=Math.round(v*100);
+    const bar=pct>=55?"bg-emerald-600":pct>=45?"bg-amber-600":"bg-rose-600";
+    const w=Math.min(100,Math.abs(pct-50)*4+30);
+    return `<div class="bg-slate-800 rounded p-1.5">
+      <div class="flex justify-between mb-0.5 text-slate-400"><span>${FACTOR_LABEL[k]||k}</span><span>${pct}%</span></div>
+      <div class="h-1 bg-slate-700 rounded overflow-hidden"><div class="${bar} h-full" style="width:${w}%"></div></div>
+    </div>`;
+  }).join("")+"</div>";
+}
+
+function toggleDetail(uid,btn) {
+  const el=document.getElementById(uid);
+  el.classList.toggle("open");
+  btn.textContent=el.classList.contains("open")?"▲ 收起詳情":"▼ 展開詳情";
+}
+
+function renderLive() {
+  const sec=document.getElementById("live-section"), con=document.getElementById("live-container");
+  if(!liveGames.length){if(currentFilter!=="LIVE")sec.style.display="none";return;}
+  if(currentFilter!=="LIVE")sec.style.display="";
+  con.innerHTML=liveGames.map(g=>{
+    const inn=`${g.top_inning?"▲":"▼"}${g.inning}局`;
+    const bet=g.bet?`<div class="mt-2 bg-emerald-900/40 border border-emerald-700/50 rounded px-2 py-1 text-xs text-emerald-300">💡 <b>${g.bet}</b> — ${g.reason||""}</div>`:"";
+    return `<div class="card p-3"><div class="flex justify-between items-center">
+      <div><div class="font-bold">${g.away_cn} <span class="text-slate-400 text-sm">@</span> ${g.home_cn}</div><div class="text-xs text-slate-500">${inn}</div></div>
+      <div class="text-right"><div class="text-xl font-bold">${g.away_runs}:${g.home_runs}</div><div class="text-xs text-slate-500">預計 ${g.projected_total||"—"}</div></div>
+    </div>${bet}</div>`;
+  }).join("");
+}
+
+function toggleHistory() {
+  const ov=document.getElementById("hist-overlay");
+  const showing=!ov.classList.contains("hidden");
+  ov.classList.toggle("hidden",showing);
+  if(!showing&&allHistory.length){
+    document.getElementById("hist-list").innerHTML=[...allHistory].reverse().map(h=>{
+      const [rc,lbl]=h.result==="W"?["text-emerald-400","✅ 勝"]:h.result==="L"?["text-rose-400","❌ 負"]:["text-slate-400","⏳ 待結算"];
+      return `<div class="card p-3 text-xs">
+        <div class="flex justify-between"><span class="text-slate-400">${h.date}</span><span class="font-bold ${rc}">${lbl}</span></div>
+        <div class="font-medium mt-0.5">${h.bet_label||h.bet_type||""}</div>
+        <div class="text-slate-500">${h.away||""} @ ${h.home||""} &nbsp;賠率 ${h.bp||"?"} &nbsp;注 $${h.stake||"?"}</div>
+      </div>`;
+    }).join("");
+  }
+}
+
+function openRunModal(){
+  const ov=document.getElementById("run-overlay");
+  ov.classList.remove("hidden"); ov.classList.add("flex");
+  document.getElementById("pat-inp").value=localStorage.getItem("cpbl_pat")||"";
+  document.getElementById("run-st").textContent="";
+}
+function closeRunModal(){
+  const ov=document.getElementById("run-overlay");
+  ov.classList.add("hidden"); ov.classList.remove("flex");
+}
+async function doRun(){
+  const token=document.getElementById("pat-inp").value.trim();
+  if(!token){alert("請輸入 PAT");return;}
+  localStorage.setItem("cpbl_pat",token);
+  const btn=document.getElementById("run-btn"),st=document.getElementById("run-st");
+  btn.disabled=true;btn.textContent="執行中…";st.textContent="";
+  try{
+    const res=await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      {method:"POST",headers:{"Authorization":`Bearer ${token}`,"Accept":"application/vnd.github+json",
+       "X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"},body:JSON.stringify({ref:"main"})});
+    if(res.status===204){
+      st.className="text-sm text-center mb-3 text-emerald-400";
+      st.textContent="✅ 已成功觸發！約需 2 分鐘完成後請重新整理。";
+      setTimeout(closeRunModal,3500);
+    }else{
+      const j=await res.json().catch(()=>({}));
+      st.className="text-sm text-center mb-3 text-rose-400";
+      st.textContent="❌ "+(j.message||"失敗 "+res.status);
+    }
+  }catch(e){
+    st.className="text-sm text-center mb-3 text-rose-400";
+    st.textContent="❌ "+e.message;
+  }
+  btn.disabled=false;btn.textContent="確認執行";
+}
+document.getElementById("run-overlay").addEventListener("click",function(e){if(e.target===this)closeRunModal();});
+
+function copyText(t){
+  navigator.clipboard?.writeText(t).then(()=>{
+    const el=document.createElement("div");
+    el.className="fixed top-4 right-4 z-50 bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg shadow-lg";
+    el.textContent="已複製！";document.body.appendChild(el);setTimeout(()=>el.remove(),2000);
+  });
+}
+
+loadData();
+setInterval(loadData,300000);
 </script>
 </body>
 </html>
