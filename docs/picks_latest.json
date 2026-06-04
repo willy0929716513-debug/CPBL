@@ -1,96 +1,11 @@
 {
-  "generated_at": "2026-06-04 12:43 (台灣時間)",
+  "generated_at": "2026-06-04 12:45 (台灣時間)",
   "game_date": "2026-06-04",
-  "picks": [
-    {
-      "away": "FG",
-      "home": "WL",
-      "away_cn": "富邦悍將",
-      "home_cn": "樂天桃猿",
-      "game_date": "2026-06-04",
-      "game_time": "18:35",
-      "time": "18:35",
-      "venue": "桃園棒球場",
-      "home_win_prob": 0.789,
-      "away_win_prob": 0.211,
-      "away_sp": {
-        "team": "FG",
-        "foreign": false,
-        "era": 3.34,
-        "whip": 1.24,
-        "fip": 3.45,
-        "xfip": 3.5,
-        "k9": 8.1,
-        "bb9": 2.9,
-        "h9": 8.2,
-        "hr9": 0.8,
-        "babip": 0.298,
-        "lob_pct": 73.8,
-        "k_bb_pct": 14.5,
-        "recent_3_era": 2.1,
-        "recent_5_era": 2.65,
-        "recent_10_era": 3.1,
-        "gs": 14,
-        "innings": 86.0,
-        "wpa": 1.5,
-        "re24": 10.2,
-        "name": "鄭錫謙"
-      },
-      "home_sp": {
-        "team": "WL",
-        "foreign": false,
-        "era": 2.67,
-        "whip": 1.09,
-        "fip": 2.78,
-        "xfip": 2.88,
-        "k9": 9.2,
-        "bb9": 2.3,
-        "h9": 7.0,
-        "hr9": 0.5,
-        "babip": 0.278,
-        "lob_pct": 79.1,
-        "k_bb_pct": 20.1,
-        "recent_3_era": 1.5,
-        "recent_5_era": 1.8,
-        "recent_10_era": 2.4,
-        "gs": 15,
-        "innings": 94.2,
-        "wpa": 4.1,
-        "re24": 28.5,
-        "name": "林晨樺"
-      },
-      "market_home_prob": 60.8,
-      "value_gap": 21.3,
-      "curr_home_odds": 1.58,
-      "curr_away_odds": 2.45,
-      "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 21% (Value)",
-        "📉 主隊賠率縮短 1.65→1.58 (莊家看好主隊)"
-      ],
-      "factors": {},
-      "btype": "ML",
-      "bet_label": "樂天桃猿 獨贏",
-      "bp": 1.58,
-      "stake": 106.0,
-      "edge": 0.1558,
-      "conf": 0.577,
-      "tier": 3
-    }
-  ],
+  "picks": [],
   "live_games": [],
   "live_updated_at": "",
   "live_updated_ts": 0,
   "recent_history": [],
-  "game_preds": {
-    "WL|FG": {
-      "home_win_prob": 0.789,
-      "market_total": 8.5
-    },
-    "AEL|TSG": {
-      "home_win_prob": 0.672,
-      "market_total": 7.5
-    }
-  },
-  "demo_mode": true
+  "game_preds": {},
+  "demo_mode": false
 }
