@@ -66,7 +66,7 @@ PITCHERS = {
         "recent_3_era": 2.80, "recent_5_era": 3.10, "recent_10_era": 3.55,
         "gs": 14, "innings": 83.2, "wpa": 0.9, "re24": 5.2,
     },
-    "Ryan Tuck": {
+    "塔克": {
         "team": "CT", "foreign": True,
         "era": 2.89, "whip": 1.12, "fip": 3.01, "xfip": 3.12,
         "k9": 8.9, "bb9": 2.5, "h9": 7.5, "hr9": 0.7,
@@ -91,7 +91,7 @@ PITCHERS = {
         "recent_3_era": 2.10, "recent_5_era": 2.65, "recent_10_era": 3.10,
         "gs": 14, "innings": 86.0, "wpa": 1.5, "re24": 10.2,
     },
-    "Manny Banuelos": {
+    "班努洛斯": {
         "team": "FG", "foreign": True,
         "era": 3.01, "whip": 1.15, "fip": 3.12, "xfip": 3.20,
         "k9": 8.6, "bb9": 2.6, "h9": 7.8, "hr9": 0.7,
@@ -116,7 +116,7 @@ PITCHERS = {
         "recent_3_era": 1.50, "recent_5_era": 1.80, "recent_10_era": 2.40,
         "gs": 15, "innings": 94.2, "wpa": 4.1, "re24": 28.5,
     },
-    "Zach Lee": {
+    "李澤奇": {
         "team": "WL", "foreign": True,
         "era": 3.45, "whip": 1.28, "fip": 3.58, "xfip": 3.65,
         "k9": 7.9, "bb9": 3.0, "h9": 8.8, "hr9": 0.9,
@@ -141,7 +141,7 @@ PITCHERS = {
         "recent_3_era": 4.80, "recent_5_era": 4.50, "recent_10_era": 4.10,
         "gs": 13, "innings": 78.1, "wpa": 0.2, "re24": 1.5,
     },
-    "Scott McGough": {
+    "麥高夫": {
         "team": "TSG", "foreign": True,
         "era": 2.56, "whip": 1.06, "fip": 2.68, "xfip": 2.82,
         "k9": 9.5, "bb9": 2.0, "h9": 7.1, "hr9": 0.6,
@@ -178,12 +178,12 @@ PITCHERS = {
 
 # 各隊預設先發（無明確排班時使用 ace 數據供參考）
 TEAM_DEFAULT_SP = {
-    "AEL": "羅力",           # ERA 2.45
-    "CT":  "Ryan Tuck",      # ERA 2.89
-    "FG":  "Manny Banuelos", # ERA 3.01
-    "WL":  "林晨樺",          # ERA 2.67
-    "TSG": "Scott McGough",  # ERA 2.56
-    "WC":  "約翰甘特",        # ERA 1.49
+    "AEL": "羅力",    # ERA 2.45
+    "CT":  "塔克",    # ERA 2.89
+    "FG":  "班努洛斯", # ERA 3.01
+    "WL":  "林晨樺",  # ERA 2.67
+    "TSG": "麥高夫",  # ERA 2.56
+    "WC":  "約翰甘特", # ERA 1.49
 }
 
 # ──────────────────────────────────────────────
