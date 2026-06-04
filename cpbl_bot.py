@@ -141,7 +141,7 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
 
     rec_count = len(picks)
     lines = [
-        "⚾ **CPBL V7 分析報告**",
+        "⚾ **CPBL V8 分析報告**",
         f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅MC ✅Ensemble ✅CLV ✅Matchup ✅RLv8",
         f"📊 歷史: {hist_str}{mem_line}",
         "",
