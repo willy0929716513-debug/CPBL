@@ -41,11 +41,14 @@ class PredictionModel:
         self.elo = elo or ELOSystem()
 
     def predict(self, game: dict, weather: dict | None = None,
-                odds_data: dict | None = None) -> dict:
+                odds_data: dict | None = None,
+                pitchers: dict | None = None) -> dict:
         ht = game["home"]
         at = game["away"]
         if not ht or not at:
             return {}
+
+        pitcher_db = pitchers if pitchers is not None else PITCHERS
 
         # Pitcher name lookup — accept string or dict
         hp_name = game.get("home_pitcher") or ""
@@ -54,8 +57,8 @@ class PredictionModel:
             hp_name = game["home_sp"]
         if not ap_name and isinstance(game.get("away_sp"), str):
             ap_name = game["away_sp"]
-        hp = PITCHERS.get(hp_name, {})
-        ap = PITCHERS.get(ap_name, {})
+        hp = pitcher_db.get(hp_name, {})
+        ap = pitcher_db.get(ap_name, {})
 
         factors: dict[str, dict] = {}
 
