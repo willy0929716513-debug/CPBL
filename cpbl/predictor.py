@@ -1,5 +1,5 @@
 """
-CPBL V2.0 勝負預測模型 — 9大因子 100+變量
+NPB / KBO V2.0 勝負預測模型 — 9大因子 100+變量
 
 權重分配：
   先發投手   35%  ERA/FIP/xFIP/WHIP/BABIP/LOB%/K-BB%/WPA/RE24/近況/洋將
@@ -28,12 +28,12 @@ WEIGHTS = {
     "defense":     0.02,
 }
 
-LEAGUE_AVG_ERA  = 3.80
-LEAGUE_AVG_OPS  = 0.760
-LEAGUE_AVG_WOBA = 0.330
+LEAGUE_AVG_ERA  = 3.90   # NPB≈3.50, KBO≈4.50, blended ≈ 3.90
+LEAGUE_AVG_OPS  = 0.730  # NPB≈0.710, KBO≈0.755, blended ≈ 0.730
+LEAGUE_AVG_WOBA = 0.325  # 日韓聯盟平均
 LEAGUE_AVG_WRC  = 100
-LEAGUE_AVG_RPG  = 4.8
-FOREIGN_PREMIUM = 4.0   # 洋將平均表現高於本土投手
+LEAGUE_AVG_RPG  = 4.5    # NPB≈4.1, KBO≈5.0, blended ≈ 4.5
+FOREIGN_PREMIUM = 4.0    # 洋將平均表現高於本土投手
 
 
 class PredictionModel:

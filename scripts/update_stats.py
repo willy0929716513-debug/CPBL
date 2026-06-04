@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-CPBL 數據本地更新腳本 — 在你的電腦執行，把數據推上 GitHub
+NPB / KBO 數據本地更新腳本 — 在你的電腦執行，把數據推上 GitHub
 
 使用方式：
   python scripts/update_stats.py          # 更新投手+賽程
   python scripts/update_stats.py --dry    # 只爬不寫入
   python scripts/update_stats.py --push   # 爬完自動 git commit + push
+  python scripts/update_stats.py --odds-only --push  # 只更新賠率
 
-執行環境：你的個人電腦（不是 GitHub Actions）
-原因：所有 CPBL 數據網站封鎖雲端機房 IP（包含 GH Actions、Codespace）
+資料來源：
+  - 投手統計：ESPN API (jlb/kor)，不受 WAF 封鎖
+  - 賽程：ESPN API
+  - 賠率：The Odds API (baseball_kbo) / oddsportal
 """
 import sys, os, json, time, logging, argparse, datetime, copy
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -33,51 +36,32 @@ _HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/125.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8",
+    "Accept": "application/json, text/html, */*",
+    "Accept-Language": "ja,ko,en-US;q=0.8",
     "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
-    "Referer": "https://www.cpbl.com.tw/",
 }
 
-BASE = "https://www.cpbl.com.tw"
+BASE_ESPN_NPB = "https://site.api.espn.com/apis/site/v2/sports/baseball/jlb"
+BASE_ESPN_KBO = "https://site.api.espn.com/apis/site/v2/sports/baseball/kor"
 
 # ─────────────────────────────────────────────────────────────
-# 1. CPBL 官方投手成績
+# 1. ESPN 投手成績 (NPB + KBO)
 # ─────────────────────────────────────────────────────────────
 
-def scrape_cpbl_pitchers(year: int, session: requests.Session) -> dict:
+def scrape_espn_pitchers(year: int, session: requests.Session) -> dict:
     """
-    從 CPBL 官網抓先發投手成績。
-    支援多種 URL 格式，自動嘗試。
+    從 ESPN API 抓 NPB + KBO 先發投手成績。
+    不受 WAF 封鎖，可在任何環境執行。
     """
-    urls = [
-        f"{BASE}/stats/player?kind=P&year={year}&kindType=SP",
-        f"{BASE}/stats/player?kind=P&year={year}&kindType=1",
-        f"{BASE}/stats/player?kind=P&year={year}",
-        f"{BASE}/stats/toplist?type=0&kind=P&year={year}",
-        f"{BASE}/stats/record?type=0&kindType=SP&year={year}",
-    ]
-
-    for url in urls:
-        try:
-            log.info("嘗試 CPBL stats: %s", url)
-            r = session.get(url, timeout=15)
-            if r.status_code == 403:
-                log.warning("403 被擋 — 請確認在個人電腦執行，不是雲端機器")
-                break
-            if r.status_code == 404:
-                continue
-            r.raise_for_status()
-            stats = _parse_cpbl_stats(r.text)
-            if stats:
-                log.info("CPBL 官網: 抓到 %d 名投手", len(stats))
-                return stats
-        except requests.exceptions.RequestException as e:
-            log.warning("URL %s 失敗: %s", url, e)
-            continue
-
-    return {}
+    from cpbl.stats_scraper import fetch_all_pitcher_stats
+    try:
+        stats = fetch_all_pitcher_stats(year)
+        log.info("ESPN: 抓到 %d 名投手", len(stats))
+        return stats
+    except Exception as e:
+        log.warning("ESPN 投手統計失敗: %s", e)
+        return {}
 
 
 def _parse_cpbl_stats(html: str) -> dict:
@@ -253,18 +237,11 @@ def scrape_mycpbl(year: int, session: requests.Session) -> dict:
 # ─────────────────────────────────────────────────────────────
 
 def scrape_schedule(year: int, months: list[int], session: requests.Session) -> list:
-    """抓多個月份的賽程，用 Playwright 繞過 JS 渲染。"""
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        log.warning("Playwright 未安裝，跳過賽程爬取。可用: pip install playwright && playwright install chromium")
-        return []
-
-    from cpbl.scraper import CPBLScraper, TEAM_CODE_MAP
+    """從 ESPN API 抓 NPB + KBO 多個月份的賽程。"""
+    from cpbl.stats_scraper import fetch_espn_schedule
     import datetime
 
     all_games = []
-    scraper   = CPBLScraper()
 
     for month in months:
         for day in range(1, 32):
@@ -272,9 +249,11 @@ def scrape_schedule(year: int, months: list[int], session: requests.Session) -> 
                 d = datetime.date(year, month, day)
             except ValueError:
                 break
-            games = scraper.fetch_schedule(d)
+            if d > datetime.date.today():
+                break
+            games = fetch_espn_schedule(d)
             all_games.extend(games)
-            time.sleep(0.5)   # 避免爬太快
+            time.sleep(0.3)
 
     log.info("賽程: 共 %d 場（%d 個月份）", len(all_games), len(months))
     return all_games
@@ -284,32 +263,39 @@ def scrape_schedule(year: int, months: list[int], session: requests.Session) -> 
 # 5. 賠率爬取（台灣運彩 / oddsportal）
 # ─────────────────────────────────────────────────────────────
 
-# 台灣運彩隊名 → 代碼
-_SL_TEAM_MAP = {
-    "中信兄弟": "AEL", "兄弟":   "AEL",
-    "統一7-ELEVEn獅": "CT",  "統一獅":  "CT",  "統一":    "CT",
-    "富邦悍將":  "FG",  "悍將":   "FG",  "富邦":    "FG",
-    "樂天桃猿":  "WL",  "桃猿":   "WL",  "樂天":    "WL",
-    "台鋼雄鷹":  "TSG", "雄鷹":   "TSG", "台鋼":    "TSG",
-    "味全龍":    "WC",  "龍":     "WC",  "味全":    "WC",
+# KBO 隊名對照（The Odds API / oddsportal 使用）
+_KBO_TEAM_MAP = {
+    "samsung lions":  "SSL", "samsung":  "SSL",
+    "lg twins":       "LGT", "lg":       "LGT",
+    "doosan bears":   "DSB", "doosan":   "DSB",
+    "kt wiz":         "KTW", "kt":       "KTW",
+    "ssg landers":    "SSG", "ssg":      "SSG",
+    "nc dinos":       "NCD", "nc":       "NCD",
+    "kia tigers":     "KIA", "kia":      "KIA",
+    "lotte giants":   "LTG", "lotte":    "LTG",
+    "hanwha eagles":  "HWE", "hanwha":   "HWE",
+    "kiwoom heroes":  "KWH", "kiwoom":   "KWH",
 }
 
-# oddsportal 英文隊名 → 代碼
-_OP_TEAM_MAP = {
-    "rakuten monkeys":              "WL",
-    "ctbc brothers":                "AEL",
-    "fubon guardians":              "FG",
-    "uni-president 7-eleven lions": "CT",
-    "uni president 7-eleven lions": "CT",
-    "tsg hawks":                    "TSG",
-    "taiwan steel hawks":           "TSG",
-    "wei-chuan dragons":            "WC",
-    "wei chuan dragons":            "WC",
+# NPB 隊名對照（oddsportal / The Odds API）
+_NPB_TEAM_MAP = {
+    "yomiuri giants":       "GNT", "giants":      "GNT",
+    "hanshin tigers":       "HNS", "hanshin":     "HNS",
+    "hiroshima carp":       "HRC", "hiroshima":   "HRC",
+    "yokohama dena baystars":"YDB", "baystars":    "YDB",
+    "yakult swallows":      "YKL", "yakult":      "YKL",
+    "chunichi dragons":     "CND", "chunichi":    "CND",
+    "softbank hawks":       "SBH", "softbank":    "SBH",
+    "orix buffaloes":       "ORX", "orix":        "ORX",
+    "rakuten eagles":       "RKT", "rakuten":     "RKT",
+    "lotte marines":        "LTT", "marines":     "LTT",
+    "seibu lions":          "SEI", "seibu":       "SEI",
+    "nippon-ham fighters":  "HAM", "fighters":    "HAM",
 }
 
-_SL_API_URL  = "https://api2.sportslottery.com.tw/sport/events?sport=baseball&league=cpbl"
-_SL_HTML_URL = "https://www.sportslottery.com.tw/sport/baseball/cpbl"
-_OP_URL      = "https://www.oddsportal.com/baseball/taiwan/cpbl/"
+_OP_URL_KBO = "https://www.oddsportal.com/baseball/south-korea/kbo-league/"
+_OP_URL_NPB = "https://www.oddsportal.com/baseball/japan/npb/"
+_THE_ODDS_KBO_KEY = "baseball_kbo"
 
 _ODDS_HEADERS = {
     "User-Agent": (
@@ -325,21 +311,18 @@ _ODDS_HEADERS = {
 }
 
 
-def _sl_code(name: str) -> str:
-    """模糊比對隊名 → 代碼"""
-    name = name.strip()
-    for k, v in _SL_TEAM_MAP.items():
-        if k in name or name in k:
-            return v
+def _any_code(name: str) -> str:
+    """模糊比對隊名 → 代碼（合併 NPB + KBO 查詢表）"""
+    n = name.lower().strip()
+    for mapping in (_KBO_TEAM_MAP, _NPB_TEAM_MAP):
+        for k, v in mapping.items():
+            if k in n or n in k:
+                return v
     return ""
 
-
-def _op_code(name: str) -> str:
-    name = name.lower().strip()
-    for k, v in _OP_TEAM_MAP.items():
-        if k in name or name in k:
-            return v
-    return ""
+# Keep old aliases for compatibility
+_sl_code = _any_code
+_op_code = _any_code
 
 
 def _make_odds_entry(away_odds: float, home_odds: float,
@@ -373,185 +356,129 @@ def _make_odds_entry(away_odds: float, home_odds: float,
 
 
 def _scrape_sl_api(session: requests.Session) -> dict:
-    """台灣運彩 JSON API"""
+    """The Odds API — KBO"""
+    import os
+    api_key = os.environ.get("ODDS_API_KEY", "")
+    if not api_key:
+        log.warning("ODDS_API_KEY 未設定，跳過 The Odds API")
+        return {}
+    url = f"https://api.the-odds-api.com/v4/sports/{_THE_ODDS_KBO_KEY}/odds/?apiKey={api_key}&regions=eu,us&markets=h2h&oddsFormat=decimal"
     try:
-        r = session.get(_SL_API_URL, timeout=12, headers=_ODDS_HEADERS)
+        r = session.get(url, timeout=12, headers=_ODDS_HEADERS)
         if r.status_code == 403:
             log.warning("台灣運彩 API 403 — 嘗試 HTML")
             return {}
         r.raise_for_status()
         data = r.json()
         result = {}
-        for event in data.get("events", data.get("data", [])):
-            teams = event.get("teams", event.get("competitors", []))
-            if len(teams) < 2:
-                continue
-            # 嘗試識別主客隊
-            away_name = teams[0].get("name", "")
-            home_name = teams[1].get("name", "")
-            away_code = _sl_code(away_name)
-            home_code = _sl_code(home_name)
-            if not away_code or not home_code:
+        data = r.json()
+        result = {}
+        for event in data if isinstance(data, list) else []:
+            home_en = event.get("home_team", "").lower()
+            away_en = event.get("away_team", "").lower()
+            home_code = _any_code(home_en)
+            away_code = _any_code(away_en)
+            if not home_code or not away_code:
                 continue
             game_key = f"{away_code}-{home_code}"
-
-            # 解析各種賠率類型
-            ah = hh = None      # away/home h2h
-            run_line = -1.5
-            rl_h = rl_a = 1.90
-            total = 8.5
-            over_o = under_o = 1.90
-            open_a = open_h = None
-            pub_home = 50
-
-            for o in event.get("odds", event.get("markets", [])):
-                kind = o.get("kind", o.get("marketType", "")).lower()
-                if kind in ("win", "moneyline", "h2h", "1x2"):
-                    ah = float(o.get("awayOdds", o.get("oddAway", o.get("away", ah or 1.90))))
-                    hh = float(o.get("homeOdds", o.get("oddHome", o.get("home", hh or 1.90))))
-                    open_a = float(o.get("openAwayOdds", o.get("openAway", ah)))
-                    open_h = float(o.get("openHomeOdds", o.get("openHome", hh)))
-                elif kind in ("runline", "run_line", "spread", "handicap"):
-                    run_line = float(o.get("line", o.get("spread", -1.5)))
-                    rl_h = float(o.get("homeOdds", o.get("home", 1.90)))
-                    rl_a = float(o.get("awayOdds", o.get("away", 1.90)))
-                elif kind in ("total", "totals", "ou"):
-                    total = float(o.get("line", o.get("total", 8.5)))
-                    over_o  = float(o.get("overOdds",  o.get("over",  1.90)))
-                    under_o = float(o.get("underOdds", o.get("under", 1.90)))
-                elif kind in ("public", "public_bet_pct"):
-                    pub_home = int(o.get("homePct", o.get("home_pct", 50)))
-
+            # Parse h2h odds from bookmakers
+            ah = hh = None
+            for bm in event.get("bookmakers", []):
+                for mkt in bm.get("markets", []):
+                    if mkt.get("key") == "h2h":
+                        for out in mkt.get("outcomes", []):
+                            n = out.get("name", "").lower()
+                            if home_en in n:
+                                hh = float(out.get("price", hh or 1.90))
+                            elif away_en in n:
+                                ah = float(out.get("price", ah or 1.90))
+                if ah and hh:
+                    break
             if ah and hh:
                 result[game_key] = _make_odds_entry(
-                    ah, hh, open_a, open_h,
-                    run_line, rl_h, rl_a,
-                    total, over_o, under_o,
-                    pub_home, source="台灣運彩",
-                    note="台灣運彩 API",
+                    ah, hh, source="The Odds API (KBO)",
+                    note="The Odds API baseball_kbo",
                 )
         if result:
-            log.info("台灣運彩 API: %d 場賠率", len(result))
+            log.info("The Odds API KBO: %d 場賠率", len(result))
         return result
     except Exception as e:
-        log.debug("台灣運彩 API 失敗: %s", e)
+        log.debug("The Odds API 失敗: %s", e)
         return {}
 
 
 def _scrape_sl_html(session: requests.Session) -> dict:
-    """台灣運彩 HTML 解析"""
-    try:
-        r = session.get(_SL_HTML_URL, timeout=15, headers=_ODDS_HEADERS)
-        if r.status_code == 403:
-            log.warning("台灣運彩 HTML 403")
-            return {}
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
-        result = {}
-
-        # 嘗試多種 CSS 選擇器（台灣運彩改版頻繁）
-        game_selectors = [
-            ".game-item", ".match-item", ".event-item",
-            "[data-event-id]", ".game-row",
-        ]
-        for sel in game_selectors:
-            items = soup.select(sel)
-            if not items:
+    """oddsportal KBO / NPB HTML 解析 (備援)"""
+    result = {}
+    for league_url in [_OP_URL_KBO, _OP_URL_NPB]:
+        try:
+            r = session.get(league_url, timeout=15, headers=_ODDS_HEADERS)
+            if r.status_code == 403:
+                log.warning("oddsportal 403 — 跳過")
                 continue
-            for item in items:
-                text = item.get_text(" ", strip=True)
-                teams_found = []
-                for k in _SL_TEAM_MAP:
-                    if k in text:
-                        teams_found.append(_SL_TEAM_MAP[k])
-                if len(teams_found) < 2:
+            r.raise_for_status()
+            soup = BeautifulSoup(r.text, "html.parser")
+            for row in soup.select(".eventRow, [class*='eventRow']"):
+                teams = row.select(".participant-name, .team-name")
+                if len(teams) < 2:
                     continue
-                # 取賠率數字
-                vals = []
-                for el in item.select(".odds, .odd-value, td.odds, [class*='odd'], [class*='price']"):
+                ac = _any_code(teams[0].get_text(strip=True))
+                hc = _any_code(teams[1].get_text(strip=True))
+                if not ac or not hc:
+                    continue
+                nums = []
+                for el in row.select(".odds-nowrp, .oddsValueInner, [class*='odds']"):
                     try:
-                        vals.append(float(el.get_text(strip=True)))
+                        nums.append(float(el.get_text(strip=True)))
                     except ValueError:
                         pass
-                if len(vals) >= 2:
-                    away_c, home_c = teams_found[0], teams_found[1]
-                    game_key = f"{away_c}-{home_c}"
-                    result[game_key] = _make_odds_entry(
-                        vals[0], vals[1],
-                        source="台灣運彩",
-                        note="台灣運彩 HTML",
+                if len(nums) >= 2:
+                    result[f"{ac}-{hc}"] = _make_odds_entry(
+                        nums[0], nums[1], source="oddsportal", note="oddsportal HTML",
                     )
-            if result:
-                log.info("台灣運彩 HTML: %d 場賠率", len(result))
-                return result
-        return result
-    except Exception as e:
-        log.debug("台灣運彩 HTML 失敗: %s", e)
-        return {}
+        except Exception as e:
+            log.debug("oddsportal %s 失敗: %s", league_url, e)
+    if result:
+        log.info("oddsportal: %d 場賠率", len(result))
+    return result
 
 
 def _scrape_sl_playwright(game_date_str: str) -> dict:
-    """Playwright 動態渲染台灣運彩（JS 重度渲染時用）"""
+    """Playwright 動態渲染 oddsportal（JS 重度渲染時用）"""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         return {}
+    result = {}
     try:
-        result = {}
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
-            page    = browser.new_page(extra_http_headers={
-                "Accept-Language": "zh-TW,zh;q=0.9",
-            })
-            page.goto(_SL_HTML_URL, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(2000)
-            html = page.content()
+            for league_url in [_OP_URL_KBO, _OP_URL_NPB]:
+                page = browser.new_page()
+                page.goto(league_url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(2000)
+                html = page.content()
+                page.close()
+                soup = BeautifulSoup(html, "html.parser")
+                partial = _scrape_sl_html_from_rendered(soup)
+                result.update(partial)
             browser.close()
-        soup = BeautifulSoup(html, "html.parser")
-
-        # 從頁面提取 JSON 資料（常見 Next.js / Vue 應用注入 window.__data__ 等）
-        for script in soup.find_all("script"):
-            text = script.string or ""
-            if "homeOdds" in text or "awayOdds" in text:
-                import re as _re
-                # 嘗試抓 JSON blob
-                matches = _re.findall(r'\{[^{}]*"homeOdds"\s*:[^{}]+\}', text)
-                for m in matches:
-                    try:
-                        obj = json.loads(m)
-                        ah  = float(obj.get("awayOdds", 0))
-                        hh  = float(obj.get("homeOdds", 0))
-                        if ah > 1 and hh > 1:
-                            away_n = obj.get("awayTeam", obj.get("away", ""))
-                            home_n = obj.get("homeTeam", obj.get("home", ""))
-                            ac = _sl_code(away_n)
-                            hc = _sl_code(home_n)
-                            if ac and hc:
-                                result[f"{ac}-{hc}"] = _make_odds_entry(
-                                    ah, hh, source="台灣運彩",
-                                    note="台灣運彩 Playwright",
-                                )
-                    except Exception:
-                        pass
-
-        # 也嘗試 HTML 解析
-        if not result:
-            result = _scrape_sl_html_from_rendered(soup)
-
         if result:
-            log.info("台灣運彩 Playwright: %d 場賠率", len(result))
-        return result
+            log.info("oddsportal Playwright: %d 場賠率", len(result))
     except Exception as e:
-        log.debug("台灣運彩 Playwright 失敗: %s", e)
-        return {}
+        log.debug("oddsportal Playwright 失敗: %s", e)
+    return result
 
 
 def _scrape_sl_html_from_rendered(soup: BeautifulSoup) -> dict:
     result = {}
     for row in soup.find_all(["tr", "div"], class_=lambda c: c and any(
-            x in c for x in ("game", "match", "event", "odd"))):
+            x in c for x in ("game", "match", "event", "odd", "eventRow"))):
         text = row.get_text(" ", strip=True)
-        found = [_SL_TEAM_MAP[k] for k in _SL_TEAM_MAP if k in text]
+        found = []
+        for k in {**_KBO_TEAM_MAP, **_NPB_TEAM_MAP}:
+            if k in text.lower():
+                found.append({**_KBO_TEAM_MAP, **_NPB_TEAM_MAP}[k])
         if len(found) < 2:
             continue
         nums = []
@@ -564,110 +491,43 @@ def _scrape_sl_html_from_rendered(soup: BeautifulSoup) -> dict:
                 pass
         if len(nums) >= 2:
             result[f"{found[0]}-{found[1]}"] = _make_odds_entry(
-                nums[0], nums[1], source="台灣運彩", note="HTML 解析",
+                nums[0], nums[1], source="oddsportal", note="HTML 解析",
             )
     return result
 
 
 def _scrape_oddsportal(session: requests.Session) -> dict:
-    """oddsportal CPBL 賠率（備援）"""
-    try:
-        r = session.get(_OP_URL, timeout=15, headers={
-            **_ODDS_HEADERS,
-            "Referer": "https://www.oddsportal.com/",
-        })
-        if r.status_code == 403:
-            log.warning("oddsportal 403")
-            return {}
-        r.raise_for_status()
-        soup   = BeautifulSoup(r.text, "html.parser")
-        result = {}
-
-        # oddsportal 通常用 JSON 嵌入頁面
-        for script in soup.find_all("script"):
-            text = script.string or ""
-            if '"odds"' in text and '"home-odds"' in text.replace("-", "_").replace('"', '"'):
-                try:
-                    import re as _re
-                    m = _re.search(r'var\s+page_vars\s*=\s*(\{.*?\});', text, _re.DOTALL)
-                    if m:
-                        data = json.loads(m.group(1))
-                        for ev in data.get("events", {}).values():
-                            home_n = ev.get("home_name", "")
-                            away_n = ev.get("away_name", "")
-                            hc = _op_code(home_n)
-                            ac = _op_code(away_n)
-                            if hc and ac:
-                                odds_raw = ev.get("odds", {})
-                                ah = float(odds_raw.get("away", 1.90))
-                                hh = float(odds_raw.get("home", 1.90))
-                                result[f"{ac}-{hc}"] = _make_odds_entry(
-                                    ah, hh, source="oddsportal",
-                                    note="oddsportal.com",
-                                )
-                except Exception:
-                    pass
-
-        # 也嘗試 HTML 表格
-        if not result:
-            for row in soup.select(".eventRow, [class*='eventRow']"):
-                teams = row.select(".participant-name, .team-name")
-                if len(teams) < 2:
-                    continue
-                ac = _op_code(teams[0].get_text(strip=True))
-                hc = _op_code(teams[1].get_text(strip=True))
-                if not ac or not hc:
-                    continue
-                odds_els = row.select(".odds-nowrp, .oddsValueInner, [class*='odds']")
-                nums = []
-                for el in odds_els:
-                    try:
-                        nums.append(float(el.get_text(strip=True)))
-                    except ValueError:
-                        pass
-                if len(nums) >= 2:
-                    result[f"{ac}-{hc}"] = _make_odds_entry(
-                        nums[0], nums[1], source="oddsportal",
-                        note="oddsportal HTML",
-                    )
-        if result:
-            log.info("oddsportal: %d 場賠率", len(result))
-        return result
-    except Exception as e:
-        log.debug("oddsportal 失敗: %s", e)
-        return {}
+    """oddsportal NPB/KBO 賠率（備援，已在 _scrape_sl_html 處理）"""
+    return _scrape_sl_html(session)
 
 
 def scrape_odds(game_date_str: str, session: requests.Session,
                 use_playwright: bool = True) -> dict:
     """
-    抓今日 CPBL 賠率，嘗試順序：
-      1. 台灣運彩 API
-      2. 台灣運彩 HTML
-      3. 台灣運彩 Playwright（JS 渲染）
-      4. oddsportal
+    抓今日 NPB/KBO 賠率，嘗試順序：
+      1. The Odds API (baseball_kbo)
+      2. oddsportal (KBO/NPB) HTML
+      3. oddsportal Playwright（JS 渲染）
 
     回傳 {game_key: odds_dict}
     """
-    print("  嘗試台灣運彩 API...")
+    print("  嘗試 The Odds API (KBO)...")
     result = _scrape_sl_api(session)
     if result:
         return result
 
-    print("  嘗試台灣運彩 HTML...")
+    print("  嘗試 oddsportal HTML...")
     result = _scrape_sl_html(session)
     if result:
         return result
 
     if use_playwright:
-        print("  嘗試台灣運彩 Playwright（JS 渲染）...")
+        print("  嘗試 oddsportal Playwright（JS 渲染）...")
         result = _scrape_sl_playwright(game_date_str)
         if result:
             return result
 
-    print("  嘗試 oddsportal...")
-    result = _scrape_oddsportal(session)
-    return result
+    return {}
 
 
 def save_odds(odds: dict, game_date_str: str, source: str = "local", dry: bool = False):
@@ -759,7 +619,7 @@ def update_schedule(games: list, dry: bool = False):
 # ─────────────────────────────────────────────────────────────
 
 def main():
-    ap = argparse.ArgumentParser(description="CPBL 數據本地更新腳本")
+    ap = argparse.ArgumentParser(description="NPB/KBO 數據更新腳本")
     ap.add_argument("--dry",          action="store_true", help="只爬不寫入")
     ap.add_argument("--push",         action="store_true", help="完成後自動 git commit + push")
     ap.add_argument("--year",         type=int, default=datetime.date.today().year)
@@ -774,43 +634,24 @@ def main():
     args = ap.parse_args()
 
     print("=" * 60)
-    print(f"CPBL 數據更新 — {args.year}年 | dry={args.dry}")
-    print("注意：請在個人電腦執行，不支援 GitHub Actions")
+    print(f"NPB/KBO 數據更新 — {args.year}年 | dry={args.dry}")
     print("=" * 60)
 
     session = requests.Session()
     session.headers.update(_HEADERS)
 
-    # ── 暖身 cookie ──
-    try:
-        session.get("https://www.cpbl.com.tw", timeout=8)
-        time.sleep(1)
-    except Exception:
-        pass
-
     today_str = datetime.date.today().isoformat()
     live_stats = {}
 
-    # ── 投手成績：多來源 ──
+    # ── 投手成績：ESPN API ──
     if not args.odds_only:
-        print("\n[1/4] 抓取投手成績...")
-        stats = scrape_cpbl_pitchers(args.year, session)
+        print("\n[1/4] 抓取 NPB/KBO 投手成績（ESPN API）...")
+        stats = scrape_espn_pitchers(args.year, session)
         if stats:
             live_stats.update(stats)
-            print(f"  ✅ CPBL 官網: {len(stats)} 名投手")
+            print(f"  ✅ ESPN: {len(stats)} 名投手")
         else:
-            print("  ❌ CPBL 官網失敗，嘗試 cpblstats.com...")
-            stats2 = scrape_cpblstats(args.year, session)
-            if stats2:
-                live_stats.update(stats2)
-                print(f"  ✅ cpblstats.com: {len(stats2)} 名投手")
-            else:
-                stats3 = scrape_mycpbl(args.year, session)
-                if stats3:
-                    live_stats.update(stats3)
-                    print(f"  ✅ myCPBL: {len(stats3)} 名投手")
-                else:
-                    print("  ⚠️ 所有來源失敗，使用 mock 數據（加上衍生指標計算）")
+            print("  ⚠️ ESPN 失敗，使用 mock 數據（加上衍生指標計算）")
 
         # ── 合併 mock + live ──
         merged = merge_stats(live_stats)
@@ -850,9 +691,8 @@ def main():
         else:
             print("  ⚠️ 所有賠率來源失敗")
             print("  提示：")
-            print("    - 確認在個人電腦（非雲端機房）執行")
+            print("    - 設定 ODDS_API_KEY 環境變數（The Odds API）")
             print("    - 嘗試：python scripts/update_stats.py --odds-only --no-playwright")
-            print("    - 台灣運彩需要 VPN 或居家網路（封鎖雲端 IP）")
             source_str = "none"
             odds = {}
 

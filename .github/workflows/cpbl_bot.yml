@@ -1,4 +1,4 @@
-name: CPBL Bot
+name: NPB/KBO Bot
 
 on:
   workflow_dispatch:

@@ -1,13 +1,13 @@
 """
-V8 Stats Scraper — 多來源投手數據抓取器
+V8 Stats Scraper — 多來源投手數據抓取器 (NPB / KBO)
 
 優先順序：
   1. ESPN 非官方 API （免費、JSON、不需金鑰、不擋 GH Actions）
-  2. CPBL 官網多種 URL 嘗試（WAF 封鎖時失敗）
-  3. 從已抓到的 K/BB/HR/IP 自動計算 FIP / K% / BB%
+     NPB: /baseball/jlb/  KBO: /baseball/kor/
+  2. 從已抓到的 K/BB/HR/IP 自動計算 FIP / K% / BB%
 
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
-  CPBL FIP_C 約 3.20（聯盟平均 ERA - 聯盟平均 FIP ≈ 3.20）
+  NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
 """
 import re
 import math
@@ -19,12 +19,13 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
-BASE_CPBL  = "https://www.cpbl.com.tw"
-BASE_ESPN  = "https://site.api.espn.com/apis/site/v2/sports/baseball/cpbl"
+BASE_ESPN_NPB = "https://site.api.espn.com/apis/site/v2/sports/baseball/jlb"
+BASE_ESPN_KBO = "https://site.api.espn.com/apis/site/v2/sports/baseball/kor"
 
-# CPBL 聯盟常數（用於 FIP 校正）
-_FIP_CONSTANT = 3.20
-_LG_IP_PER_GS = 5.5   # 聯盟平均每次先發局數（用於推算 K9→K%）
+_FIP_CONSTANT_NPB = 3.20
+_FIP_CONSTANT_KBO = 3.60
+_FIP_CONSTANT     = 3.35  # blended default
+_LG_IP_PER_GS     = 5.8   # 日韓聯盟平均先發局數
 
 _HEADERS = {
     "User-Agent": (
@@ -33,24 +34,35 @@ _HEADERS = {
         "Chrome/125.0.0.0 Safari/537.36"
     ),
     "Accept": "application/json, text/html, */*",
-    "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8",
+    "Accept-Language": "ja,ko,en-US;q=0.8",
 }
 
-# ESPN 球隊代碼對照
+# ESPN 球隊顯示名稱 → 內部代碼
 _ESPN_TEAM_MAP = {
-    "Brothers":              "AEL",
-    "Chinatrust Brothers":   "AEL",
-    "Uni-President 7-Eleven Lions": "CT",
-    "Uni Lions":             "CT",
-    "Fubon Guardians":       "FG",
-    "Guardians":             "FG",
-    "Rakuten Monkeys":       "WL",
-    "Monkeys":               "WL",
-    "TSG Hawks":             "TSG",
-    "TSG Eagles":            "TSG",
-    "Taiwan Steel Eagles":   "TSG",
-    "Wei Chuan Dragons":     "WC",
-    "Dragons":               "WC",
+    # NPB
+    "Giants":           "GNT", "Yomiuri Giants":     "GNT",
+    "Tigers":           "HNS", "Hanshin Tigers":     "HNS",
+    "Carp":             "HRC", "Hiroshima Carp":     "HRC",
+    "BayStars":         "YDB", "DeNA BayStars":      "YDB",
+    "Swallows":         "YKL", "Yakult Swallows":    "YKL",
+    "Dragons":          "CND", "Chunichi Dragons":   "CND",
+    "Hawks":            "SBH", "SoftBank Hawks":     "SBH",
+    "Buffaloes":        "ORX", "Orix Buffaloes":     "ORX",
+    "Eagles":           "RKT", "Rakuten Eagles":     "RKT",
+    "Marines":          "LTT", "Lotte Marines":      "LTT",
+    "Lions":            "SEI", "Seibu Lions":        "SEI",
+    "Fighters":         "HAM", "Nippon-Ham Fighters":"HAM",
+    # KBO
+    "Samsung Lions":    "SSL",
+    "LG Twins":         "LGT",
+    "Doosan Bears":     "DSB",
+    "KT Wiz":           "KTW",
+    "SSG Landers":      "SSG",
+    "NC Dinos":         "NCD",
+    "KIA Tigers":       "KIA",
+    "Lotte Giants":     "LTG",
+    "Hanwha Eagles":    "HWE",
+    "Kiwoom Heroes":    "KWH",
 }
 
 
@@ -143,25 +155,26 @@ def enrich_pitcher(p: dict) -> dict:
 
 def fetch_espn_schedule(game_date: date) -> list[dict]:
     """
-    從 ESPN API 取得 CPBL 賽程。
+    從 ESPN API 取得 NPB + KBO 賽程。
     不需 API key，通常不被 WAF 封鎖。
-    回傳 list[game_dict] 格式同 CPBLScraper.fetch_schedule()
     """
     date_str = game_date.strftime("%Y%m%d")
-    url = f"{BASE_ESPN}/scoreboard?dates={date_str}&limit=20"
-    try:
-        resp = requests.get(url, headers=_HEADERS, timeout=10)
-        resp.raise_for_status()
-        data   = resp.json()
-        events = data.get("events", [])
-        log.info("ESPN: %d events on %s", len(events), game_date)
-        return _parse_espn_events(events, str(game_date))
-    except Exception as e:
-        log.warning("ESPN schedule fetch failed: %s", e)
-        return []
+    games: list[dict] = []
+    for league, base_url in [("NPB", BASE_ESPN_NPB), ("KBO", BASE_ESPN_KBO)]:
+        url = f"{base_url}/scoreboard?dates={date_str}&limit=20"
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            resp.raise_for_status()
+            data   = resp.json()
+            events = data.get("events", [])
+            log.info("ESPN [%s]: %d events on %s", league, len(events), game_date)
+            games.extend(_parse_espn_events(events, str(game_date), league))
+        except Exception as e:
+            log.warning("ESPN [%s] schedule fetch failed: %s", league, e)
+    return games
 
 
-def _parse_espn_events(events: list, date_str: str) -> list[dict]:
+def _parse_espn_events(events: list, date_str: str, league: str = "NPB") -> list[dict]:
     games = []
     for ev in events:
         try:
@@ -219,7 +232,7 @@ def _parse_espn_events(events: list, date_str: str) -> list[dict]:
                 "home":         home_code,
                 "home_name":    home_name,
                 "venue":        venue,
-                "league":       "A",
+                "league":       league,
                 "status":       "結束" if state == "post" else "預定",
                 "away_score":   away_score,
                 "home_score":   home_score,
@@ -246,18 +259,21 @@ def _espn_starter(competitor: dict) -> str:
 
 def fetch_espn_pitcher_stats(year: int) -> dict[str, dict]:
     """
-    從 ESPN API 嘗試取得 CPBL 投手成績。
-    ESPN 的 CPBL 統計數據覆蓋度有限，僅供補充。
+    從 ESPN API 嘗試取得 NPB + KBO 投手成績。
     """
-    url = f"{BASE_ESPN}/leaders?year={year}&season=2&limit=50"
-    try:
-        resp = requests.get(url, headers=_HEADERS, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        return _parse_espn_leaders(data)
-    except Exception as e:
-        log.warning("ESPN pitcher stats failed: %s", e)
-        return {}
+    stats: dict[str, dict] = {}
+    for league, base_url in [("NPB", BASE_ESPN_NPB), ("KBO", BASE_ESPN_KBO)]:
+        url = f"{base_url}/leaders?year={year}&season=2&limit=50"
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            result = _parse_espn_leaders(data)
+            stats.update(result)
+            log.info("ESPN [%s] pitcher stats: %d players", league, len(result))
+        except Exception as e:
+            log.warning("ESPN [%s] pitcher stats failed: %s", league, e)
+    return stats
 
 
 def _parse_espn_leaders(data: dict) -> dict[str, dict]:
@@ -428,40 +444,35 @@ def _parse_cpbl_stats_html(html: str) -> dict[str, dict]:
 def fetch_all_pitcher_stats(year: int) -> dict[str, dict]:
     """
     多來源取投手成績，回傳合併後的最完整資料。
-    順序：ESPN → CPBL 官網
+    順序：ESPN NPB → ESPN KBO
     """
     stats: dict[str, dict] = {}
 
-    # 1. ESPN
     espn = fetch_espn_pitcher_stats(year)
     stats.update(espn)
-
-    # 2. CPBL 官網（覆蓋 ESPN 缺少的欄位）
-    cpbl = fetch_cpbl_pitcher_stats(year)
-    for name, p in cpbl.items():
-        if name in stats:
-            # CPBL 官網資料更精確，覆蓋 ESPN 數據
-            stats[name].update(p)
-        else:
-            stats[name] = p
 
     # 對所有投手補算缺少的衍生指標
     for p in stats.values():
         enrich_pitcher(p)
 
-    log.info("Stats merged: %d pitchers (ESPN=%d CPBL=%d)",
-             len(stats), len(espn), len(cpbl))
+    log.info("Stats merged: %d pitchers (ESPN=%d)", len(stats), len(espn))
     return stats
 
 
 def fetch_schedule_multi(game_date: date) -> list[dict]:
     """
-    多來源賽程：ESPN → CPBL 官網
+    多來源賽程：ESPN NPB + KBO
     """
-    # ESPN 不受 GitHub Actions WAF 封鎖
     games = fetch_espn_schedule(game_date)
     if games:
         log.info("Schedule from ESPN: %d games", len(games))
         return games
-    log.warning("ESPN schedule empty, caller should try CPBL scraper")
+    log.warning("ESPN schedule empty, will use mock data")
     return []
+
+
+# 删除舊的 CPBL 官網函數，保留 stub 避免 import 錯誤
+def fetch_cpbl_pitcher_stats(year: int) -> dict[str, dict]:
+    """廢棄 — CPBL 官網已被 WAF 封鎖。回傳空 dict。"""
+    log.debug("fetch_cpbl_pitcher_stats: CPBL site removed, returning empty")
+    return {}

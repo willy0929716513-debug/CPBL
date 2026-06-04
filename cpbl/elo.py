@@ -5,7 +5,7 @@ from .mock_data import TEAM_STATS
 K_FACTOR = 32
 HOME_ADVANTAGE = 50   # ELO 主場加成
 PITCHER_SCALE = 80    # 先發投手 ERA 換算 ELO 差值的最大調整量
-LEAGUE_AVG_ERA = 3.80
+LEAGUE_AVG_ERA = 3.90  # NPB≈3.50, KBO≈4.50, blended ≈ 3.90
 
 
 class ELOSystem:

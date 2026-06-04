@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""CPBL Protector Bot V8 — Ensemble + CLV + Feature Store + Bayesian + Market Move"""
+"""NPB/KBO Protector Bot V8 — Ensemble + CLV + Feature Store + Bayesian + Market Move"""
 import os, json, logging, datetime, requests, sys, copy
 sys.path.insert(0, ".")
 
-from cpbl.scraper import CPBLScraper
+from cpbl.scraper import MultiLeagueScraper as CPBLScraper
 from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
@@ -87,12 +87,12 @@ def save_gist(gid, records):
 
 # ── Discord ────────────────────────────────────────────────────────────────
 
-def send_discord_no_games(game_date, reason="無法取得一軍賽程"):
+def send_discord_no_games(game_date, reason="無法取得今日賽程"):
     if not DISCORD_URL: return
     now_tw   = datetime.datetime.now(TW)
     time_str = now_tw.strftime("%m/%d %H:%M")
     msg = (
-        f"⚾ **CPBL Bot** {game_date}\n"
+        f"⚾ **NPB/KBO Bot** {game_date}\n"
         f"🕐 {time_str} (台灣時間)\n"
         f"ℹ️ 今日無推薦：{reason}"
     )
@@ -142,7 +142,7 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
 
     rec_count = len(picks)
     lines = [
-        "⚾ **CPBL V8 分析報告**",
+        "⚾ **NPB/KBO V8 分析報告**",
         f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅MC ✅Ensemble ✅CLV ✅Matchup ✅RLv8",
         f"📊 歷史: {hist_str}{mem_line}",
         "",
