@@ -1,20 +1,7 @@
 name: CPBL Daily Prediction
 
 on:
-  schedule:
-    # 平日晚場 18:35 賽前2小時 → 16:35 台灣 (UTC 08:35)
-    - cron: "35 8 * * 1-5"
-    # 週末午場 13:05 賽前2小時 → 11:05 台灣 (UTC 03:05)
-    - cron: "5 3 * * 6,0"
-    # 週末下午場 17:05 賽前2小時 → 15:05 台灣 (UTC 07:05)
-    - cron: "5 7 * * 6,0"
-  workflow_dispatch:
-    inputs:
-      official_record:
-        description: '正式紀錄（儲存 JSON、推播 Discord、更新 Gist、部署頁面）'
-        required: false
-        default: 'false'
-        type: boolean
+  workflow_dispatch:   # 純手動觸發
 
 permissions:
   contents: write
@@ -40,12 +27,10 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
-          # schedule → 正式; workflow_dispatch → 看 input
-          OFFICIAL_RUN: ${{ (github.event_name == 'schedule' || inputs.official_record == 'true') && '1' || '0' }}
         run: |
           python - <<'EOF'
           import json, os, sys
-          from datetime import date
+          from datetime import date, datetime, timezone, timedelta
           sys.path.insert(0, ".")
           from cpbl.scraper import CPBLScraper
           from cpbl.elo import ELOSystem
@@ -53,14 +38,45 @@ jobs:
           from cpbl.odds import OddsFetcher
           import cpbl.mock_data as mock
 
+          TW = timezone(timedelta(hours=8))
+
+          def is_pregame_window(games):
+              """
+              如果現在台灣時間距離任何一場比賽開始 <= 2 小時，回傳 True。
+              比賽的 time 欄位格式為 "HH:MM"（台灣時間）。
+              若抓不到時間，fallback 到常見開賽時段判斷。
+              """
+              now_tw = datetime.now(TW)
+              for g in games:
+                  t = g.get("time", "")
+                  if t and ":" in t:
+                      try:
+                          h, m = map(int, t.split(":")[:2])
+                          game_dt = now_tw.replace(hour=h, minute=m, second=0, microsecond=0)
+                          diff = (game_dt - now_tw).total_seconds() / 60  # 分鐘
+                          if 0 <= diff <= 120:
+                              print(f"  → {g.get('away_name','?')} vs {g.get('home_name','?')} 開賽時間 {t}，距今 {diff:.0f} 分鐘，符合賽前2小時")
+                              return True
+                      except Exception:
+                          pass
+              # fallback：沒有時間資訊時，用常見開賽時段判斷
+              # 13:05 / 17:05 / 18:35 台灣時間的前兩小時區間
+              now_min = now_tw.hour * 60 + now_tw.minute
+              for start_h, start_m in [(13, 5), (17, 5), (18, 35)]:
+                  start_min = start_h * 60 + start_m
+                  if (start_min - 120) <= now_min <= start_min:
+                      print(f"  → fallback: 現在 {now_tw.strftime('%H:%M')} 在 {start_h:02d}:{start_m:02d} 賽前2小時區間內")
+                      return True
+              return False
+
           today    = date.today()
-          official = os.environ.get("OFFICIAL_RUN", "0") == "1"
+          now_tw   = datetime.now(TW)
           elo      = ELOSystem()
           model    = PredictionModel(elo)
           scraper  = CPBLScraper()
           fetcher  = OddsFetcher()
 
-          print(f"{'【正式紀錄】' if official else '【預覽模式，不儲存】'}  {today}")
+          print(f"執行時間（台灣）：{now_tw.strftime('%Y-%m-%d %H:%M')}")
 
           # 1. 賽程
           try:
@@ -72,13 +88,17 @@ jobs:
               print(f"Scraper failed ({e}), using mock data")
               games = mock.get_today_games(today)
 
-          # 2. 賠率
+          # 2. 判斷是否在賽前兩小時內
+          official = is_pregame_window(games)
+          print(f"{'【正式紀錄】賽前2小時內' if official else '【預覽模式】不在賽前2小時內，不記錄'}")
+
+          # 3. 賠率
           quota = fetcher.quota()
           print(f"Odds API quota: {quota}")
           all_odds = fetcher.fetch_all()
           print(f"Fetched odds for {len(all_odds)} games")
 
-          # 3. 預測
+          # 4. 預測
           results = []
           for g in games:
               if not (g.get("away") and g.get("home")):
@@ -94,27 +114,28 @@ jobs:
               g["odds_raw"]   = odds
               results.append(g)
 
-          # 預覽模式：只印結果，不儲存
+          # 印預覽（不管正不正式都印）
+          for g in results:
+              p = g.get("prediction", {})
+              if not p:
+                  continue
+              hw  = int(p["home_win_prob"] * 100)
+              win = g.get("home_name","主") if p["winner"] == "home" else g.get("away_name","客")
+              print(f"  {g.get('away_name')} vs {g.get('home_name')}  →  {win} ({100-hw}%/{hw}%)  信心{p['confidence']:.0f}%")
+
           if not official:
-              for g in results:
-                  p = g.get("prediction", {})
-                  if not p:
-                      continue
-                  hw  = int(p["home_win_prob"] * 100)
-                  win = g.get("home_name","主") if p["winner"] == "home" else g.get("away_name","客")
-                  print(f"  {g.get('away_name')} vs {g.get('home_name')}  →  {win} ({100-hw}%/{hw}%)  信心{p['confidence']:.0f}%")
-              print("預覽完成，非正式執行，跳過儲存/推播/Gist")
+              print("非賽前2小時，結束（不儲存/不推播/不更新Gist）")
               sys.exit(0)
 
-          # 4. 存 JSON（僅正式）
+          # 5. 存 JSON
+          import requests as req
           os.makedirs("predictions", exist_ok=True)
           out = f"predictions/{today}.json"
           with open(out, "w", encoding="utf-8") as f:
               json.dump(results, f, ensure_ascii=False, indent=2, default=str)
           print(f"Saved: {out}")
 
-          # 5. Discord 推播（僅正式）
-          import requests as req
+          # 6. Discord 推播
           webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
           if webhook and results:
               lines = [f"**⚾ CPBL 今日賽前預測 {today}**\n"]
@@ -142,7 +163,7 @@ jobs:
               req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
               print("Discord notified")
 
-          # 6. 更新 Gist（僅正式）
+          # 7. 更新 Gist
           gist_token = os.environ.get("GIST_TOKEN", "")
           if gist_token and results:
               with open(f"predictions/{today}.json", encoding="utf-8") as f:
@@ -179,20 +200,16 @@ jobs:
           EOF
 
       - name: Commit predictions
-        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add predictions/ || true
-          git diff --staged --quiet || git commit -m "chore: add prediction $(date +%Y-%m-%d)"
-          git push
+          git diff --staged --quiet || git commit -m "chore: add prediction $(date +%Y-%m-%d)" && git push || true
 
       - name: Generate static site
-        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         run: python generate_static.py
 
       - name: Deploy to GitHub Pages
-        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
