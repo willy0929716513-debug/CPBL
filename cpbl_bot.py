@@ -399,7 +399,7 @@ def main():
         all_odds = {f"{g['away']}-{g['home']}": MOCK_ODDS.get(f"{g['away']}-{g['home']}", {}) for g in games}
     else:
         try:
-            all_odds = fetcher.fetch_all()
+            all_odds = fetcher.fetch_all(game_date=today_str)
             log.info("Odds: %d games", len(all_odds))
         except Exception as e:
             log.warning("Odds failed: %s", e)

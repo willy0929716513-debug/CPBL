@@ -11,6 +11,7 @@ The Odds API 免費方案：500 req/月 (夠每天用)
 """
 import os
 import re
+import json
 import logging
 import requests
 from bs4 import BeautifulSoup
@@ -457,18 +458,52 @@ class OddsFetcher:
         self._sl_scraper  = SportslotteryScraper()
         self._cache: dict[str, dict] = {}
 
-    def fetch_all(self) -> dict[str, dict]:
-        """一次抓今日所有比賽賠率，快取起來"""
+    def fetch_all(self, game_date: str = None) -> dict[str, dict]:
+        """一次抓今日所有比賽賠率，快取起來
+
+        優先順序：
+          0. data/odds_today.json（本地腳本 scripts/update_stats.py 抓取後儲存）
+          1. The Odds API（需 ODDS_API_KEY）
+          2. Mock 資料
+        """
+        if game_date is None:
+            game_date = str(date.today())
+
+        # 0. 本地預存賠率（由 scripts/update_stats.py 在個人電腦執行後產生）
+        _odds_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "data", "odds_today.json"
+        )
+        if os.path.exists(_odds_file):
+            try:
+                with open(_odds_file, encoding="utf-8") as f:
+                    saved = json.load(f)
+                if saved.get("game_date") == game_date and saved.get("odds"):
+                    self._cache = saved["odds"]
+                    log.info(
+                        "OddsFetcher: 使用本地 odds_today.json (%s) — %d 場 [來源: %s]",
+                        game_date, len(self._cache), saved.get("source", "?"),
+                    )
+                    return self._cache
+                else:
+                    log.info(
+                        "OddsFetcher: odds_today.json 日期 %s ≠ 今日 %s，略過",
+                        saved.get("game_date", "?"), game_date,
+                    )
+            except Exception as e:
+                log.warning("OddsFetcher: 讀取 odds_today.json 失敗 → %s", e)
+
+        # 1. The Odds API
         if self._odds_api:
             try:
                 data = self._odds_api.fetch_all()
                 if data:
                     self._cache = data
-                    log.info(f"OddsFetcher: The Odds API 成功，{len(data)} 場比賽")
+                    log.info("OddsFetcher: The Odds API 成功，%d 場比賽", len(data))
                     return data
             except Exception as e:
-                log.warning(f"OddsFetcher: The Odds API 失敗 → {e}")
-        log.info("OddsFetcher: 使用 Mock 資料")
+                log.warning("OddsFetcher: The Odds API 失敗 → %s", e)
+
+        log.info("OddsFetcher: 使用 Mock 資料（執行 scripts/update_stats.py --odds 可取得真實賠率）")
         self._cache = dict(MOCK_ODDS)
         return self._cache
 

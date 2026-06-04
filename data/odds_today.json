@@ -1,0 +1,6 @@
+{
+  "game_date": "2000-01-01",
+  "updated_at": "2000-01-01 00:00",
+  "source": "placeholder — run scripts/update_stats.py --odds-only locally to populate",
+  "odds": {}
+}

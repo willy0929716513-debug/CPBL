@@ -37,6 +37,13 @@ jobs:
           if [ -f data/schedule.json ]; then
             python -c "import json; d=json.load(open('data/schedule.json')); print('Games:', len(d.get('games',[])))"
           fi
+          echo "=== odds_today.json ==="
+          if [ -f data/odds_today.json ]; then
+            python -c "import json; d=json.load(open('data/odds_today.json')); print('Date:', d.get('game_date','?'), '| Source:', d.get('source','?'), '| Games:', len(d.get('odds',{})))"
+          else
+            echo "not found — will use MOCK_ODDS"
+            echo "Tip: run 'python scripts/update_stats.py --odds-only --push' locally to get real odds"
+          fi
 
       - name: Run CPBL Bot
         env:
