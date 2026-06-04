@@ -53,10 +53,12 @@
 </header>
 
 <!-- ── Sub header ──────────────────────────── -->
-<div class="px-6 py-2 text-xs text-gray-500 border-b border-gray-800 flex gap-4">
+<div class="px-6 py-2 text-xs text-gray-500 border-b border-gray-800 flex flex-wrap gap-4 items-center">
   <span>📅 {{ game_date }}</span>
   <span>🕒 最後更新：{{ last_update or '-' }}</span>
-  <span>V1.0 模型 | ELO + 9 因子加權</span>
+  <span>V1.0 模型 | ELO + 10 因子加權</span>
+  <span id="odds-source" class="text-yellow-600">🎰 賠率載入中…</span>
+  <a href="/api/quota" target="_blank" class="text-gray-600 hover:text-gray-400 underline">配額查詢</a>
 </div>
 
 <!-- ── Main layout ──────────────────────────── -->
@@ -486,21 +488,46 @@
 <!-- ── Footer ──────────────────────────────── -->
 <footer class="text-center py-4 text-xs text-gray-600 border-t border-gray-800 mt-4">
   CPBL Protector V1.0 &nbsp;|&nbsp;
-  資料來源：cpbl.com.tw &nbsp;|&nbsp;
-  預測模型：ELO + 9 因子加權 &nbsp;|&nbsp;
+  賠率：The Odds API / 台灣運彩 &nbsp;|&nbsp;
+  預測模型：ELO + 10 因子加權 &nbsp;|&nbsp;
   僅供參考
 </footer>
 
 <script>
+// ── 偵測賠率來源 ───────────────────────────
+(async () => {
+  try {
+    const res  = await fetch('/api/today');
+    const data = await res.json();
+    const game = data.games?.find(g => g.prediction?.factors?.odds?.curr_home_odds);
+    const src  = game?.prediction?.factors?.odds?.detail || '';
+    const el   = document.getElementById('odds-source');
+    if (!el) return;
+    if (src.includes('the-odds-api')) {
+      el.textContent = '🎰 賠率：The Odds API ✓';
+      el.className = 'text-emerald-500';
+    } else if (src.includes('sportslottery')) {
+      el.textContent = '🎰 賠率：台灣運彩 ✓';
+      el.className = 'text-yellow-500';
+    } else if (src.includes('demo')) {
+      el.textContent = '🎰 賠率：Demo 模擬資料';
+      el.className = 'text-gray-500';
+    } else {
+      el.textContent = '🎰 賠率：無法取得';
+      el.className = 'text-red-500';
+    }
+  } catch { }
+})();
+
 // ── Weight donut chart ─────────────────────
 const wCtx = document.getElementById('weightChart').getContext('2d');
 new Chart(wCtx, {
   type: 'doughnut',
   data: {
-    labels: ['先發投手(35%)', '打線(20%)', '牛棚(15%)', '主客場(8%)', '近期狀態(8%)', '對戰紀錄(5%)', '傷兵(4%)', '天氣(3%)', '守備(2%)'],
+    labels: ['先發投手(32%)', '打線(18%)', '牛棚(13%)', '盤口(10%)', '主客場(8%)', '近期狀態(7%)', '對戰紀錄(5%)', '傷兵(3%)', '天氣(2%)', '守備(2%)'],
     datasets: [{
-      data: [35, 20, 15, 8, 8, 5, 4, 3, 2],
-      backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316'],
+      data: [32, 18, 13, 10, 8, 7, 5, 3, 2, 2],
+      backgroundColor: ['#10b981','#3b82f6','#f59e0b','#facc15','#8b5cf6','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316'],
       borderWidth: 0,
     }]
   },

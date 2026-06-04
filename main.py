@@ -10,7 +10,7 @@ from flask import Flask, render_template, jsonify, request
 from cpbl.scraper import CPBLScraper
 from cpbl.predictor import PredictionModel
 from cpbl.elo import ELOSystem
-from cpbl.odds import OddsScraper, MOCK_ODDS
+from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -35,7 +35,7 @@ _cache: dict = {
 elo          = ELOSystem()
 model        = PredictionModel(elo)
 scraper      = CPBLScraper()
-odds_scraper = OddsScraper()
+odds_fetcher = OddsFetcher()   # The Odds API → 運彩 → Mock
 
 
 # ── 資料更新 ─────────────────────────────────────
@@ -56,7 +56,6 @@ def refresh(game_date: date | None = None) -> list:
             odds_data  = None
 
             if DEMO_MODE:
-                # Demo：直接用 mock 賠率
                 key = f"{g['away']}-{g['home']}"
                 odds_data = MOCK_ODDS.get(key, {})
             else:
@@ -64,11 +63,7 @@ def refresh(game_date: date | None = None) -> list:
                     weather = scraper.fetch_weather(g.get("venue", ""))
                 except Exception:
                     pass
-                try:
-                    odds_data = odds_scraper.fetch(g["away"], g["home"])
-                except Exception:
-                    key = f"{g['away']}-{g['home']}"
-                    odds_data = MOCK_ODDS.get(key, {})
+                odds_data = odds_fetcher.get(g["away"], g["home"]) or {}
 
             g["weather"]    = weather
             g["odds_raw"]   = odds_data   # 供 API 輸出
@@ -157,6 +152,12 @@ def api_refresh():
             pass
     games = refresh(game_date)
     return jsonify({"status": "ok", "count": len(games), "ts": _cache["last_update"]})
+
+
+@app.route("/api/quota")
+def api_quota():
+    """查 The Odds API 剩餘配額"""
+    return jsonify(odds_fetcher.quota())
 
 
 @app.route("/api/pitcher/<name>")
