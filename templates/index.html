@@ -212,6 +212,98 @@
           {% endif %}
         </div>
 
+        <!-- ── Odds panel ────────────────────────── -->
+        {% set of = pred.factors.odds if pred.factors.odds is defined else None %}
+        {% if of and of.curr_home_odds %}
+        <div class="bg-gray-800/40 rounded-lg p-3 mb-3 border border-gray-700/40">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-yellow-400">🎰 台灣運彩盤口</span>
+            {% if of.analysis is defined %}
+            <span class="text-xs px-2 py-0.5 rounded-full
+              {% if of.analysis.value_gap > 8 %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
+              {% elif of.analysis.value_gap < -8 %}bg-red-500/20 text-red-400 border border-red-500/30
+              {% else %}bg-gray-600/40 text-gray-400{% endif %}">
+              {% if of.analysis.value_gap > 8 %}📈 主隊 Value +{{ of.analysis.value_gap | int }}%
+              {% elif of.analysis.value_gap < -8 %}📉 主隊被高估
+              {% else %}⚖️ 盤口接近模型{% endif %}
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- 勝負賠率 -->
+          <div class="grid grid-cols-3 gap-2 text-xs mb-2">
+            <div class="text-center">
+              <div class="text-gray-500 mb-1">{{ g.away_name }}</div>
+              <div class="font-mono text-blue-300 text-base font-bold">{{ of.curr_away_odds }}</div>
+              {% if of.open_away_odds and of.open_away_odds != of.curr_away_odds %}
+              <div class="text-gray-600 text-xs">開 {{ of.open_away_odds }}
+                <span class="{% if of.curr_away_odds < of.open_away_odds %}text-emerald-400{% else %}text-red-400{% endif %}">
+                  {{ '▼' if of.curr_away_odds < of.open_away_odds else '▲' }}
+                </span>
+              </div>
+              {% else %}
+              <div class="text-gray-600 text-xs">開 {{ of.open_away_odds }} —</div>
+              {% endif %}
+            </div>
+
+            <div class="text-center border-x border-gray-700/50">
+              <div class="text-gray-500 mb-0.5">讓分</div>
+              <div class="font-mono text-yellow-400 font-bold">{{ of.run_line | int if of.run_line else '-' }}.5</div>
+              <div class="text-gray-500 text-xs">大小 {{ of.total }}</div>
+            </div>
+
+            <div class="text-center">
+              <div class="text-gray-500 mb-1">{{ g.home_name }}</div>
+              <div class="font-mono text-emerald-300 text-base font-bold">{{ of.curr_home_odds }}</div>
+              {% if of.open_home_odds and of.open_home_odds != of.curr_home_odds %}
+              <div class="text-gray-600 text-xs">開 {{ of.open_home_odds }}
+                <span class="{% if of.curr_home_odds < of.open_home_odds %}text-emerald-400{% else %}text-red-400{% endif %}">
+                  {{ '▼' if of.curr_home_odds < of.open_home_odds else '▲' }}
+                </span>
+              </div>
+              {% else %}
+              <div class="text-gray-600 text-xs">開 {{ of.open_home_odds }} —</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- 公眾投注比例 -->
+          {% if of.public_home_pct %}
+          <div class="mb-2">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>公眾投注  客 {{ of.public_away_pct }}%</span>
+              <span>主 {{ of.public_home_pct }}%</span>
+            </div>
+            <div class="h-2 bg-blue-800/60 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-600 rounded-full" style="width:{{ of.public_home_pct }}%"></div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- 市場隱含勝率 vs 模型 -->
+          {% if of.market_home_prob is defined %}
+          <div class="flex gap-4 text-xs text-gray-400">
+            <span>市場隱含主隊勝率：<span class="text-yellow-400 font-mono">{{ of.market_home_prob }}%</span></span>
+            <span>本模型：<span class="text-white font-mono">{{ hw }}%</span></span>
+            {% if of.analysis is defined %}
+            <span class="{% if of.analysis.value_gap > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+              差距 {{ of.analysis.value_gap | int }}%
+            </span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- 莊家信號 -->
+          {% if of.signals %}
+          <div class="mt-2 space-y-0.5">
+            {% for sig in of.signals %}
+            <div class="text-xs text-amber-400/80">{{ sig }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Factor breakdown (expandable) -->
         <details class="group">
           <summary class="flex items-center justify-between text-sm text-gray-400 hover:text-white cursor-pointer py-2 border-t border-gray-700/50">
@@ -220,15 +312,16 @@
           </summary>
           <div class="mt-3 space-y-2">
             {% set factor_labels = {
-              'starter': ('先發投手', '35%'),
-              'lineup': ('打線強度', '20%'),
-              'bullpen': ('牛棚戰力', '15%'),
-              'home_away': ('主客場', '8%'),
-              'recent_form': ('近期狀態', '8%'),
-              'h2h': ('對戰紀錄', '5%'),
-              'injuries': ('傷兵狀況', '4%'),
-              'weather': ('天氣', '3%'),
-              'defense': ('守備能力', '2%'),
+              'starter':     ('先發投手', '32%'),
+              'lineup':      ('打線強度', '18%'),
+              'bullpen':     ('牛棚戰力', '13%'),
+              'odds':        ('盤口/賠率', '10%'),
+              'home_away':   ('主客場',   '8%'),
+              'recent_form': ('近期狀態', '7%'),
+              'h2h':         ('對戰紀錄', '5%'),
+              'injuries':    ('傷兵狀況', '3%'),
+              'weather':     ('天氣',     '2%'),
+              'defense':     ('守備能力', '2%'),
             } %}
             {% for key, (label, weight) in factor_labels.items() %}
             {% if pred.factors[key] is defined %}
@@ -237,19 +330,20 @@
             <div class="flex items-center gap-2 text-xs">
               <span class="w-20 text-gray-400 flex-shrink-0">{{ label }}</span>
               <span class="w-8 text-gray-500 flex-shrink-0 text-right">{{ weight }}</span>
-              <div class="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div class="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden relative">
+                <div class="absolute top-0 bottom-0 w-px bg-gray-500" style="left:50%"></div>
                 {% if adv >= 0 %}
-                <div class="h-full bg-emerald-500 rounded-full" style="width: {{ [adv|abs / 2, 100]|min | int }}%; margin-left: 50%;"></div>
+                <div class="h-full bg-emerald-500 rounded-r-full absolute" style="left:50%; width:{{ [adv|abs, 100]|min | int }}%"></div>
                 {% else %}
-                <div class="h-full bg-blue-500 rounded-full" style="width: {{ [adv|abs / 2, 100]|min | int }}%; margin-right: 50%; margin-left: auto;"></div>
+                <div class="h-full bg-blue-500 rounded-l-full absolute" style="right:50%; width:{{ [adv|abs, 100]|min | int }}%"></div>
                 {% endif %}
               </div>
               <span class="w-16 text-right flex-shrink-0 {% if adv > 5 %}text-emerald-400{% elif adv < -5 %}text-blue-400{% else %}text-gray-400{% endif %}">
                 {% if adv > 0 %}主 +{{ adv | int }}{% elif adv < 0 %}客 +{{ adv|abs | int }}{% else %}持平{% endif %}
               </span>
             </div>
-            {% if f.detail %}
-            <div class="text-xs text-gray-500 pl-28 mb-1">{{ f.detail }}</div>
+            {% if f.detail and key != 'odds' %}
+            <div class="text-xs text-gray-600 pl-28 -mt-1 mb-0.5">{{ f.detail }}</div>
             {% endif %}
             {% endif %}
             {% endfor %}

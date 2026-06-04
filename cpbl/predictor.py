@@ -2,28 +2,31 @@
 CPBL V1.0 勝負預測模型
 
 權重分配：
-  先發投手   35%
-  打線       20%
-  牛棚       15%
+  先發投手   32%
+  打線       18%
+  牛棚       13%
+  盤口       10%   ← 新增
   主客場      8%
-  近期狀態    8%
+  近期狀態    7%
   對戰紀錄    5%
-  傷兵        4%
-  天氣        3%
+  傷兵        3%
+  天氣        2%
   守備        2%
 """
 from .elo import ELOSystem
 from .mock_data import PITCHERS, TEAM_STATS, H2H, VENUE_FACTORS
+from . import odds as odds_module
 
 WEIGHTS = {
-    "starter":     0.35,
-    "lineup":      0.20,
-    "bullpen":     0.15,
+    "starter":     0.32,
+    "lineup":      0.18,
+    "bullpen":     0.13,
+    "odds":        0.10,   # 盤口因子
     "home_away":   0.08,
-    "recent_form": 0.08,
+    "recent_form": 0.07,
     "h2h":         0.05,
-    "injuries":    0.04,
-    "weather":     0.03,
+    "injuries":    0.03,
+    "weather":     0.02,
     "defense":     0.02,
 }
 
@@ -35,7 +38,8 @@ class PredictionModel:
     def __init__(self, elo: ELOSystem | None = None):
         self.elo = elo or ELOSystem()
 
-    def predict(self, game: dict, weather: dict | None = None) -> dict:
+    def predict(self, game: dict, weather: dict | None = None,
+                odds_data: dict | None = None) -> dict:
         ht = game["home"]
         at = game["away"]
         if not ht or not at:
@@ -143,21 +147,60 @@ class PredictionModel:
             "detail": _defense_detail(ht, at),
         }
 
-        # ── 整合勝率 ───────────────────────────────
-        # 以 ELO 為基礎，各因子進行調整
+        # ── 整合勝率（第一階段，不含盤口）─────────
         elo_base = self.elo.win_probability(
             ht, at,
             hp.get("era"),
             ap.get("era"),
         )
         home_prob = elo_base
-
         for key, w in WEIGHTS.items():
-            adv = factors[key]["advantage"]       # -100 ~ +100
-            adj = (adv / 100.0) * w * 0.5        # 最大調整 ±w/2
+            if key == "odds":
+                continue   # 盤口要拿到 model_prob 才能算
+            adv = factors[key]["advantage"]
+            adj = (adv / 100.0) * w * 0.5
             home_prob += adj
-
         home_prob = max(0.05, min(0.95, home_prob))
+
+        # ── 10. 盤口因子 ───────────────────────────
+        # 需要先算出模型勝率，才能計算 value_gap
+        odds_key = f"{at}-{ht}"
+        if odds_data is None:
+            odds_data = odds_module.MOCK_ODDS.get(odds_key, {})
+
+        if odds_data:
+            o_analysis = odds_module.analyze(odds_data, home_prob)
+            factors["odds"] = {
+                "label": "盤口 / 賠率",
+                "home_score": 50 + o_analysis["advantage"],
+                "away_score": 50 - o_analysis["advantage"],
+                "advantage":  o_analysis["advantage"],
+                "detail":     o_analysis["detail"],
+                "analysis":   o_analysis,
+                # 原始賠率欄位，供 UI 直接顯示
+                "curr_home_odds": odds_data.get("curr_home_odds"),
+                "curr_away_odds": odds_data.get("curr_away_odds"),
+                "open_home_odds": odds_data.get("open_home_odds"),
+                "open_away_odds": odds_data.get("open_away_odds"),
+                "run_line":       odds_data.get("run_line"),
+                "total":          odds_data.get("total"),
+                "over_odds":      odds_data.get("over_odds"),
+                "under_odds":     odds_data.get("under_odds"),
+                "public_home_pct":odds_data.get("public_home_pct"),
+                "public_away_pct":odds_data.get("public_away_pct"),
+                "market_home_prob": o_analysis["market_home_prob"],
+                "signals":        o_analysis["signals"],
+            }
+            odds_adv = o_analysis["advantage"]
+            home_prob += (odds_adv / 100.0) * WEIGHTS["odds"] * 0.5
+            home_prob = max(0.05, min(0.95, home_prob))
+        else:
+            factors["odds"] = {
+                "label": "盤口 / 賠率",
+                "home_score": 50, "away_score": 50,
+                "advantage": 0, "detail": "無賠率資料",
+                "signals": [],
+            }
 
         return {
             "home_win_prob": round(home_prob, 4),
@@ -165,7 +208,7 @@ class PredictionModel:
             "elo_base": round(elo_base, 4),
             "factors": factors,
             "winner":  "home" if home_prob >= 0.5 else "away",
-            "confidence": round(abs(home_prob - 0.5) * 200, 1),  # 0~100
+            "confidence": round(abs(home_prob - 0.5) * 200, 1),
             "home_elo": self.elo.get(ht),
             "away_elo": self.elo.get(at),
         }

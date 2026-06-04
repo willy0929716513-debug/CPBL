@@ -10,6 +10,7 @@ from flask import Flask, render_template, jsonify, request
 from cpbl.scraper import CPBLScraper
 from cpbl.predictor import PredictionModel
 from cpbl.elo import ELOSystem
+from cpbl.odds import OddsScraper, MOCK_ODDS
 import cpbl.mock_data as mock
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -31,9 +32,10 @@ _cache: dict = {
     "last_update": None,
 }
 
-elo    = ELOSystem()
-model  = PredictionModel(elo)
-scraper = CPBLScraper()
+elo          = ELOSystem()
+model        = PredictionModel(elo)
+scraper      = CPBLScraper()
+odds_scraper = OddsScraper()
 
 
 # ── 資料更新 ─────────────────────────────────────
@@ -50,16 +52,30 @@ def refresh(game_date: date | None = None) -> list:
     # 2. 逐場預測
     for g in games:
         if g.get("away") and g.get("home") and g.get("status") != "輪休":
-            weather = None
-            if not DEMO_MODE:
+            weather    = None
+            odds_data  = None
+
+            if DEMO_MODE:
+                # Demo：直接用 mock 賠率
+                key = f"{g['away']}-{g['home']}"
+                odds_data = MOCK_ODDS.get(key, {})
+            else:
                 try:
                     weather = scraper.fetch_weather(g.get("venue", ""))
                 except Exception:
                     pass
-            g["weather"] = weather
-            g["prediction"] = model.predict(g, weather)
+                try:
+                    odds_data = odds_scraper.fetch(g["away"], g["home"])
+                except Exception:
+                    key = f"{g['away']}-{g['home']}"
+                    odds_data = MOCK_ODDS.get(key, {})
+
+            g["weather"]    = weather
+            g["odds_raw"]   = odds_data   # 供 API 輸出
+            g["prediction"] = model.predict(g, weather, odds_data)
         else:
             g["prediction"] = None
+            g["odds_raw"]   = None
 
     _cache["date"]        = str(game_date)
     _cache["games"]       = games
@@ -109,9 +125,10 @@ def dashboard():
         last_update=_cache["last_update"],
         demo_mode=DEMO_MODE,
         weights={k: int(v * 100) for k, v in {
-            "starter": 0.35, "lineup": 0.20, "bullpen": 0.15,
-            "home_away": 0.08, "recent_form": 0.08, "h2h": 0.05,
-            "injuries": 0.04, "weather": 0.03, "defense": 0.02,
+            "starter": 0.32, "lineup": 0.18, "bullpen": 0.13,
+            "odds": 0.10,
+            "home_away": 0.08, "recent_form": 0.07, "h2h": 0.05,
+            "injuries": 0.03, "weather": 0.02, "defense": 0.02,
         }.items()},
     )
 
@@ -160,13 +177,28 @@ def send_discord(games: list):
         if not g.get("prediction"):
             continue
         pred = g["prediction"]
-        hw  = int(pred["home_win_prob"] * 100)
-        aw  = 100 - hw
-        win = g["home_name"] if pred["winner"] == "home" else g["away_name"]
+        hw   = int(pred["home_win_prob"] * 100)
+        aw   = 100 - hw
+        win  = g["home_name"] if pred["winner"] == "home" else g["away_name"]
         conf = pred["confidence"]
+
+        odds_txt = ""
+        of = pred.get("factors", {}).get("odds", {})
+        if of.get("curr_home_odds"):
+            mkt = of.get("market_home_prob", "?")
+            vg  = of.get("analysis", {}).get("value_gap", 0) if of.get("analysis") else 0
+            odds_txt = (
+                f"\n  📋 賠率：客 `{of['curr_away_odds']}` / 主 `{of['curr_home_odds']}`"
+                f"  市場隱含主隊 `{mkt}%`  差距 `{vg:+.0f}%`"
+            )
+            sigs = of.get("signals", [])
+            if sigs:
+                odds_txt += "\n  " + " | ".join(sigs[:2])
+
         lines.append(
-            f"**{g['away_name']}** `{aw}%` vs `{hw}%` **{g['home_name']}**"
-            f"  →  🏆 {win} 勝率更高（信心 {conf:.0f}%）"
+            f"**{g['away_name']}** `{aw}%`  vs  `{hw}%` **{g['home_name']}**"
+            f"  →  🏆 {win} (信心 {conf:.0f}%)"
+            + odds_txt
         )
     try:
         requests.post(DISCORD_URL, json={"content": "\n".join(lines)}, timeout=8)
