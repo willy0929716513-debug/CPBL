@@ -76,6 +76,14 @@ PITCHERS = {
         "gs": 12, "innings": 70.2, "wpa": -0.4, "re24": -2.1,
     },
     # ── 富邦悍將 ──────────────────────────────
+    "李東洛": {
+        "team": "FG", "foreign": False,
+        "era": 1.83, "whip": 0.96, "fip": 2.05, "xfip": 2.18,
+        "k9": 8.8, "bb9": 2.1, "h9": 6.9, "hr9": 0.4,
+        "babip": 0.270, "lob_pct": 81.5, "k_bb_pct": 21.2,
+        "recent_3_era": 1.50, "recent_5_era": 1.72, "recent_10_era": 1.80,
+        "gs": 13, "innings": 83.2, "wpa": 3.5, "re24": 24.8,
+    },
     "鄭錫謙": {
         "team": "FG", "foreign": False,
         "era": 3.34, "whip": 1.24, "fip": 3.45, "xfip": 3.50,
@@ -119,6 +127,14 @@ PITCHERS = {
         "gs": 12, "innings": 69.0, "wpa": -0.8, "re24": -5.2,
     },
     # ── 台鋼雄鷹 ──────────────────────────────
+    "黃子鵬": {
+        "team": "TSG", "foreign": False,
+        "era": 2.96, "whip": 1.15, "fip": 3.10, "xfip": 3.18,
+        "k9": 8.2, "bb9": 2.6, "h9": 7.8, "hr9": 0.7,
+        "babip": 0.288, "lob_pct": 76.0, "k_bb_pct": 17.2,
+        "recent_3_era": 2.70, "recent_5_era": 2.85, "recent_10_era": 2.92,
+        "gs": 9, "innings": 54.2, "wpa": 1.2, "re24": 8.5,
+    },
     "江少慶": {
         "team": "TSG", "foreign": False,
         "era": 3.78, "whip": 1.35, "fip": 3.89, "xfip": 3.82,
