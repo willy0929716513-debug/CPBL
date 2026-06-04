@@ -193,19 +193,40 @@ def main():
     scraper = CPBLScraper()
     fetcher = OddsFetcher()
 
-    # 1. Schedule — Demo 用 mock，真實模式只用爬蟲（失敗則 0 場）
+    # 1. Schedule — Demo 用 mock；真實模式：爬蟲 → 本地備份日程 → 空
     if DEMO_MODE:
         games = mock.get_today_games(today)
         log.info("Demo: %d games", len(games))
     else:
+        games = []
+        # 1a. 嘗試爬蟲
         try:
             games = scraper.fetch_schedule(today)
             if not games:
-                raise ValueError("no games parsed")
+                raise ValueError("no games parsed from scraper")
             log.info("Scraped %d 一軍 games from cpbl.com.tw", len(games))
         except Exception as e:
-            log.warning("Scraper failed (%s) — 今日無法取得一軍賽程，跳過預測", e)
-            games = []
+            log.warning("Scraper failed (%s)", e)
+
+        # 1b. 爬蟲失敗 → 讀本地備份 data/schedule.json
+        if not games:
+            sched_path = os.path.join(os.path.dirname(__file__), "data", "schedule.json")
+            try:
+                with open(sched_path, encoding="utf-8") as f:
+                    sched = json.load(f)
+                games = [
+                    {**g, "league": "A"}
+                    for g in sched.get("games", [])
+                    if g.get("date") == today_str
+                    and g.get("away") and g.get("home")
+                    and g.get("status") not in ("休兵日", "輪休")
+                ]
+                if games:
+                    log.info("Schedule file: %d games for %s", len(games), today_str)
+                else:
+                    log.info("Schedule file: no games found for %s (rest day or not in file)", today_str)
+            except Exception as ef:
+                log.warning("Schedule file read failed (%s)", ef)
 
     # 2. Odds
     if DEMO_MODE:
@@ -343,7 +364,7 @@ def main():
     if picks:
         send_discord(picks, today_str, history)
     elif not games and not DEMO_MODE:
-        send_discord_no_games(today_str, "cpbl.com.tw 賽程爬取失敗，今日可能無賽或網站封鎖")
+        send_discord_no_games(today_str, "今日無賽事或無推薦（爬蟲封鎖 + 備份日程無比賽）")
 
 
 if __name__ == "__main__":

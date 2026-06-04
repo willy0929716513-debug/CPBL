@@ -7,11 +7,12 @@ from datetime import date
 # 球隊基本資訊
 # ──────────────────────────────────────────────
 TEAM_INFO = {
-    "AEL": {"name": "中信兄弟",      "short": "兄弟", "stadium": "洲際棒球場", "city": "台中", "color": "#002B5B"},
-    "CT":  {"name": "統一7-ELEVEn獅","short": "統一", "stadium": "台南棒球場", "city": "台南", "color": "#C8102E"},
-    "FG":  {"name": "富邦悍將",      "short": "富邦", "stadium": "新莊棒球場", "city": "新北", "color": "#003087"},
-    "WL":  {"name": "樂天桃猿",      "short": "樂天", "stadium": "桃園棒球場", "city": "桃園", "color": "#E4002B"},
+    "AEL": {"name": "中信兄弟",      "short": "兄弟", "stadium": "洲際棒球場",  "city": "台中", "color": "#002B5B"},
+    "CT":  {"name": "統一7-ELEVEn獅","short": "統一", "stadium": "台南棒球場",  "city": "台南", "color": "#C8102E"},
+    "FG":  {"name": "富邦悍將",      "short": "富邦", "stadium": "新莊棒球場",  "city": "新北", "color": "#003087"},
+    "WL":  {"name": "樂天桃猿",      "short": "樂天", "stadium": "桃園棒球場",  "city": "桃園", "color": "#E4002B"},
     "TSG": {"name": "台鋼雄鷹",      "short": "台鋼", "stadium": "澄清湖棒球場","city": "高雄", "color": "#1B4B8A"},
+    "WC":  {"name": "味全龍",        "short": "龍",   "stadium": "天母棒球場",  "city": "台北", "color": "#E31937"},
 }
 
 # ──────────────────────────────────────────────
@@ -24,6 +25,7 @@ VENUE_FACTORS = {
     "桃園棒球場":  {"run_factor": 1.05, "hr_factor": 1.15, "note": "夜場風勢大，全壘打多"},
     "澄清湖棒球場":{"run_factor": 0.95, "hr_factor": 0.90, "note": "投手有利，球場大"},
     "天母棒球場":  {"run_factor": 1.02, "hr_factor": 1.05, "note": "風場多變"},
+    "台北大巨蛋":  {"run_factor": 0.94, "hr_factor": 0.91, "note": "室內球場，環控氣候"},
 }
 
 # ──────────────────────────────────────────────
@@ -154,6 +156,23 @@ PITCHERS = {
         "babip": 0.322, "lob_pct": 70.0, "k_bb_pct": 9.8,
         "recent_3_era": 5.10, "recent_5_era": 4.80, "recent_10_era": 4.50,
         "gs": 12, "innings": 68.2, "wpa": -0.6, "re24": -4.3,
+    },
+    # ── 味全龍 ──────────────────────────────────
+    "約翰甘特": {
+        "team": "WC", "foreign": True,
+        "era": 1.49, "whip": 0.95, "fip": 1.82, "xfip": 2.10,
+        "k9": 9.4, "bb9": 1.8, "h9": 6.5, "hr9": 0.5,
+        "babip": 0.268, "lob_pct": 82.0, "k_bb_pct": 22.1,
+        "recent_3_era": 1.20, "recent_5_era": 1.38, "recent_10_era": 1.50,
+        "gs": 14, "innings": 90.2, "wpa": 4.1, "re24": 28.5,
+    },
+    "陳子豪": {
+        "team": "WC", "foreign": False,
+        "era": 3.55, "whip": 1.28, "fip": 3.68, "xfip": 3.74,
+        "k9": 7.8, "bb9": 2.9, "h9": 8.4, "hr9": 0.9,
+        "babip": 0.302, "lob_pct": 73.5, "k_bb_pct": 14.0,
+        "recent_3_era": 3.20, "recent_5_era": 3.40, "recent_10_era": 3.60,
+        "gs": 13, "innings": 81.0, "wpa": 1.2, "re24": 8.8,
     },
 }
 
@@ -304,24 +323,68 @@ TEAM_STATS = {
 }
 
 # ──────────────────────────────────────────────
-# 本季對戰紀錄 {away: {home: [away_wins, home_wins]}}
+# 味全龍 球隊數據（2026 復歸六隊）
 # ──────────────────────────────────────────────
-H2H = {
-    "AEL": {"CT": [6, 4], "FG": [5, 5], "WL": [3, 7], "TSG": [7, 3]},
-    "CT":  {"AEL": [4, 6], "FG": [4, 6], "WL": [2, 8], "TSG": [5, 5]},
-    "FG":  {"AEL": [5, 5], "CT": [6, 4], "WL": [3, 7], "TSG": [6, 4]},
-    "WL":  {"AEL": [7, 3], "CT": [8, 2], "FG": [7, 3], "TSG": [7, 3]},
-    "TSG": {"AEL": [3, 7], "CT": [5, 5], "FG": [4, 6], "WL": [3, 7]},
+TEAM_STATS["WC"] = {
+    "batting": {
+        "avg": 0.275, "obp": 0.340, "slg": 0.435, "ops": 0.775,
+        "woba": 0.335, "wrc_plus": 103,
+        "runs_per_game": 5.0, "hr_per_game": 1.0,
+        "recent_7_ops": 0.790, "recent_14_ops": 0.780, "recent_30_ops": 0.775,
+    },
+    "bullpen": {
+        "era": 3.20, "whip": 1.20, "fip": 3.35,
+        "save_pct": 70.0, "hold_pct": 65.0,
+        "last7_games": 10, "last7_pitches": 310,
+        "closer_consecutive_days": 0,
+        "fatigue_score": 30,
+    },
+    "defense": {
+        "fielding_pct": 0.981, "errors": 28, "drs": 5, "uzr": 3.0,
+    },
+    "record": {
+        "w": 30, "l": 20, "pct": 0.600,
+        "home_w": 16, "home_l": 10,
+        "away_w": 14, "away_l": 10,
+        "last5": [1,1,0,1,1], "last10": [1,0,1,1,0,1,1,0,1,1],
+        "run_diff": 28,
+    },
+    "elo": 1545,
+    "injuries": [],
+    "schedule_fatigue": 2,
 }
 
 # ──────────────────────────────────────────────
-# 今日賽程 (Demo)
+# 本季對戰紀錄 {away: {home: [away_wins, home_wins]}}
+# ──────────────────────────────────────────────
+H2H = {
+    "AEL": {"CT": [6,4], "FG": [5,5], "WL": [3,7], "TSG": [7,3], "WC": [4,6]},
+    "CT":  {"AEL": [4,6], "FG": [4,6], "WL": [2,8], "TSG": [5,5], "WC": [5,5]},
+    "FG":  {"AEL": [5,5], "CT": [6,4], "WL": [3,7], "TSG": [6,4], "WC": [4,6]},
+    "WL":  {"AEL": [7,3], "CT": [8,2], "FG": [7,3], "TSG": [7,3], "WC": [6,4]},
+    "TSG": {"AEL": [3,7], "CT": [5,5], "FG": [4,6], "WL": [3,7], "WC": [5,5]},
+    "WC":  {"AEL": [6,4], "CT": [5,5], "FG": [6,4], "WL": [4,6], "TSG": [5,5]},
+}
+
+# ──────────────────────────────────────────────
+# 今日賽程 (Demo — 三場六隊全出)
 # ──────────────────────────────────────────────
 def get_today_games(game_date: date = None) -> list:
     if game_date is None:
         game_date = date.today()
     ds = str(game_date)
     return [
+        {
+            "game_id": f"{ds}-FG-TSG",
+            "date": ds, "time": "18:35",
+            "away": "FG",  "away_name": "富邦悍將",
+            "home": "TSG", "home_name": "台鋼雄鷹",
+            "venue": "澄清湖棒球場",
+            "away_pitcher": "鄭錫謙",
+            "home_pitcher": "羅力",
+            "status": "預定",
+            "away_score": None, "home_score": None,
+        },
         {
             "game_id": f"{ds}-FG-WL",
             "date": ds, "time": "18:35",
@@ -334,24 +397,14 @@ def get_today_games(game_date: date = None) -> list:
             "away_score": None, "home_score": None,
         },
         {
-            "game_id": f"{ds}-TSG-AEL",
+            "game_id": f"{ds}-WC-CT",
             "date": ds, "time": "18:35",
-            "away": "TSG", "away_name": "台鋼雄鷹",
-            "home": "AEL", "home_name": "中信兄弟",
-            "venue": "洲際棒球場",
-            "away_pitcher": "Scott McGough",
-            "home_pitcher": "陳柏清",
+            "away": "WC",  "away_name": "味全龍",
+            "home": "CT",  "home_name": "統一7-ELEVEn獅",
+            "venue": "台南棒球場",
+            "away_pitcher": "約翰甘特",
+            "home_pitcher": "陳冠宇",
             "status": "預定",
-            "away_score": None, "home_score": None,
-        },
-        {
-            "game_id": f"{ds}-CT-off",
-            "date": ds, "time": None,
-            "away": None, "away_name": None,
-            "home": "CT", "home_name": "統一7-ELEVEn獅",
-            "venue": None,
-            "away_pitcher": None, "home_pitcher": None,
-            "status": "輪休",
             "away_score": None, "home_score": None,
         },
     ]

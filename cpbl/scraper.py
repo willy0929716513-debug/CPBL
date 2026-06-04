@@ -35,6 +35,14 @@ TEAM_CODE_MAP = {
     "富邦悍將": "FG", "悍將": "FG", "富邦": "FG",
     "樂天桃猿": "WL", "桃猿": "WL", "樂天": "WL",
     "台鋼雄鷹": "TSG", "雄鷹": "TSG", "台鋼": "TSG",
+    "味全龍": "WC", "龍": "WC", "味全": "WC",
+    # English names (from international sports sites)
+    "Chinatrust Brothers": "AEL", "Brothers": "AEL",
+    "Uni-President Lions": "CT", "Uni Lions": "CT", "Uni-President 7-Eleven Lions": "CT",
+    "Fubon Guardians": "FG", "Guardians": "FG",
+    "Rakuten Monkeys": "WL", "Monkeys": "WL",
+    "TSG Eagles": "TSG", "Taiwan Steel Eagles": "TSG", "TSG Hawks": "TSG",
+    "Wei Chuan Dragons": "WC", "Dragons": "WC",
 }
 
 CITY_MAP = {

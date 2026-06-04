@@ -56,43 +56,69 @@ _opening_cache: dict[str, dict] = {}
 # ──────────────────────────────────────────────
 # Mock 資料  (game_key = "AWAY_CODE-HOME_CODE")
 # ──────────────────────────────────────────────
+def _mock(away_odds: float, home_odds: float, total: float = 8.5, note: str = "") -> dict:
+    """Generate a mock odds entry from decimal odds."""
+    home_impl = round(1 / home_odds * 100, 1)
+    away_impl = round(1 / away_odds * 100, 1)
+    return {
+        "source": "mock",
+        "open_away_odds": away_odds,
+        "open_home_odds": home_odds,
+        "curr_away_odds": away_odds,
+        "curr_home_odds": home_odds,
+        "run_line": -1.5,
+        "rl_home_odds": 1.90,
+        "rl_away_odds": 1.90,
+        "total": total,
+        "over_odds": 1.90,
+        "under_odds": 1.90,
+        "public_home_pct": round(home_impl / (home_impl + away_impl) * 100),
+        "public_away_pct": round(away_impl / (home_impl + away_impl) * 100),
+        "vig_pct": 7.5,
+        "bookmakers": ["mock"],
+        "note": note,
+    }
+
+
 MOCK_ODDS: dict[str, dict] = {
-    "FG-WL": {
-        "source":            "demo",
-        "open_away_odds":    2.30,
-        "open_home_odds":    1.65,
-        "curr_away_odds":    2.45,
-        "curr_home_odds":    1.58,
-        "run_line":         -1.5,
-        "rl_home_odds":      1.82,
-        "rl_away_odds":      2.00,
-        "total":             8.5,
-        "over_odds":         1.85,
-        "under_odds":        1.95,
-        "public_home_pct":   62,
-        "public_away_pct":   38,
-        "vig_pct":           7.5,
-        "bookmakers":       ["demo"],
-        "note": "主隊賠率從 1.65 縮至 1.58 → 莊家更看好主隊；主隊讓 1.5 分受青睞",
-    },
-    "TSG-AEL": {
-        "source":            "demo",
-        "open_away_odds":    2.20,
-        "open_home_odds":    1.72,
-        "curr_away_odds":    2.15,
-        "curr_home_odds":    1.72,
-        "run_line":         -1.0,
-        "rl_home_odds":      1.88,
-        "rl_away_odds":      1.92,
-        "total":             7.5,
-        "over_odds":         1.90,
-        "under_odds":        1.90,
-        "public_home_pct":   55,
-        "public_away_pct":   45,
-        "vig_pct":           7.5,
-        "bookmakers":       ["demo"],
-        "note": "盤口穩定；客隊賠率微縮（2.20→2.15）有部分資金流入客隊",
-    },
+    # ── 原有 Demo 賠率 ─────────────────────────
+    "FG-WL":  _mock(2.45, 1.58, 8.5, "主隊賠率從1.65縮至1.58→莊家看好主隊"),
+    "TSG-AEL": _mock(2.15, 1.72, 7.5, "盤口穩定"),
+    # ── 2026 年六月賽程常見對陣 ───────────────
+    # FG (富邦) 作客
+    "FG-TSG": _mock(2.10, 1.78, 8.0, "兩隊實力相近"),
+    "FG-AEL": _mock(2.20, 1.70, 8.5, ""),
+    "FG-CT":  _mock(2.30, 1.65, 9.0, "台南主場加成"),
+    "FG-WC":  _mock(2.00, 1.85, 8.5, ""),
+    # WL (樂天) 作客
+    "WL-AEL": _mock(1.85, 2.00, 9.0, "強客出擊"),
+    "WL-CT":  _mock(1.90, 1.95, 8.5, ""),
+    "WL-TSG": _mock(1.80, 2.10, 8.5, "樂天強勢"),
+    "WL-FG":  _mock(1.88, 1.98, 8.5, ""),
+    "WL-WC":  _mock(1.82, 2.05, 8.5, ""),
+    # WC (味全) 作客
+    "WC-AEL": _mock(2.05, 1.80, 8.5, ""),
+    "WC-CT":  _mock(2.15, 1.75, 9.0, ""),
+    "WC-TSG": _mock(1.95, 1.90, 8.0, ""),
+    "WC-WL":  _mock(2.20, 1.68, 8.5, ""),
+    "WC-FG":  _mock(2.10, 1.78, 8.5, ""),
+    # AEL (中信) 作客
+    "AEL-CT":  _mock(2.10, 1.78, 8.5, ""),
+    "AEL-WL":  _mock(2.30, 1.65, 9.0, ""),
+    "AEL-TSG": _mock(1.80, 2.10, 7.5, ""),
+    "AEL-WC":  _mock(1.88, 1.98, 8.5, ""),
+    "AEL-FG":  _mock(2.05, 1.82, 8.5, ""),
+    # CT (統一) 作客
+    "CT-AEL":  _mock(2.20, 1.72, 8.0, ""),
+    "CT-WL":   _mock(2.40, 1.60, 8.5, ""),
+    "CT-TSG":  _mock(2.00, 1.85, 8.0, ""),
+    "CT-WC":   _mock(2.10, 1.78, 9.0, ""),
+    "CT-FG":   _mock(2.15, 1.75, 8.5, ""),
+    # TSG (台鋼) 作客
+    "TSG-CT":  _mock(2.25, 1.68, 7.5, ""),
+    "TSG-WL":  _mock(2.50, 1.55, 8.5, ""),
+    "TSG-FG":  _mock(2.15, 1.75, 8.0, ""),
+    "TSG-WC":  _mock(2.05, 1.80, 8.0, ""),
 }
 
 
