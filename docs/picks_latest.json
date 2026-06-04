@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04 14:35 (台灣時間)",
+  "generated_at": "2026-06-04 17:24 (台灣時間)",
   "game_date": "2026-06-04",
   "picks": [],
   "predictions": [
@@ -12,22 +12,22 @@
       "game_time": "18:35",
       "time": "18:35",
       "venue": "澄清湖棒球場",
-      "home_win_prob": 0.527,
-      "away_win_prob": 0.473,
+      "home_win_prob": 0.525,
+      "away_win_prob": 0.475,
       "away_sp": {},
       "home_sp": {},
       "market_home_prob": 54.1,
-      "value_gap": -1.7,
+      "value_gap": -1.9,
       "curr_home_odds": 1.78,
       "curr_away_odds": 2.1,
       "market_total": 8.0,
       "signals": [],
       "factors": {},
       "ref_label": "台鋼雄鷹 勝算較高",
-      "ref_prob": 52.7,
+      "ref_prob": 52.5,
       "ref_odds": 1.78,
-      "ref_edge": -0.0351,
-      "conf": 0.053,
+      "ref_edge": -0.0366,
+      "conf": 0.05,
       "tier": 3,
       "recommended": false
     }
@@ -38,7 +38,7 @@
   "recent_history": [],
   "game_preds": {
     "TSG|FG": {
-      "home_win_prob": 0.527,
+      "home_win_prob": 0.525,
       "market_total": 8.0
     }
   },
