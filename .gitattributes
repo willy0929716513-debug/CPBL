@@ -1,0 +1,3 @@
+# Auto-generated files — skip diff and resolve conflicts with ours
+docs/picks_latest.json merge=ours -diff linguist-generated=true
+data/pitcher_stats.json merge=ours -diff linguist-generated=true
