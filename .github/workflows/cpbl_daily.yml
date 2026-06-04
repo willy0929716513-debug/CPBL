@@ -123,19 +123,8 @@ jobs:
               win = g.get("home_name","主") if p["winner"] == "home" else g.get("away_name","客")
               print(f"  {g.get('away_name')} vs {g.get('home_name')}  →  {win} ({100-hw}%/{hw}%)  信心{p['confidence']:.0f}%")
 
-          if not official:
-              print("非賽前2小時，結束（不儲存/不推播/不更新Gist）")
-              sys.exit(0)
-
-          # 5. 存 JSON
+          # 5. Discord 推播（每次都發）
           import requests as req
-          os.makedirs("predictions", exist_ok=True)
-          out = f"predictions/{today}.json"
-          with open(out, "w", encoding="utf-8") as f:
-              json.dump(results, f, ensure_ascii=False, indent=2, default=str)
-          print(f"Saved: {out}")
-
-          # 6. Discord 推播
           webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
           if webhook and results:
               lines = [f"**⚾ CPBL 今日賽前預測 {today}**\n"]
@@ -163,7 +152,18 @@ jobs:
               req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
               print("Discord notified")
 
-          # 7. 更新 Gist
+          if not official:
+              print("非賽前2小時，結束（不儲存/不更新Gist）")
+              sys.exit(0)
+
+          # 6. 存 JSON（僅賽前2小時）
+          os.makedirs("predictions", exist_ok=True)
+          out = f"predictions/{today}.json"
+          with open(out, "w", encoding="utf-8") as f:
+              json.dump(results, f, ensure_ascii=False, indent=2, default=str)
+          print(f"Saved: {out}")
+
+          # 7. 更新 Gist（僅賽前2小時）
           gist_token = os.environ.get("GIST_TOKEN", "")
           if gist_token and results:
               with open(f"predictions/{today}.json", encoding="utf-8") as f:
