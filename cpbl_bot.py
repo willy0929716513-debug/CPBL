@@ -26,8 +26,8 @@ KELLY       = 0.25
 KELLY_FLOOR = 50.0
 KELLY_MAX   = 200.0
 BANK        = 1000.0
-EDGE_MIN    = 0.03 if DEMO_MODE else 0.06
-CONF_MIN    = 0.55 if DEMO_MODE else 0.60
+EDGE_MIN    = 0.03 if DEMO_MODE else 0.05
+CONF_MIN    = 0.55
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
