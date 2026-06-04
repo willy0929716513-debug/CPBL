@@ -1,0 +1,89 @@
+name: CPBL Schedule Check
+
+on:
+  schedule:
+    # 每天台灣時間 16:00 (UTC 08:00)
+    - cron: "0 8 * * *"
+    # 每天台灣時間 18:00 (UTC 10:00)
+    - cron: "0 10 * * *"
+  workflow_dispatch:   # 手動測試用
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser (Chromium)
+        run: playwright install chromium --with-deps
+
+      - name: Check today's schedule
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python - <<'EOF'
+          import os, sys
+          from datetime import date, datetime, timezone, timedelta
+          sys.path.insert(0, ".")
+          from cpbl.scraper import CPBLScraper
+          import requests
+
+          TW      = timezone(timedelta(hours=8))
+          today   = date.today()
+          now_tw  = datetime.now(TW)
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+          scraper = CPBLScraper()
+
+          print(f"偵測時間（台灣）：{now_tw.strftime('%Y-%m-%d %H:%M')}")
+
+          # 取得今日一軍賽程（失敗則視為無賽事）
+          try:
+              games = scraper.fetch_schedule(today)
+              source = "cpbl.com.tw"
+              print(f"取得 {len(games)} 場一軍賽事（來源：{source}）")
+          except Exception as e:
+              print(f"Scraper failed ({e}) — 今日無法確認賽程")
+              games = []
+              source = "failed"
+
+          # 過濾有效賽事（排除輪休）
+          valid = [g for g in games if g.get("away") and g.get("home") and g.get("status") != "輪休"]
+
+          print(f"今日賽事：{len(valid)} 場（來源：{source}）")
+
+          if not webhook:
+              sys.exit(0)
+
+          if not valid:
+              # 沒有比賽，不發通知
+              print("今日無賽事，不推播")
+              sys.exit(0)
+
+          # 有比賽 → 推 Discord
+          time_label = now_tw.strftime("%H:%M")
+          lines = [f"⚾ **CPBL 今日賽事提醒** {today}（{time_label} 偵測）\n"]
+          for g in valid:
+              aname = g.get("away_name", g.get("away", "?"))
+              hname = g.get("home_name", g.get("home", "?"))
+              t     = g.get("time", "")
+              venue = g.get("venue", "")
+              line  = f"• **{aname}** @ **{hname}**"
+              if t:
+                  line += f"  🕐 {t}"
+              if venue:
+                  line += f"  📍 {venue}"
+              lines.append(line)
+
+          msg = "\n".join(lines)
+          r = requests.post(webhook, json={"content": msg}, timeout=8)
+          print(f"Discord notified ({r.status_code})")
+          EOF
