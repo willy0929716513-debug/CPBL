@@ -2,9 +2,19 @@ name: CPBL Daily Prediction
 
 on:
   schedule:
-    # 每天台灣時間 10:00 (UTC+8) = UTC 02:00
-    - cron: "0 2 * * *"
-  workflow_dispatch:   # 手動觸發
+    # 平日晚場 18:35 賽前2小時 → 16:35 台灣 (UTC 08:35)
+    - cron: "35 8 * * 1-5"
+    # 週末午場 13:05 賽前2小時 → 11:05 台灣 (UTC 03:05)
+    - cron: "5 3 * * 6,0"
+    # 週末下午場 17:05 賽前2小時 → 15:05 台灣 (UTC 07:05)
+    - cron: "5 7 * * 6,0"
+  workflow_dispatch:
+    inputs:
+      official_record:
+        description: '正式紀錄（儲存 JSON、推播 Discord、更新 Gist、部署頁面）'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
@@ -24,12 +34,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run daily prediction
+      - name: Run prediction
         env:
           CPBL_DEMO: "0"
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          # schedule → 正式; workflow_dispatch → 看 input
+          OFFICIAL_RUN: ${{ (github.event_name == 'schedule' || inputs.official_record == 'true') && '1' || '0' }}
         run: |
           python - <<'EOF'
           import json, os, sys
@@ -42,12 +54,15 @@ jobs:
           import cpbl.mock_data as mock
 
           today    = date.today()
+          official = os.environ.get("OFFICIAL_RUN", "0") == "1"
           elo      = ELOSystem()
           model    = PredictionModel(elo)
           scraper  = CPBLScraper()
           fetcher  = OddsFetcher()
 
-          # 1. 賽程（先嘗試真實資料，失敗用 mock）
+          print(f"{'【正式紀錄】' if official else '【預覽模式，不儲存】'}  {today}")
+
+          # 1. 賽程
           try:
               games = scraper.fetch_schedule(today)
               if not games:
@@ -68,9 +83,9 @@ jobs:
           for g in games:
               if not (g.get("away") and g.get("home")):
                   continue
-              key      = f"{g['away']}-{g['home']}"
-              odds     = all_odds.get(key, {})
-              weather  = None
+              key     = f"{g['away']}-{g['home']}"
+              odds    = all_odds.get(key, {})
+              weather = None
               try:
                   weather = scraper.fetch_weather(g.get("venue", ""))
               except Exception:
@@ -79,49 +94,55 @@ jobs:
               g["odds_raw"]   = odds
               results.append(g)
 
-          # 4. 存 JSON
+          # 預覽模式：只印結果，不儲存
+          if not official:
+              for g in results:
+                  p = g.get("prediction", {})
+                  if not p:
+                      continue
+                  hw  = int(p["home_win_prob"] * 100)
+                  win = g.get("home_name","主") if p["winner"] == "home" else g.get("away_name","客")
+                  print(f"  {g.get('away_name')} vs {g.get('home_name')}  →  {win} ({100-hw}%/{hw}%)  信心{p['confidence']:.0f}%")
+              print("預覽完成，非正式執行，跳過儲存/推播/Gist")
+              sys.exit(0)
+
+          # 4. 存 JSON（僅正式）
           os.makedirs("predictions", exist_ok=True)
           out = f"predictions/{today}.json"
           with open(out, "w", encoding="utf-8") as f:
               json.dump(results, f, ensure_ascii=False, indent=2, default=str)
           print(f"Saved: {out}")
 
-          # 5. Discord 推播
-          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
-          if not webhook or not results:
-              sys.exit(0)
-
+          # 5. Discord 推播（僅正式）
           import requests as req
-          lines = [f"**⚾ CPBL 今日賽前預測 {today}**\n"]
-          for g in results:
-              p = g.get("prediction", {})
-              if not p:
-                  continue
-              hw   = int(p["home_win_prob"] * 100)
-              aw   = 100 - hw
-              win  = g.get("home_name","主隊") if p["winner"] == "home" else g.get("away_name","客隊")
-              conf = p["confidence"]
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+          if webhook and results:
+              lines = [f"**⚾ CPBL 今日賽前預測 {today}**\n"]
+              for g in results:
+                  p = g.get("prediction", {})
+                  if not p:
+                      continue
+                  hw   = int(p["home_win_prob"] * 100)
+                  aw   = 100 - hw
+                  win  = g.get("home_name","主隊") if p["winner"] == "home" else g.get("away_name","客隊")
+                  conf = p["confidence"]
+                  of   = p.get("factors", {}).get("odds", {})
+                  h_odds = of.get("curr_home_odds", "?")
+                  a_odds = of.get("curr_away_odds", "?")
+                  mkt    = of.get("market_home_prob", "?")
+                  vg     = of.get("analysis", {}).get("value_gap", 0) if of.get("analysis") else 0
+                  sigs   = of.get("signals", [])
+                  sig_txt = ("  " + " | ".join(sigs[:2])) if sigs else ""
+                  lines.append(
+                      f"**{g.get('away_name','?')}** `{aw}%`  vs  `{hw}%` **{g.get('home_name','?')}**"
+                      f"  →  🏆 **{win}** (信心 {conf:.0f}%)\n"
+                      f"  📋 賠率 客`{a_odds}` / 主`{h_odds}`  市場主隊`{mkt}%`  差距`{vg:+.0f}%`"
+                      + sig_txt
+                  )
+              req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
+              print("Discord notified")
 
-              of      = p.get("factors", {}).get("odds", {})
-              h_odds  = of.get("curr_home_odds", "?")
-              a_odds  = of.get("curr_away_odds", "?")
-              mkt     = of.get("market_home_prob", "?")
-              vg      = of.get("analysis", {}).get("value_gap", 0) if of.get("analysis") else 0
-
-              sigs = of.get("signals", [])
-              sig_txt = ("  " + " | ".join(sigs[:2])) if sigs else ""
-
-              lines.append(
-                  f"**{g.get('away_name','?')}** `{aw}%`  vs  `{hw}%` **{g.get('home_name','?')}**"
-                  f"  →  🏆 **{win}** (信心 {conf:.0f}%)\n"
-                  f"  📋 賠率 客`{a_odds}` / 主`{h_odds}`  市場主隊`{mkt}%`  差距`{vg:+.0f}%`"
-                  + sig_txt
-              )
-
-          req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
-          print("Discord notified")
-
-          # 6. 存 Gist 歷史紀錄
+          # 6. 更新 Gist（僅正式）
           gist_token = os.environ.get("GIST_TOKEN", "")
           if gist_token and results:
               with open(f"predictions/{today}.json", encoding="utf-8") as f:
@@ -131,7 +152,6 @@ jobs:
                   "Accept": "application/vnd.github+json",
                   "X-GitHub-Api-Version": "2022-11-28",
               }
-              # 尋找現有的 CPBL Predictions Archive gist
               gist_id = None
               r = req.get("https://api.github.com/gists", headers=headers, timeout=10)
               if r.status_code == 200:
@@ -153,13 +173,13 @@ jobs:
                       print(f"Gist created: {r2.json().get('html_url')}")
                   else:
                       print(f"Gist create failed: {r2.status_code}")
-              # 傳遞 Gist ID 供 generate_static.py 使用
               if gist_id:
                   with open(os.environ.get("GITHUB_ENV", "/dev/null"), "a") as ef:
                       ef.write(f"GIST_ID={gist_id}\n")
           EOF
 
       - name: Commit predictions
+        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -168,9 +188,11 @@ jobs:
           git push
 
       - name: Generate static site
+        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         run: python generate_static.py
 
       - name: Deploy to GitHub Pages
+        if: ${{ github.event_name == 'schedule' || inputs.official_record == 'true' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
