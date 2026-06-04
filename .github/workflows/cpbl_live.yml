@@ -1,0 +1,117 @@
+name: CPBL Live Monitor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360   # 最長6小時（GitHub Actions 上限）
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Live monitoring
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python - <<'EOF'
+          import os, sys, time
+          from datetime import date, datetime, timezone, timedelta
+          sys.path.insert(0, ".")
+          from cpbl.scraper import CPBLScraper
+          import cpbl.mock_data as mock
+          import requests
+
+          TW      = timezone(timedelta(hours=8))
+          today   = date.today()
+          scraper = CPBLScraper()
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+
+          def notify(msg):
+              print(msg)
+              if webhook:
+                  try:
+                      requests.post(webhook, json={"content": msg}, timeout=8)
+                  except Exception:
+                      pass
+
+          def check_live():
+              """
+              回傳 (True, game)  → 偵測到比賽進行中
+              回傳 (False, None) → 確認沒有比賽在進行（已結束）
+              回傳 (None, None)  → 爬蟲錯誤，結果不確定
+              """
+              try:
+                  games = scraper.fetch_schedule(today)
+                  if not games:
+                      return False, None
+                  for g in games:
+                      status = str(g.get("status", "")).lower()
+                      if any(s in status for s in ["進行", "live", "in_progress", "●"]):
+                          return True, g
+                  return False, None
+              except Exception as e:
+                  print(f"  Scraper error: {e}")
+                  return None, None
+
+          def in_game_window():
+              """用時間判斷現在是否可能在比賽時段內（開賽後3小時內）"""
+              now_min = datetime.now(TW)
+              nm = now_min.hour * 60 + now_min.minute
+              for sh, sm in [(13, 5), (17, 5), (18, 35)]:
+                  start = sh * 60 + sm
+                  if start <= nm <= start + 180:
+                      return True
+              return False
+
+          notify(
+              f"📡 **CPBL 場中偵測開始**  {datetime.now(TW).strftime('%Y-%m-%d %H:%M')}\n"
+              f"每 5 分鐘偵測一次，連續 3 次未偵測到比賽自動停止。"
+          )
+
+          consecutive_miss = 0
+          check_num        = 0
+
+          while consecutive_miss < 3:
+              time.sleep(300)   # 等5分鐘
+              check_num += 1
+              now_str = datetime.now(TW).strftime('%H:%M')
+
+              detected, game = check_live()
+
+              if detected:
+                  # 偵測到比賽進行中
+                  consecutive_miss = 0
+                  gname = (f"{game.get('away_name','?')} vs {game.get('home_name','?')}"
+                           if game else "比賽")
+                  print(f"[#{check_num} {now_str}] ✅ {gname} 進行中")
+
+              elif detected is False:
+                  # 確認無比賽
+                  consecutive_miss += 1
+                  print(f"[#{check_num} {now_str}] ❌ 未偵測到進行中比賽 ({consecutive_miss}/3)")
+
+              else:
+                  # 爬蟲錯誤，用時間判斷
+                  if in_game_window():
+                      consecutive_miss = 0
+                      print(f"[#{check_num} {now_str}] ⚠️  爬蟲錯誤，但時間在比賽時段內，繼續監測")
+                  else:
+                      consecutive_miss += 1
+                      print(f"[#{check_num} {now_str}] ❌ 爬蟲錯誤且超過比賽時段 ({consecutive_miss}/3)")
+
+          notify(
+              f"🏁 **CPBL 場中偵測結束**  {datetime.now(TW).strftime('%H:%M')}\n"
+              f"連續 3 次未偵測到比賽，自動停止（共偵測 {check_num} 次）"
+          )
+          EOF
