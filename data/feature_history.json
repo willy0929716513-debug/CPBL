@@ -1,0 +1,70 @@
+{
+  "teams": {
+    "TSG": {
+      "bullpen_ip_3d": 0.0,
+      "bullpen_ip_1d": 0.0,
+      "rest_days": 1,
+      "travel_fatigue": 0,
+      "consecutive_away": 0,
+      "home_run_factor": 1.0,
+      "vs_lhp_ops_30d": 0.76,
+      "vs_rhp_ops_30d": 0.76,
+      "run_support_5g": 4.8,
+      "wins_l10": 5,
+      "last_game_date": ""
+    },
+    "FG": {
+      "bullpen_ip_3d": 0.0,
+      "bullpen_ip_1d": 0.0,
+      "rest_days": 1,
+      "travel_fatigue": 0,
+      "consecutive_away": 0,
+      "home_run_factor": 1.0,
+      "vs_lhp_ops_30d": 0.76,
+      "vs_rhp_ops_30d": 0.76,
+      "run_support_5g": 4.8,
+      "wins_l10": 5,
+      "last_game_date": ""
+    },
+    "WL": {
+      "bullpen_ip_3d": 0.0,
+      "bullpen_ip_1d": 0.0,
+      "rest_days": 1,
+      "travel_fatigue": 0,
+      "consecutive_away": 0,
+      "home_run_factor": 1.0,
+      "vs_lhp_ops_30d": 0.76,
+      "vs_rhp_ops_30d": 0.76,
+      "run_support_5g": 4.8,
+      "wins_l10": 5,
+      "last_game_date": ""
+    },
+    "CT": {
+      "bullpen_ip_3d": 0.0,
+      "bullpen_ip_1d": 0.0,
+      "rest_days": 1,
+      "travel_fatigue": 0,
+      "consecutive_away": 0,
+      "home_run_factor": 1.0,
+      "vs_lhp_ops_30d": 0.76,
+      "vs_rhp_ops_30d": 0.76,
+      "run_support_5g": 4.8,
+      "wins_l10": 5,
+      "last_game_date": ""
+    },
+    "WC": {
+      "bullpen_ip_3d": 0.0,
+      "bullpen_ip_1d": 0.0,
+      "rest_days": 1,
+      "travel_fatigue": 0,
+      "consecutive_away": 0,
+      "home_run_factor": 1.0,
+      "vs_lhp_ops_30d": 0.76,
+      "vs_rhp_ops_30d": 0.76,
+      "run_support_5g": 4.8,
+      "wins_l10": 5,
+      "last_game_date": ""
+    }
+  },
+  "updated_at": "2026-06-04 11:37"
+}

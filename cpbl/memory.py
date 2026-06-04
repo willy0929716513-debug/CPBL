@@ -1,10 +1,10 @@
-"""V7 RL 記憶模組 — 自適應權重，根據歷史結果更新"""
+"""V8 RL 記憶模組 — 自適應權重 + Decay + Rolling Window + Cold-start Guard"""
 import json, os, math
 
 _FILE = os.path.join(os.path.dirname(__file__), "..", "data", "memory.json")
 
 DEFAULT: dict = {
-    "version":        2,
+    "version":        3,
     "pitcher_weight": 1.0,   # 先發投手因子乘數 (0.5~2.0)
     "market_weight":  1.0,   # 盤口因子乘數
     "lineup_weight":  1.0,   # 打線因子乘數
@@ -16,6 +16,7 @@ DEFAULT: dict = {
     "roi_units":      0.0,   # 累積損益 (Kelly 單位)
     "streak_correct": 0,
     "streak_wrong":   0,
+    "rolling_results": [],   # 最近50場結果 (True/False)，rolling window
     "calibration": {         # 信心分桶校準 {bucket: [正確, 總場數]}
         "50": [0, 0], "55": [0, 0], "60": [0, 0],
         "65": [0, 0], "70": [0, 0], "75": [0, 0], "80": [0, 0],
@@ -42,6 +43,7 @@ def load() -> dict:
             mem["calibration"].setdefault(k, v)
         for k, v in DEFAULT["factor_accuracy"].items():
             mem["factor_accuracy"].setdefault(k, v)
+        mem.setdefault("rolling_results", [])
         return mem
     except (FileNotFoundError, json.JSONDecodeError):
         return dict(DEFAULT)
@@ -78,6 +80,11 @@ def update(mem: dict, actual_home_win: bool, predicted_home_win: bool,
         mem["streak_wrong"] = mem.get("streak_wrong", 0) + 1
         mem["streak_correct"] = 0
         mem["roi_units"] = round(mem.get("roi_units", 0) - 1.0, 4)
+
+    # ── Rolling Window（最近50場，防止長期 overfit）───
+    rr = mem.get("rolling_results", [])
+    rr.append(correct)
+    mem["rolling_results"] = rr[-50:]
 
     # ── 置信度校準 ──────────────────────────────
     bucket = str(int(min(80, max(50, conf * 100 // 5 * 5))))
@@ -130,23 +137,47 @@ def update(mem: dict, actual_home_win: bool, predicted_home_win: bool,
         _adjust("bullpen_weight", adv_map["bullpen"])
         _adjust("form_weight",    adv_map["form"])
 
-    # ── 全局偏誤校正（需足夠樣本才調整）──────────
+    # ── V8 Decay：每場都把權重往 1.0 拉一點（防止過擬合）─
+    _apply_decay(mem)
+
+    # ── 全局偏誤校正（優先用 Rolling Window，需足夠樣本）──
     total = mem["total_games"]
-    if total >= 20:
+    rr    = mem.get("rolling_results", [])
+    # 用 rolling window 的準確率（更能反映近期）
+    if len(rr) >= 20:
+        acc_roll = sum(rr) / len(rr)
+        if acc_roll < 0.46:
+            mem["bias"] = round(max(-0.08, mem.get("bias", 0.0) - LR * 0.4), 4)
+        elif acc_roll > 0.65:
+            mem["bias"] = round(min(0.08, mem.get("bias", 0.0) + LR * 0.15), 4)
+    elif total >= 20:
         acc = mem["correct"] / total
         if acc < 0.48:
-            # 系統性低估，調低 bias（讓模型更保守）
             mem["bias"] = round(max(-0.08, mem.get("bias", 0.0) - LR * 0.3), 4)
         elif acc > 0.62:
-            # 準確率異常高，可能過擬合，輕微回調
             mem["bias"] = round(min(0.08, mem.get("bias", 0.0) + LR * 0.1), 4)
 
     return mem
 
 
+def _apply_decay(mem: dict, decay: float = 0.97):
+    """每場把因子權重向 1.0 回縮 (decay)，防止小樣本過擬合。"""
+    for key in ("pitcher_weight", "market_weight", "lineup_weight",
+                "bullpen_weight", "form_weight"):
+        cur = mem.get(key, 1.0)
+        # 往 1.0 移動 (1 - decay) 的距離
+        mem[key] = round(cur + (1.0 - cur) * (1.0 - decay), 4)
+
+
 def accuracy(mem: dict) -> float:
     total = mem.get("total_games", 0)
     return mem["correct"] / total if total > 0 else 0.0
+
+
+def rolling_accuracy(mem: dict) -> float:
+    """最近50場滾動準確率（比全期準確率更能反映近況）。"""
+    rr = mem.get("rolling_results", [])
+    return sum(rr) / len(rr) if rr else 0.0
 
 
 def calibration_str(mem: dict) -> str:
@@ -168,3 +199,21 @@ def weight_str(mem: dict) -> str:
         f"近況×{mem.get('form_weight',1):.2f} "
         f"偏移{mem.get('bias',0):+.3f}"
     )
+
+
+def v8_summary(mem: dict) -> dict:
+    """V8 記憶完整摘要 dict。"""
+    total = mem.get("total_games", 0)
+    rr    = mem.get("rolling_results", [])
+    return {
+        "total_games":     total,
+        "accuracy":        round(accuracy(mem), 3),
+        "rolling_acc_50":  round(rolling_accuracy(mem), 3),
+        "rolling_n":       len(rr),
+        "roi_units":       mem.get("roi_units", 0.0),
+        "streak_correct":  mem.get("streak_correct", 0),
+        "streak_wrong":    mem.get("streak_wrong", 0),
+        "weights":         weight_str(mem),
+        "calibration":     calibration_str(mem),
+        "bias":            mem.get("bias", 0.0),
+    }
