@@ -29,6 +29,7 @@ jobs:
           CPBL_DEMO: "0"
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
           python - <<'EOF'
           import json, os, sys
@@ -119,6 +120,43 @@ jobs:
 
           req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
           print("Discord notified")
+
+          # 6. 存 Gist 歷史紀錄
+          gist_token = os.environ.get("GIST_TOKEN", "")
+          if gist_token and results:
+              with open(f"predictions/{today}.json", encoding="utf-8") as f:
+                  content = f.read()
+              headers = {
+                  "Authorization": f"Bearer {gist_token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              }
+              # 尋找現有的 CPBL Predictions Archive gist
+              gist_id = None
+              r = req.get("https://api.github.com/gists", headers=headers, timeout=10)
+              if r.status_code == 200:
+                  for g in r.json():
+                      if g.get("description") == "CPBL Predictions Archive":
+                          gist_id = g["id"]
+                          break
+              filename = f"cpbl-{today}.json"
+              payload  = {"files": {filename: {"content": content}}}
+              if gist_id:
+                  r2 = req.patch(f"https://api.github.com/gists/{gist_id}", headers=headers, json=payload, timeout=10)
+                  print(f"Gist updated ({r2.status_code}): https://gist.github.com/{gist_id}")
+              else:
+                  payload["description"] = "CPBL Predictions Archive"
+                  payload["public"] = False
+                  r2 = req.post("https://api.github.com/gists", headers=headers, json=payload, timeout=10)
+                  if r2.status_code == 201:
+                      gist_id = r2.json()["id"]
+                      print(f"Gist created: {r2.json().get('html_url')}")
+                  else:
+                      print(f"Gist create failed: {r2.status_code}")
+              # 傳遞 Gist ID 供 generate_static.py 使用
+              if gist_id:
+                  with open(os.environ.get("GITHUB_ENV", "/dev/null"), "a") as ef:
+                      ef.write(f"GIST_ID={gist_id}\n")
           EOF
 
       - name: Commit predictions

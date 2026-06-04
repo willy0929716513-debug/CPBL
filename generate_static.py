@@ -22,7 +22,6 @@ def get_repo_slug():
         url = subprocess.check_output(
             ["git", "remote", "get-url", "origin"], text=True
         ).strip()
-        # handles https://...github.com/owner/repo[.git] and git@github.com:owner/repo.git
         for sep in ["/github.com/", ":github.com:", ":github.com/"]:
             if sep in url:
                 slug = url.split(sep, 1)[1].removesuffix(".git")
@@ -30,6 +29,13 @@ def get_repo_slug():
     except Exception:
         pass
     return "OWNER/REPO"
+
+def get_gist_id():
+    """Find the CPBL Predictions Archive gist ID from local cache file."""
+    cache = Path("docs/.gist_id")
+    if cache.exists():
+        return cache.read_text().strip()
+    return ""
 
 def load_all_predictions():
     """Return sorted list of (date_str, games) tuples, newest first."""
@@ -246,7 +252,7 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
 }});
 """
 
-def build_page(date_str, games, all_dates, repo, is_latest=False):
+def build_page(date_str, games, all_dates, repo, is_latest=False, gist_id=""):
     """Render a full HTML page for one date."""
     cards = "\n".join(game_card(g) for g in games) if games else '<p class="empty">今日無賽事資料</p>'
     today_label = " （最新）" if is_latest else ""
@@ -281,6 +287,7 @@ def build_page(date_str, games, all_dates, repo, is_latest=False):
 <header>
   <h1>⚾ CPBL 中華職棒 賽前預測</h1>
   <button class="hbtn hist" onclick="location.href='index.html'">最新預測</button>
+  {f'<a class="hbtn hist" href="https://gist.github.com/{gist_id}" target="_blank">📋 Gist 歷史庫</a>' if gist_id else ''}
   <button class="hbtn" onclick="openTrigger()">▶ 立即觸發預測</button>
 </header>
 <div class="sub">
@@ -331,25 +338,31 @@ def build_page(date_str, games, all_dates, repo, is_latest=False):
 # ── main ───────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    import os
     repo      = get_repo_slug()
+    gist_id   = get_gist_id()
     all_dates = load_all_predictions()  # [(date_str, games), ...]
     out_dir   = Path("docs")
     out_dir.mkdir(exist_ok=True)
 
+    # If GIST_ID env var is provided (from workflow), cache it for future static builds
+    env_gist = os.environ.get("GIST_ID", "")
+    if env_gist and env_gist != gist_id:
+        (out_dir / ".gist_id").write_text(env_gist)
+        gist_id = env_gist
+        print(f"Cached Gist ID: {gist_id}")
+
     if not all_dates:
-        # No predictions yet — placeholder
         date_str = str(_date.today())
-        html = build_page(date_str, [], [(date_str, [])], repo, is_latest=True)
+        html = build_page(date_str, [], [(date_str, [])], repo, is_latest=True, gist_id=gist_id)
         (out_dir / "index.html").write_text(html, encoding="utf-8")
         print(f"Generated docs/index.html (placeholder, no predictions yet)")
     else:
-        # Generate individual page per date
         for i, (date_str, games) in enumerate(all_dates):
             is_latest = (i == 0)
-            html = build_page(date_str, games, all_dates, repo, is_latest=is_latest)
-            # Latest → index.html; others → YYYY-MM-DD.html
+            html = build_page(date_str, games, all_dates, repo, is_latest=is_latest, gist_id=gist_id)
             fname = "index.html" if is_latest else f"{date_str}.html"
             (out_dir / fname).write_text(html, encoding="utf-8")
             print(f"Generated docs/{fname}  ({len(games)} games)")
 
-        print(f"Total: {len(all_dates)} pages, repo={repo}")
+        print(f"Total: {len(all_dates)} pages, repo={repo}, gist={gist_id or 'none'}")
