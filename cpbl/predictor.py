@@ -13,7 +13,7 @@ CPBL V2.0 勝負預測模型 — 9大因子 100+變量
   守備能力    2%  守備率/DRS/UZR/失誤數
 """
 from .elo import ELOSystem
-from .mock_data import PITCHERS, TEAM_STATS, H2H, VENUE_FACTORS
+from .mock_data import PITCHERS, TEAM_STATS, H2H, VENUE_FACTORS, BATTERS, BULLPEN
 from . import odds as odds_module
 
 WEIGHTS = {
@@ -42,7 +42,8 @@ class PredictionModel:
 
     def predict(self, game: dict, weather: dict | None = None,
                 odds_data: dict | None = None,
-                pitchers: dict | None = None) -> dict:
+                pitchers: dict | None = None,
+                memory: dict | None = None) -> dict:
         ht = game["home"]
         at = game["away"]
         if not ht or not at:
@@ -165,11 +166,25 @@ class PredictionModel:
             hp.get("era"),
             ap.get("era"),
         )
+
+        # RL 記憶權重乘數（V7 新增）
+        _MEM_KEY = {
+            "starter":     "pitcher_weight",
+            "lineup":      "lineup_weight",
+            "bullpen":     "bullpen_weight",
+            "recent_form": "form_weight",
+            "odds":        "market_weight",
+        }
         home_prob = elo_base
         for key, w in WEIGHTS.items():
             adv = factors[key]["advantage"]
-            adj = (adv / 100.0) * w * 0.5
+            mem_mult = 1.0
+            if memory and key in _MEM_KEY:
+                mem_mult = float(memory.get(_MEM_KEY[key], 1.0))
+            adj = (adv / 100.0) * w * mem_mult * 0.5
             home_prob += adj
+        if memory:
+            home_prob += float(memory.get("bias", 0.0))
         home_prob = max(0.05, min(0.95, home_prob))
 
         # ── 盤口資料 (passthrough + 輕微校正) ──────────
@@ -179,9 +194,11 @@ class PredictionModel:
 
         if odds_data:
             o_analysis = odds_module.analyze(odds_data, home_prob)
-            # 盤口校正：85% 模型 + 15% 市場（市場為百分比需先除以100）
+            # 盤口校正：市場權重由 RL 記憶動態調整 (預設 85/15)
+            mw = float(memory.get("market_weight", 1.0)) if memory else 1.0
+            market_blend = min(0.35, 0.15 * mw)   # 15%~35%，依市場權重調整
             market_hp = o_analysis.get("market_home_prob", home_prob * 100) / 100.0
-            home_prob  = home_prob * 0.85 + market_hp * 0.15
+            home_prob  = home_prob * (1 - market_blend) + market_hp * market_blend
             home_prob  = max(0.05, min(0.95, home_prob))
             factors["odds"] = {
                 "label": "盤口 / 賠率",
@@ -216,12 +233,13 @@ class PredictionModel:
         return {
             "home_win_prob": round(home_prob, 4),
             "away_win_prob": round(1.0 - home_prob, 4),
-            "elo_base":  round(elo_base, 4),
-            "factors":   factors,
-            "winner":    "home" if home_prob >= 0.5 else "away",
-            "confidence": round(abs(home_prob - 0.5) * 200, 1),
-            "home_elo":  self.elo.get(ht),
-            "away_elo":  self.elo.get(at),
+            "elo_base":      round(elo_base, 4),
+            "factors":       factors,
+            "winner":        "home" if home_prob >= 0.5 else "away",
+            "confidence":    round(abs(home_prob - 0.5) * 200, 1),
+            "home_elo":      self.elo.get(ht),
+            "away_elo":      self.elo.get(at),
+            "memory_applied": memory is not None,
         }
 
 
@@ -341,7 +359,7 @@ def foreign_score(p: dict) -> float:
 
 
 def _lineup_score(team: str) -> float:
-    """打線強度 (0~100)。涵蓋 7 個指標 + 三段近況 OPS 趨勢。"""
+    """打線強度 (0~100)。整合球隊整體數據 + 個人野手數據。"""
     b = TEAM_STATS.get(team, {}).get("batting", {})
     if not b:
         return 50.0
@@ -367,7 +385,42 @@ def _lineup_score(team: str) -> float:
     recent_ops = r7 * 0.50 + r14 * 0.30 + r30 * 0.20
     s += (recent_ops - ops) * 30.0
 
+    # ── 個人野手深度加成 ──────────────────────────
+    s += _lineup_depth_bonus(team)
+
     return max(10.0, min(90.0, s))
+
+
+def _lineup_depth_bonus(team: str) -> float:
+    """
+    從 BATTERS 計算打線深度加成 (-8~+8)。
+    考量：前4棒 wRC+ 均值、全壘打火力、近況熱度。
+    """
+    roster = [b for b in BATTERS.values() if b.get("team") == team]
+    if len(roster) < 3:
+        return 0.0
+
+    # 按 wRC+ 排序取前 4 棒
+    top4 = sorted(roster, key=lambda x: -x.get("wrc_plus", 100))[:4]
+
+    # 前4棒平均 wRC+ vs 聯盟平均100
+    avg_wrc = sum(b.get("wrc_plus", 100) for b in top4) / len(top4)
+    depth   = (avg_wrc - 100) * 0.06
+
+    # 全隊全壘打長打力（取整隊）
+    total_hr = sum(b.get("hr", 0) for b in roster)
+    depth   += (total_hr / max(1, len(roster)) - 8.0) * 0.15
+
+    # 近況熱度（前4棒近7天 OPS vs 季均 OPS）
+    for batter in top4:
+        r7      = batter.get("recent_7_ops",  batter.get("ops", 0.750))
+        season  = batter.get("ops", 0.750)
+        depth  += (r7 - season) * 3.0
+
+    # 打線厚度（陣容愈深加分愈多，8人以上滿分）
+    depth += min(2.0, (len(roster) - 5) * 0.4)
+
+    return max(-8.0, min(8.0, depth))
 
 
 def _lineup_detail(ht: str, at: str) -> str:
@@ -382,7 +435,7 @@ def _lineup_detail(ht: str, at: str) -> str:
 
 
 def _bullpen_score(team: str) -> float:
-    """牛棚戰力 (0~100)。涵蓋 ERA/FIP/WHIP + 疲勞三重指標。"""
+    """牛棚戰力 (0~100)。整合球隊整體數據 + BULLPEN 個人成員數據。"""
     bp = TEAM_STATS.get(team, {}).get("bullpen", {})
     if not bp:
         return 50.0
@@ -420,7 +473,43 @@ def _bullpen_score(team: str) -> float:
     if l7g > 15:
         s -= (l7g - 15) * 1.2
 
+    # ── 個人牛棚成員補強 ─────────────────────────
+    s += _bullpen_individual_bonus(team)
+
     return max(10.0, min(90.0, s))
+
+
+def _bullpen_individual_bonus(team: str) -> float:
+    """
+    從 BULLPEN 個人數據計算補強分 (-6~+6)。
+    考量：終結者/設置ERA近況、個人連出天數。
+    """
+    members = [p for p in BULLPEN.values() if p.get("team") == team]
+    if not members:
+        return 0.0
+
+    bonus = 0.0
+    for p in members:
+        era_r3  = p.get("recent_3_era", p.get("era", LEAGUE_AVG_ERA))
+        era_s   = p.get("era", LEAGUE_AVG_ERA)
+        consec  = p.get("consec_days", 0)
+        role    = p.get("role", "MR")
+
+        # 角色乘數（終結者最重要）
+        role_w = {"CL": 0.5, "SU": 0.3, "MR": 0.2}.get(role, 0.2)
+
+        # 近況 vs 整季 ERA 趨勢
+        bonus += (era_s - era_r3) * role_w * 2.0
+
+        # 個人連出懲罰（跨越整隊疲勞數據）
+        if consec >= 3:
+            bonus -= role_w * 8.0
+        elif consec == 2:
+            bonus -= role_w * 4.0
+        elif consec == 1:
+            bonus -= role_w * 1.5
+
+    return max(-6.0, min(6.0, bonus))
 
 
 def _bullpen_detail(ht: str, at: str) -> str:
