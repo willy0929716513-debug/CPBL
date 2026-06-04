@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPBL 預測 2026-06-03</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+/* header */
+header{background:#1e293b;border-bottom:2px solid #334155;padding:16px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.35rem;font-weight:800;color:#f8fafc;flex:1;min-width:200px}
+.hbtn{background:#0ea5e9;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s}
+.hbtn:hover{background:#0284c7}
+.hbtn.hist{background:#334155}
+.hbtn.hist:hover{background:#475569}
+/* sub bar */
+.sub{font-size:.78rem;color:#64748b;padding:8px 24px;background:#1e293b;border-bottom:1px solid #0f172a}
+/* layout */
+.layout{display:flex;max-width:1200px;margin:0 auto;padding:24px 16px;gap:24px;align-items:flex-start}
+/* main content */
+.content{flex:1;min-width:0}
+h2{font-size:.85rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;margin-bottom:24px}
+/* game card */
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;transition:border-color .2s}
+.card:hover{border-color:#475569}
+.card-meta{font-size:.72rem;color:#475569;margin-bottom:8px}
+.matchup{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.team{flex:1}.team.right{text-align:right}
+.tname{font-size:1rem;font-weight:700}
+.pitcher{font-size:.75rem;color:#94a3b8;margin-top:2px}
+.prob{font-size:1.25rem;font-weight:800;margin-top:4px}
+.vs-col{flex-shrink:0}
+.vs{font-size:.65rem;color:#475569;font-weight:700;background:#0f172a;padding:6px 8px;border-radius:6px}
+.bar{display:flex;height:20px;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.bar div{transition:width .3s}
+.winner{font-size:.85rem;color:#cbd5e1;text-align:center;padding:7px 12px;background:#0f172a;border-radius:8px;margin-bottom:8px}
+.winner strong{color:#fbbf24}
+.odds-row{display:flex;flex-wrap:wrap;gap:5px;font-size:.72rem;color:#94a3b8;border-top:1px solid #334155;padding-top:8px}
+.odds-row span{background:#0f172a;padding:3px 8px;border-radius:6px}
+.odds-row b{color:#e2e8f0}
+.sig{background:#1e3a5f!important;color:#60a5fa!important}
+.no-pred{color:#475569;padding:16px;text-align:center}
+/* sidebar */
+.sidebar{width:240px;flex-shrink:0}
+.scard{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:16px}
+.scard h3{font-size:.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.date-list{list-style:none}
+.date-list li{margin-bottom:4px}
+.date-list a{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:7px;font-size:.82rem;color:#cbd5e1;background:#0f172a;transition:background .15s}
+.date-list a:hover,.date-list a.active{background:#1e40af;color:#fff}
+.date-list .cnt{font-size:.7rem;color:#64748b}
+.date-list a.active .cnt{color:#93c5fd}
+/* trigger modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:28px;width:420px;max-width:95vw}
+.modal h3{font-size:1.1rem;font-weight:700;color:#f8fafc;margin-bottom:8px}
+.modal p{font-size:.83rem;color:#94a3b8;margin-bottom:16px;line-height:1.5}
+.modal input{width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#e2e8f0;font-size:.9rem;margin-bottom:12px;outline:none}
+.modal input:focus{border-color:#0ea5e9}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.modal-btns button{padding:8px 18px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer}
+.btn-cancel{background:#334155;color:#e2e8f0}.btn-cancel:hover{background:#475569}
+.btn-ok{background:#0ea5e9;color:#fff}.btn-ok:hover{background:#0284c7}
+#trigger-status{font-size:.82rem;margin-top:10px;min-height:20px;text-align:center}
+/* empty / footer */
+.empty{color:#475569;padding:40px;text-align:center;font-size:1rem}
+footer{text-align:center;padding:24px;color:#334155;font-size:.75rem;border-top:1px solid #1e293b;margin-top:8px}
+@media(max-width:680px){.layout{flex-direction:column}.sidebar{width:100%}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚾ CPBL 中華職棒 賽前預測</h1>
+  <button class="hbtn hist" onclick="location.href='index.html'">最新預測</button>
+  <button class="hbtn" onclick="openTrigger()">▶ 立即觸發預測</button>
+</header>
+<div class="sub">
+  預測模型：先發投手 32% ／ 打線 18% ／ 牛棚 13% ／ 賠率 10% ／ 主客場 8% ／ 近況 7% ／ H2H 5% ／ 其他 7%
+</div>
+
+<div class="layout">
+  <div class="content">
+    <h2>📅 2026-06-03 （最新） · 0 場賽事</h2>
+    <div class="grid">
+      <p class="empty">今日無賽事資料</p>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="scard">
+      <h3>歷史紀錄</h3>
+      <ul class="date-list">
+        <li><a href="#" class="active">2026-06-03 （最新）<span class="cnt">0 場</span></a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<footer>自動更新 每日 10:00（台灣時間）&nbsp;·&nbsp; 僅供參考，請理性投注 &nbsp;·&nbsp; 資料來源：cpbl.com.tw / The Odds API</footer>
+
+<!-- Trigger Modal -->
+<div id="modal-overlay" class="overlay">
+  <div class="modal">
+    <h3>▶ 立即觸發預測</h3>
+    <p>需要 GitHub Personal Access Token（細粒度，只需 <b>Actions: Write</b> 權限）。<br>Token 只存在你的瀏覽器 localStorage，不會上傳。</p>
+    <input id="pat-input" type="password" placeholder="ghp_xxxxxxxxxxxx 或 github_pat_xxx">
+    <div id="trigger-status"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeTrigger()">取消</button>
+      <button class="btn-ok" id="btn-trigger-ok" onclick="doTrigger()">確認觸發</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const REPO = 'OWNER/REPO';
+const WF   = 'cpbl_daily.yml';
+
+function openTrigger() {
+  document.getElementById('modal-overlay').classList.add('open');
+  const saved = localStorage.getItem('gh_pat') || '';
+  document.getElementById('pat-input').value = saved;
+  document.getElementById('trigger-status').textContent = '';
+}
+function closeTrigger() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+async function doTrigger() {
+  const token = document.getElementById('pat-input').value.trim();
+  if (!token) { alert('請輸入 Personal Access Token'); return; }
+  localStorage.setItem('gh_pat', token);
+  const btn = document.getElementById('btn-trigger-ok');
+  btn.disabled = true;
+  btn.textContent = '觸發中…';
+  const el = document.getElementById('trigger-status');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/actions/workflows/${WF}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main' }),
+      }
+    );
+    if (res.status === 204) {
+      el.style.color = '#22c55e';
+      el.textContent = '✅ 已成功觸發！預測約需 2 分鐘完成，之後重新整理頁面。';
+      setTimeout(closeTrigger, 3000);
+    } else {
+      const j = await res.json().catch(() => ({}));
+      el.style.color = '#ef4444';
+      el.textContent = '❌ 失敗：' + (j.message || res.status);
+    }
+  } catch(e) {
+    el.style.color = '#ef4444';
+    el.textContent = '❌ 網路錯誤：' + e.message;
+  }
+  btn.disabled = false;
+  btn.textContent = '確認觸發';
+}
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeTrigger();
+});
+
+</script>
+</body>
+</html>
