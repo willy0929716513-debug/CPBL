@@ -8,7 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
-from cpbl.mock_data import PITCHERS, VENUE_FACTORS
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("cpbl_bot")
@@ -295,8 +295,8 @@ def main():
             "market_total":  float(of.get("total_line") or 8.5),
         }
 
-        ap_name = g.get("away_pitcher") or ""
-        hp_name = g.get("home_pitcher") or ""
+        ap_name = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
+        hp_name = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
         asp_data = {**PITCHERS.get(ap_name, {}), "name": ap_name} if ap_name else {}
         hsp_data = {**PITCHERS.get(hp_name, {}), "name": hp_name} if hp_name else {}
 
