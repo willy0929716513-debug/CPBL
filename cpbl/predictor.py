@@ -42,7 +42,8 @@ class PredictionModel:
 
     def predict(self, game: dict, weather: dict | None = None,
                 odds_data: dict | None = None,
-                pitchers: dict | None = None) -> dict:
+                pitchers: dict | None = None,
+                memory: dict | None = None) -> dict:
         ht = game["home"]
         at = game["away"]
         if not ht or not at:
@@ -165,11 +166,25 @@ class PredictionModel:
             hp.get("era"),
             ap.get("era"),
         )
+
+        # RL 記憶權重乘數（V7 新增）
+        _MEM_KEY = {
+            "starter":     "pitcher_weight",
+            "lineup":      "lineup_weight",
+            "bullpen":     "bullpen_weight",
+            "recent_form": "form_weight",
+            "odds":        "market_weight",
+        }
         home_prob = elo_base
         for key, w in WEIGHTS.items():
             adv = factors[key]["advantage"]
-            adj = (adv / 100.0) * w * 0.5
+            mem_mult = 1.0
+            if memory and key in _MEM_KEY:
+                mem_mult = float(memory.get(_MEM_KEY[key], 1.0))
+            adj = (adv / 100.0) * w * mem_mult * 0.5
             home_prob += adj
+        if memory:
+            home_prob += float(memory.get("bias", 0.0))
         home_prob = max(0.05, min(0.95, home_prob))
 
         # ── 盤口資料 (passthrough + 輕微校正) ──────────
@@ -179,9 +194,11 @@ class PredictionModel:
 
         if odds_data:
             o_analysis = odds_module.analyze(odds_data, home_prob)
-            # 盤口校正：85% 模型 + 15% 市場（市場為百分比需先除以100）
+            # 盤口校正：市場權重由 RL 記憶動態調整 (預設 85/15)
+            mw = float(memory.get("market_weight", 1.0)) if memory else 1.0
+            market_blend = min(0.35, 0.15 * mw)   # 15%~35%，依市場權重調整
             market_hp = o_analysis.get("market_home_prob", home_prob * 100) / 100.0
-            home_prob  = home_prob * 0.85 + market_hp * 0.15
+            home_prob  = home_prob * (1 - market_blend) + market_hp * market_blend
             home_prob  = max(0.05, min(0.95, home_prob))
             factors["odds"] = {
                 "label": "盤口 / 賠率",
@@ -216,12 +233,13 @@ class PredictionModel:
         return {
             "home_win_prob": round(home_prob, 4),
             "away_win_prob": round(1.0 - home_prob, 4),
-            "elo_base":  round(elo_base, 4),
-            "factors":   factors,
-            "winner":    "home" if home_prob >= 0.5 else "away",
-            "confidence": round(abs(home_prob - 0.5) * 200, 1),
-            "home_elo":  self.elo.get(ht),
-            "away_elo":  self.elo.get(at),
+            "elo_base":      round(elo_base, 4),
+            "factors":       factors,
+            "winner":        "home" if home_prob >= 0.5 else "away",
+            "confidence":    round(abs(home_prob - 0.5) * 200, 1),
+            "home_elo":      self.elo.get(ht),
+            "away_elo":      self.elo.get(at),
+            "memory_applied": memory is not None,
         }
 
 
