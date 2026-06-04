@@ -82,6 +82,21 @@ def save_gist(gid, records):
 
 # ── Discord ────────────────────────────────────────────────────────────────
 
+def send_discord_no_games(game_date, reason="無法取得一軍賽程"):
+    if not DISCORD_URL: return
+    now_tw   = datetime.datetime.now(TW)
+    time_str = now_tw.strftime("%m/%d %H:%M")
+    msg = (
+        f"⚾ **CPBL Bot** {game_date}\n"
+        f"🕐 {time_str} (台灣時間)\n"
+        f"ℹ️ 今日無推薦：{reason}"
+    )
+    try:
+        requests.post(DISCORD_URL, json={"content": msg}, timeout=8)
+    except Exception as e:
+        log.warning("Discord no-games: %s", e)
+
+
 def send_discord(picks, game_date, history=None):
     if not DISCORD_URL or not picks: return
     now_tw   = datetime.datetime.now(TW)
@@ -178,18 +193,19 @@ def main():
     scraper = CPBLScraper()
     fetcher = OddsFetcher()
 
-    # 1. Schedule
+    # 1. Schedule — Demo 用 mock，真實模式只用爬蟲（失敗則 0 場）
     if DEMO_MODE:
         games = mock.get_today_games(today)
         log.info("Demo: %d games", len(games))
     else:
         try:
             games = scraper.fetch_schedule(today)
-            if not games: raise ValueError("empty")
-            log.info("Scraped %d games", len(games))
+            if not games:
+                raise ValueError("no games parsed")
+            log.info("Scraped %d 一軍 games from cpbl.com.tw", len(games))
         except Exception as e:
-            log.warning("Scraper failed (%s), using mock", e)
-            games = mock.get_today_games(today)
+            log.warning("Scraper failed (%s) — 今日無法取得一軍賽程，跳過預測", e)
+            games = []
 
     # 2. Odds
     if DEMO_MODE:
@@ -324,7 +340,10 @@ def main():
     log.info("Saved %s (%d picks)", JSON_PATH, len(picks))
 
     # 7. Discord
-    send_discord(picks, today_str, history)
+    if picks:
+        send_discord(picks, today_str, history)
+    elif not games and not DEMO_MODE:
+        send_discord_no_games(today_str, "cpbl.com.tw 賽程爬取失敗，今日可能無賽或網站封鎖")
 
 
 if __name__ == "__main__":
