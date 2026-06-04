@@ -23,53 +23,99 @@ jobs:
 
       - name: Run daily prediction
         env:
-          CPBL_DEMO: "1"   # 改成 "0" 可抓即時資料
+          CPBL_DEMO: "0"
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python - <<'EOF'
           import json, os, sys
           from datetime import date
           sys.path.insert(0, ".")
+          from cpbl.scraper import CPBLScraper
           from cpbl.elo import ELOSystem
           from cpbl.predictor import PredictionModel
+          from cpbl.odds import OddsFetcher
           import cpbl.mock_data as mock
 
-          today = date.today()
-          elo   = ELOSystem()
-          model = PredictionModel(elo)
-          games = mock.get_today_games(today)
+          today    = date.today()
+          elo      = ELOSystem()
+          model    = PredictionModel(elo)
+          scraper  = CPBLScraper()
+          fetcher  = OddsFetcher()
 
+          # 1. 賽程（先嘗試真實資料，失敗用 mock）
+          try:
+              games = scraper.fetch_schedule(today)
+              if not games:
+                  raise ValueError("empty")
+              print(f"Scraped {len(games)} games from cpbl.com.tw")
+          except Exception as e:
+              print(f"Scraper failed ({e}), using mock data")
+              games = mock.get_today_games(today)
+
+          # 2. 賠率
+          quota = fetcher.quota()
+          print(f"Odds API quota: {quota}")
+          all_odds = fetcher.fetch_all()
+          print(f"Fetched odds for {len(all_odds)} games")
+
+          # 3. 預測
           results = []
           for g in games:
-              if g.get("away") and g.get("home"):
-                  pred = model.predict(g)
-                  g["prediction"] = pred
-                  results.append(g)
+              if not (g.get("away") and g.get("home")):
+                  continue
+              key      = f"{g['away']}-{g['home']}"
+              odds     = all_odds.get(key, {})
+              weather  = None
+              try:
+                  weather = scraper.fetch_weather(g.get("venue", ""))
+              except Exception:
+                  pass
+              g["prediction"] = model.predict(g, weather, odds)
+              g["odds_raw"]   = odds
+              results.append(g)
 
-          # 存 JSON
+          # 4. 存 JSON
           os.makedirs("predictions", exist_ok=True)
           out = f"predictions/{today}.json"
           with open(out, "w", encoding="utf-8") as f:
               json.dump(results, f, ensure_ascii=False, indent=2, default=str)
           print(f"Saved: {out}")
 
-          # Discord 通知
+          # 5. Discord 推播
           webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
-          if webhook and results:
-              import requests
-              lines = ["**⚾ CPBL 今日賽前預測**\n"]
-              for g in results:
-                  p = g.get("prediction", {})
-                  if not p: continue
-                  hw = int(p["home_win_prob"] * 100)
-                  aw = 100 - hw
-                  win = g["home_name"] if p["winner"] == "home" else g["away_name"]
-                  lines.append(
-                      f"**{g['away_name']}** `{aw}%`  vs  `{hw}%` **{g['home_name']}**"
-                      f"  →  🏆 {win} (信心 {p['confidence']:.0f}%)"
-                  )
-              requests.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
-              print("Discord notified")
+          if not webhook or not results:
+              sys.exit(0)
+
+          import requests as req
+          lines = [f"**⚾ CPBL 今日賽前預測 {today}**\n"]
+          for g in results:
+              p = g.get("prediction", {})
+              if not p:
+                  continue
+              hw   = int(p["home_win_prob"] * 100)
+              aw   = 100 - hw
+              win  = g.get("home_name","主隊") if p["winner"] == "home" else g.get("away_name","客隊")
+              conf = p["confidence"]
+
+              of      = p.get("factors", {}).get("odds", {})
+              h_odds  = of.get("curr_home_odds", "?")
+              a_odds  = of.get("curr_away_odds", "?")
+              mkt     = of.get("market_home_prob", "?")
+              vg      = of.get("analysis", {}).get("value_gap", 0) if of.get("analysis") else 0
+
+              sigs = of.get("signals", [])
+              sig_txt = ("  " + " | ".join(sigs[:2])) if sigs else ""
+
+              lines.append(
+                  f"**{g.get('away_name','?')}** `{aw}%`  vs  `{hw}%` **{g.get('home_name','?')}**"
+                  f"  →  🏆 **{win}** (信心 {conf:.0f}%)\n"
+                  f"  📋 賠率 客`{a_odds}` / 主`{h_odds}`  市場主隊`{mkt}%`  差距`{vg:+.0f}%`"
+                  + sig_txt
+              )
+
+          req.post(webhook, json={"content": "\n".join(lines)}, timeout=10)
+          print("Discord notified")
           EOF
 
       - name: Commit predictions
