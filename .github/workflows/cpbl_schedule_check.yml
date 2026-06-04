@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install Playwright browser (Chromium)
+        run: playwright install chromium --with-deps
+
       - name: Check today's schedule
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -32,7 +35,6 @@ jobs:
           from datetime import date, datetime, timezone, timedelta
           sys.path.insert(0, ".")
           from cpbl.scraper import CPBLScraper
-          import cpbl.mock_data as mock
           import requests
 
           TW      = timezone(timedelta(hours=8))
@@ -43,18 +45,17 @@ jobs:
 
           print(f"偵測時間（台灣）：{now_tw.strftime('%Y-%m-%d %H:%M')}")
 
-          # 取得今日賽程
+          # 取得今日一軍賽程（失敗則視為無賽事）
           try:
               games = scraper.fetch_schedule(today)
-              if not games:
-                  raise ValueError("empty")
               source = "cpbl.com.tw"
+              print(f"取得 {len(games)} 場一軍賽事（來源：{source}）")
           except Exception as e:
-              print(f"Scraper failed ({e}), using mock data")
-              games = mock.get_today_games(today)
-              source = "mock"
+              print(f"Scraper failed ({e}) — 今日無法確認賽程")
+              games = []
+              source = "failed"
 
-          # 過濾有效賽事
+          # 過濾有效賽事（排除輪休）
           valid = [g for g in games if g.get("away") and g.get("home") and g.get("status") != "輪休"]
 
           print(f"今日賽事：{len(valid)} 場（來源：{source}）")
