@@ -1160,6 +1160,24 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     in the HTML the pitcher names appear.
     """
     soup = BeautifulSoup(html, "html.parser")
+
+    # ── Phase 0: scan <script> tags BEFORE removing them ─────────────────
+    # Yahoo Japan (and many modern JP sites) embed pitcher data in JS/JSON blobs.
+    # We must check script content before the decompose loop throws it away.
+    sorted_pitcher_keys_p0 = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
+    pitcher_pattern_p0 = re.compile(
+        '(' + '|'.join(re.escape(k) for k in sorted_pitcher_keys_p0) + ')'
+    )
+    found_in_scripts: set[str] = set()
+    for script in soup.find_all('script'):
+        sc = script.get_text() or ""
+        for m in pitcher_pattern_p0.finditer(sc):
+            found_in_scripts.add(_JP_PITCHER_NAME_MAP[m.group()])
+    if found_in_scripts:
+        log.info("Yahoo Japan Phase-0 (scripts): found pitchers %s", found_in_scripts)
+    else:
+        log.debug("Yahoo Japan Phase-0 (scripts): no pitcher names found in script tags")
+
     for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
         tag.decompose()
 
@@ -1213,14 +1231,15 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
         pitcher_pattern = re.compile(
             '(' + '|'.join(re.escape(k) for k in sorted_pitcher_keys) + ')'
         )
-        # Collect all pitcher names found anywhere on the page (short text nodes only)
-        found_zh: set[str] = set()
+        # Collect from regular text nodes (no length cap — let the pattern do the filtering)
+        found_zh: set[str] = set(found_in_scripts)  # seed with script-tag finds
         for node in soup.find_all(string=True):
             text = node.strip()
-            if not text or len(text) > 20:
+            if not text or len(text) > 50:
                 continue
             for m in pitcher_pattern.finditer(text):
                 found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
+        log.info("Yahoo Japan Phase-2: found pitcher names %s", found_zh or "(none)")
 
         # Assign each found pitcher to the game matching their team
         for g in games:
