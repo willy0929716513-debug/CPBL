@@ -737,25 +737,23 @@ def _parse_json_pitchers(data) -> dict:
 # ─────────────────────────────────────────────────────────────
 
 def scrape_schedule(year: int, months: list[int], session: requests.Session) -> list:
-    """從 ESPN API 抓 NPB + KBO 多個月份的賽程。"""
+    """從 ESPN API 抓 NPB + KBO 滾動日期窗口的賽程（昨天 ~ 14 天後）。"""
     from cpbl.stats_scraper import fetch_espn_schedule
     import datetime
 
     all_games = []
+    today = datetime.date.today()
+    start = today - datetime.timedelta(days=1)
+    end   = today + datetime.timedelta(days=14)
 
-    for month in months:
-        for day in range(1, 32):
-            try:
-                d = datetime.date(year, month, day)
-            except ValueError:
-                break
-            if d > datetime.date.today():
-                break
-            games = fetch_espn_schedule(d)
-            all_games.extend(games)
-            time.sleep(0.3)
+    current = start
+    while current <= end:
+        games = fetch_espn_schedule(current)
+        all_games.extend(games)
+        time.sleep(0.3)
+        current += datetime.timedelta(days=1)
 
-    log.info("賽程: 共 %d 場（%d 個月份）", len(all_games), len(months))
+    log.info("賽程: 共 %d 場（%s ~ %s）", len(all_games), start, end)
     return all_games
 
 
@@ -1084,34 +1082,45 @@ def save_stats(merged: dict, dry: bool = False):
 
 
 def update_schedule(games: list, dry: bool = False):
-    """將爬到的賽程合併進 schedule.json。"""
+    """將爬到的賽程寫入 schedule.json（只保留有 league 欄位的 NPB/KBO 資料）。"""
     if not games:
+        log.info("update_schedule: 無新賽程，schedule.json 不變")
         return
+    import datetime
+    cutoff = (datetime.date.today() - datetime.timedelta(days=2)).isoformat()
+
     try:
         with open(SCHED_FILE, encoding="utf-8") as f:
             existing = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         existing = {"games": []}
 
-    # 以 game_id 去重
-    existing_ids = {g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}"
-                    for g in existing.get("games", [])}
+    # 保留：有 league 欄位（NPB/KBO）且日期 >= cutoff 的舊資料
+    kept = [
+        g for g in existing.get("games", [])
+        if g.get("league") and g.get("date", "") >= cutoff
+    ]
+
+    existing_ids = {
+        g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}"
+        for g in kept
+    }
     added = 0
     for g in games:
         gid = g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}"
         if gid not in existing_ids:
-            existing["games"].append(g)
+            kept.append(g)
             existing_ids.add(gid)
             added += 1
 
-    existing["games"].sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
+    kept.sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
+    payload = {"games": kept, "updated_at": datetime.date.today().isoformat()}
     if dry:
-        log.info("[DRY] 會新增 %d 場賽程到 schedule.json", added)
+        log.info("[DRY] 會新增 %d 場賽程到 schedule.json（總計 %d 場）", added, len(kept))
         return
     with open(SCHED_FILE, "w", encoding="utf-8") as f:
-        json.dump(existing, f, ensure_ascii=False, indent=2)
-    log.info("schedule.json 新增 %d 場（總計 %d 場）",
-             added, len(existing["games"]))
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    log.info("schedule.json 新增 %d 場（總計 %d 場）", added, len(kept))
 
 
 # ─────────────────────────────────────────────────────────────
