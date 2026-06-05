@@ -746,9 +746,10 @@ def scrape_schedule(year: int, months: list[int], session: requests.Session) -> 
     start = today - datetime.timedelta(days=1)
     end   = today + datetime.timedelta(days=14)
 
+    odds_key = os.environ.get("ODDS_API_KEY", "")
     current = start
     while current <= end:
-        games = fetch_schedule_multi(current)
+        games = fetch_schedule_multi(current, odds_api_key=odds_key)
         all_games.extend(games)
         time.sleep(0.3)
         current += datetime.timedelta(days=1)

@@ -310,11 +310,13 @@ def main():
     else:
         games = []
 
-        # 1a. ESPN API（不受 CPBL WAF 封鎖）
+        # 1a. 多來源賽程：ESPN → ESPN Web → MLB Stats → Odds API /events
         try:
-            games = stats_scraper.fetch_schedule_multi(today)
+            games = stats_scraper.fetch_schedule_multi(
+                today, odds_api_key=os.environ.get("ODDS_API_KEY", "")
+            )
         except Exception as e:
-            log.warning("ESPN schedule failed: %s", e)
+            log.warning("Schedule fetch failed: %s", e)
 
         # 1b. 備援：schedule.json（由 update_data workflow 自動維護 NPB/KBO 賽程）
         if not games:
