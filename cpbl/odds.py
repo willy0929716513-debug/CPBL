@@ -22,7 +22,8 @@ log = logging.getLogger(__name__)
 
 # ── The Odds API ──────────────────────────────
 _ODDS_API_BASE   = "https://api.the-odds-api.com/v4"
-_KBO_SPORT_KEY   = "baseball_kbo"         # KBO は The Odds API でサポート
+_KBO_SPORT_KEY   = "baseball_kbo"
+_NPB_SPORT_KEY   = "baseball_npb"
 _PREFERRED_BMS   = ["pinnacle", "bet365", "betway", "unibet"]  # 越前越優先
 
 # The Odds API 英文隊名 → 我們的代碼  (KBO)
@@ -215,29 +216,32 @@ class TheOddsAPIClient:
         return result
 
     def _fetch_market(self, market: str) -> list:
-        url = f"{_ODDS_API_BASE}/sports/{_KBO_SPORT_KEY}/odds/"
-        params = {
-            "apiKey":      self.api_key,
-            "regions":     "eu,us,uk,au",
-            "markets":     market,
-            "oddsFormat":  "decimal",
-            "dateFormat":  "iso",
-        }
-        try:
-            resp = self._s.get(url, params=params, timeout=10)
-            if resp.status_code == 401:
-                log.error("The Odds API: 無效的 API Key")
-                return []
-            if resp.status_code == 422:
-                log.warning(f"The Odds API: KBO 不在此方案涵蓋範圍（{resp.text[:100]}）")
-                return []
-            resp.raise_for_status()
-            remaining = resp.headers.get("x-requests-remaining", "?")
-            log.info(f"The Odds API [{market}] OK — 剩餘配額: {remaining}")
-            return resp.json()
-        except requests.RequestException as e:
-            log.warning(f"The Odds API [{market}] 失敗: {e}")
-            return []
+        """抓 KBO + NPB h2h 賠率，合併回傳。"""
+        results = []
+        for sport_key in [_KBO_SPORT_KEY, _NPB_SPORT_KEY]:
+            url = f"{_ODDS_API_BASE}/sports/{sport_key}/odds/"
+            params = {
+                "apiKey":      self.api_key,
+                "regions":     "eu,us,uk,au",
+                "markets":     market,
+                "oddsFormat":  "decimal",
+                "dateFormat":  "iso",
+            }
+            try:
+                resp = self._s.get(url, params=params, timeout=10)
+                if resp.status_code == 401:
+                    log.error("The Odds API: 無效的 API Key")
+                    return results
+                if resp.status_code in (404, 422):
+                    log.debug(f"The Odds API [{sport_key}] 不支援此方案，略過")
+                    continue
+                resp.raise_for_status()
+                remaining = resp.headers.get("x-requests-remaining", "?")
+                log.info(f"The Odds API [{sport_key}/{market}] OK — 剩餘配額: {remaining}")
+                results.extend(resp.json())
+            except requests.RequestException as e:
+                log.warning(f"The Odds API [{sport_key}/{market}] 失敗: {e}")
+        return results
 
     def _parse_event(
         self, h2h_ev: dict, sp_ev: dict | None, tot_ev: dict | None,

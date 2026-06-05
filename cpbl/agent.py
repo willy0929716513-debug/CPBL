@@ -4,8 +4,8 @@ from typing import Optional
 from . import bayesian
 
 # ── 下注參數 ────────────────────────────────────────────────────────────────
-CONF_MIN      = 0.35   # real mode:  勝率 ≥ 67.5%
-CONF_MIN_DEMO = 0.25   # demo mode:  勝率 ≥ 62.5%
+CONF_MIN      = 0.22   # real mode:  完整暖機後勝率 ≥ ~61%
+CONF_MIN_DEMO = 0.15   # demo mode:  勝率 ≥ ~58%
 BANK          = 1000.0
 KELLY_FRAC    = 0.25   # 25% fractional Kelly（保守）
 KELLY_FLOOR   = 50.0
@@ -16,9 +16,9 @@ RISK_PENALTY  = 3.5    # EV 扣減 = mc_std² × RISK_PENALTY
 
 # 各信心等級對應的最低 Edge 門檻（實際模式）
 _EDGE_MIN = {
-    1: 0.08,   # 💎 頂級：需 82%+ 勝率
-    2: 0.05,   # 🔥 強力：需 72%+ 勝率
-    3: 0.03,   # ⭐ 穩定：需 67.5%+ 勝率
+    1: 0.06,   # 💎 頂級
+    2: 0.035,  # 🔥 強力
+    3: 0.02,   # ⭐ 穩定
 }
 
 TIER_EMOJI = {1: "💎", 2: "🔥", 3: "⭐"}
