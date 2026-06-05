@@ -477,17 +477,13 @@ function renderPicks() {
   let html = "";
 
   if (currentFilter === "ALL") {
-    const nonRec = allPredictions.filter(p => !p.recommended);
-    if (allPicks.length) {
-      html += allPicks.map(p => renderCard(p)).join("");
-    }
-    if (nonRec.length) {
-      if (allPicks.length) {
-        html += `<div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1 mt-2">📊 今日其他比賽（僅供參考）</div>`;
-      }
+    // Show all predictions in one flat list: picks first, then non-recommended
+    const recPreds  = allPredictions.filter(p => p.recommended);
+    const nonRec    = allPredictions.filter(p => !p.recommended);
+    if (recPreds.length || nonRec.length) {
+      html += recPreds.map(p => renderCard(p)).join("");
       html += nonRec.map(p => renderRefCard(p)).join("");
-    }
-    if (!allPicks.length && !nonRec.length) {
+    } else {
       html = `<div class="card p-10 text-center text-slate-500">今日無分析資料<br><small class="text-slate-600 mt-2 block">請先執行預測機器人</small></div>`;
     }
   } else {
@@ -531,8 +527,7 @@ function renderRefCard(p) {
       ${venueLine}
     </div>
     <div class="shrink-0 bg-amber-950/60 border border-amber-700/50 rounded-lg px-2.5 py-1 text-center">
-      <div class="text-xs font-bold text-amber-400">不建議</div>
-      <div class="text-xs text-amber-500/70">下注</div>
+      <div class="text-xs font-bold text-amber-400">（不推薦下注）</div>
     </div>
   </div>
   ${spLine}
@@ -548,7 +543,7 @@ function renderRefCard(p) {
   </div>
   <div class="mt-2 flex items-center gap-2 bg-amber-950/40 border border-amber-800/30 rounded-lg px-3 py-2">
     <span class="text-amber-400 text-sm">⚠️</span>
-    <span class="text-amber-300/80 text-xs">兩隊差距不足，不建議下注</span>
+    <span class="text-amber-300/80 text-xs">差距不足或波動過大（不推薦下注）</span>
   </div>
 </div>`;
 }
