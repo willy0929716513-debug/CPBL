@@ -42,33 +42,38 @@ _HEADERS = {
     "Accept-Language": "ja,ko,en-US;q=0.8",
 }
 
-# ESPN / Odds API 球隊顯示名稱 → 內部代碼
-_ESPN_TEAM_MAP = {
-    # NPB — 完整名稱（Odds API 帶城市前綴）
-    "Yomiuri Giants":                "GNT", "Giants":                "GNT",
-    "Hanshin Tigers":                "HNS", "Tigers":                "HNS",
-    "Hiroshima Toyo Carp":           "HRC", "Hiroshima Carp":        "HRC", "Carp": "HRC",
-    "Yokohama DeNA BayStars":        "YDB", "DeNA BayStars":         "YDB", "BayStars": "YDB",
-    "Tokyo Yakult Swallows":         "YKL", "Yakult Swallows":       "YKL", "Swallows": "YKL",
-    "Chunichi Dragons":              "CND", "Dragons":               "CND",
-    "Fukuoka SoftBank Hawks":        "SBH", "SoftBank Hawks":        "SBH", "Hawks": "SBH",
-    "Orix Buffaloes":                "ORX", "Buffaloes":             "ORX",
-    "Tohoku Rakuten Golden Eagles":  "RKT", "Rakuten Eagles":        "RKT", "Eagles": "RKT",
-    "Chiba Lotte Marines":           "LTT", "Lotte Marines":         "LTT", "Marines": "LTT",
-    "Saitama Seibu Lions":           "SEI", "Seibu Lions":           "SEI", "Lions": "SEI",
-    "Hokkaido Nippon-Ham Fighters":  "HAM", "Nippon-Ham Fighters":   "HAM", "Fighters": "HAM",
-    # KBO
-    "Samsung Lions":    "SSL",
-    "LG Twins":         "LGT",
-    "Doosan Bears":     "DSB",
-    "KT Wiz":           "KTW",
-    "SSG Landers":      "SSG",
-    "NC Dinos":         "NCD",
-    "KIA Tigers":       "KIA",
-    "Lotte Giants":     "LTG",
-    "Hanwha Eagles":    "HWE",
-    "Kiwoom Heroes":    "KWH",
+# NPB-only team map (used for baseball_npb Odds API key / MLB Stats API sportId=6)
+_NPB_TEAM_MAP = {
+    "Yomiuri Giants":               "GNT", "Giants":              "GNT",
+    "Hanshin Tigers":               "HNS", "Tigers":              "HNS",
+    "Hiroshima Toyo Carp":          "HRC", "Hiroshima Carp":      "HRC", "Carp": "HRC",
+    "Yokohama DeNA BayStars":       "YDB", "DeNA BayStars":       "YDB", "BayStars": "YDB",
+    "Tokyo Yakult Swallows":        "YKL", "Yakult Swallows":     "YKL", "Swallows": "YKL",
+    "Chunichi Dragons":             "CND", "Dragons":             "CND",
+    "Fukuoka SoftBank Hawks":       "SBH", "SoftBank Hawks":      "SBH", "Hawks": "SBH",
+    "Orix Buffaloes":               "ORX", "Buffaloes":           "ORX",
+    "Tohoku Rakuten Golden Eagles": "RKT", "Rakuten Eagles":      "RKT", "Eagles": "RKT",
+    "Chiba Lotte Marines":          "LTT", "Lotte Marines":       "LTT", "Marines": "LTT",
+    "Saitama Seibu Lions":          "SEI", "Seibu Lions":         "SEI", "Lions": "SEI",
+    "Hokkaido Nippon-Ham Fighters": "HAM", "Nippon-Ham Fighters": "HAM", "Fighters": "HAM",
 }
+
+# KBO-only team map (used for baseball_kbo Odds API key / MLB Stats API sportId=5)
+_KBO_TEAM_MAP = {
+    "Samsung Lions":  "SSL",
+    "LG Twins":       "LGT",
+    "Doosan Bears":   "DSB",
+    "KT Wiz":         "KTW",
+    "SSG Landers":    "SSG",
+    "NC Dinos":       "NCD",
+    "KIA Tigers":     "KIA",
+    "Lotte Giants":   "LTG",
+    "Hanwha Eagles":  "HWE",
+    "Kiwoom Heroes":  "KWH",
+}
+
+# Combined map kept for ESPN functions only (ESPN is blocked but code still referenced)
+_ESPN_TEAM_MAP = {**_NPB_TEAM_MAP, **_KBO_TEAM_MAP}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -487,6 +492,7 @@ def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
     date_iso    = game_date.isoformat()
     games: list[dict] = []
     for sport_id, league in [(6, "NPB"), (5, "KBO")]:
+        team_map = _NPB_TEAM_MAP if league == "NPB" else _KBO_TEAM_MAP
         url = (f"https://statsapi.mlb.com/api/v1/schedule"
                f"?sportId={sport_id}&date={date_str_us}&hydrate=probablePitcher")
         try:
@@ -501,8 +507,11 @@ def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
                     away   = away_t.get("team", {})
                     home_name = home.get("name", "")
                     away_name = away.get("name", "")
-                    home_code = _ESPN_TEAM_MAP.get(home_name, home.get("abbreviation", (home_name[:3].upper() if home_name else "???")))
-                    away_code = _ESPN_TEAM_MAP.get(away_name, away.get("abbreviation", (away_name[:3].upper() if away_name else "???")))
+                    home_code = team_map.get(home_name)
+                    away_code = team_map.get(away_name)
+                    if not home_code or not away_code:
+                        log.debug("MLB Stats [%s]: unknown team %s@%s — skip", league, away_name, home_name)
+                        continue
                     state = game.get("status", {}).get("abstractGameState", "Preview")
 
                     # 先發投手（hydrate=probablePitcher 提供）
@@ -562,8 +571,9 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
     to_utc   = (tw_midnight + timedelta(hours=24)).astimezone(timezone.utc)
 
     results: list[dict] = []
-    # Try both NPB and KBO sport keys
+    # Try both NPB and KBO sport keys, using league-specific team maps to prevent cross-league contamination
     for sport_key, league in [("baseball_npb", "NPB"), ("baseball_kbo", "KBO")]:
+        team_map = _NPB_TEAM_MAP if league == "NPB" else _KBO_TEAM_MAP
         url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/events"
         params = {
             "apiKey":          api_key,
@@ -586,28 +596,29 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
             if not isinstance(events, list):
                 log.debug("Odds API events [%s]: unexpected response", sport_key)
                 continue
+            before = len(results)
             for ev in events:
                 home_name = ev.get("home_team", "")
                 away_name = ev.get("away_team", "")
-                home_lower = home_name.lower()
-                away_lower = away_name.lower()
-                home_code = _ESPN_TEAM_MAP.get(home_name)
-                away_code = _ESPN_TEAM_MAP.get(away_name)
-                # Fallback: case-insensitive exact, then substring match
+                # Exact match first, then case-insensitive substring — within the correct league map only
+                home_code = team_map.get(home_name)
+                away_code = team_map.get(away_name)
                 if not home_code:
                     home_lower = home_name.lower()
-                    for k, v in _ESPN_TEAM_MAP.items():
+                    for k, v in team_map.items():
                         if k.lower() == home_lower or k.lower() in home_lower:
                             home_code = v
                             break
                 if not away_code:
                     away_lower = away_name.lower()
-                    for k, v in _ESPN_TEAM_MAP.items():
+                    for k, v in team_map.items():
                         if k.lower() == away_lower or k.lower() in away_lower:
                             away_code = v
                             break
-                home_code = home_code or home_name[:3].upper()
-                away_code = away_code or away_name[:3].upper()
+                # If either code is still unknown, skip — never guess with [:3]
+                if not home_code or not away_code:
+                    log.debug("Odds API [%s]: unknown team %s@%s — skip", sport_key, away_name, home_name)
+                    continue
                 # Parse game time to Taiwan local time
                 game_time = ""
                 try:
@@ -633,7 +644,7 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
                     "home_pitcher": "",
                     "_source":      "odds_api_events",
                 })
-            log.info("Odds API events [%s]: %d games", sport_key, len([r for r in results if r["league"] == league]))
+            log.info("Odds API events [%s]: %d games", sport_key, len(results) - before)
         except Exception as e:
             log.debug("Odds API events [%s]: %s", sport_key, e)
 
@@ -682,12 +693,14 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
         if odds_games:
             log.info("Schedule from Odds API events: %d games", len(odds_games))
             existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
+            needs_kbo = not games_kbo
+            needs_npb = not games_npb
             for g in odds_games:
                 if g["game_id"] not in existing_ids:
                     league = g.get("league", "")
-                    if league == "KBO" and not games_kbo:
+                    if league == "KBO" and needs_kbo:
                         games_kbo.append(g)
-                    elif league == "NPB" and not games_npb:
+                    elif league == "NPB" and needs_npb:
                         games_npb.append(g)
                     existing_ids.add(g["game_id"])
     except Exception as e:
