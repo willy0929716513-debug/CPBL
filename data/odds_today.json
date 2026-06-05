@@ -1,14 +1,14 @@
 {
   "game_date": "2026-06-05",
-  "updated_at": "2026-06-05 09:27",
+  "updated_at": "2026-06-05 10:12",
   "source": "The Odds API (KBO)",
   "odds": {
     "KWH-DSB": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.47,
-      "curr_home_odds": 1.55,
-      "open_away_odds": 2.47,
-      "open_home_odds": 1.55,
+      "curr_away_odds": 2.28,
+      "curr_home_odds": 1.59,
+      "open_away_odds": 2.28,
+      "open_home_odds": 1.59,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -17,27 +17,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 5.0,
-      "bookmakers": [
-        "The Odds API (KBO)"
-      ],
-      "note": "The Odds API baseball_kbo"
-    },
-    "HWE-LTG": {
-      "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.59,
-      "curr_home_odds": 2.38,
-      "open_away_odds": 1.59,
-      "open_home_odds": 2.38,
-      "run_line": -1.5,
-      "rl_home_odds": 1.9,
-      "rl_away_odds": 1.9,
-      "total": 8.5,
-      "over_odds": 1.9,
-      "under_odds": 1.9,
-      "public_home_pct": 50,
-      "public_away_pct": 50,
-      "vig_pct": 4.91,
+      "vig_pct": 6.75,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -45,10 +25,10 @@
     },
     "KTW-SSG": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.24,
-      "curr_home_odds": 1.66,
-      "open_away_odds": 2.24,
-      "open_home_odds": 1.66,
+      "curr_away_odds": 2.47,
+      "curr_home_odds": 1.51,
+      "open_away_odds": 2.47,
+      "open_home_odds": 1.51,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -57,27 +37,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.88,
-      "bookmakers": [
-        "The Odds API (KBO)"
-      ],
-      "note": "The Odds API baseball_kbo"
-    },
-    "SSL-KIA": {
-      "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.17,
-      "curr_home_odds": 1.7,
-      "open_away_odds": 2.17,
-      "open_home_odds": 1.7,
-      "run_line": -1.5,
-      "rl_home_odds": 1.9,
-      "rl_away_odds": 1.9,
-      "total": 8.5,
-      "over_odds": 1.9,
-      "under_odds": 1.9,
-      "public_home_pct": 50,
-      "public_away_pct": 50,
-      "vig_pct": 4.91,
+      "vig_pct": 6.71,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -85,10 +45,10 @@
     },
     "LGT-NCD": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.98,
-      "curr_home_odds": 1.84,
-      "open_away_odds": 1.98,
-      "open_home_odds": 1.84,
+      "curr_away_odds": 4.6,
+      "curr_home_odds": 1.18,
+      "open_away_odds": 4.6,
+      "open_home_odds": 1.18,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -97,7 +57,47 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.85,
+      "vig_pct": 6.48,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "HWE-LTG": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 1.61,
+      "curr_home_odds": 2.25,
+      "open_away_odds": 1.61,
+      "open_home_odds": 2.25,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 6.56,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "SSL-KIA": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 4.23,
+      "curr_home_odds": 1.2,
+      "open_away_odds": 4.23,
+      "open_home_odds": 1.2,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 6.97,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
