@@ -151,6 +151,8 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     ]
 
     def fmt_sp(sp: dict) -> str:
+        if not sp or not sp.get("confirmed", False):
+            return "未定"
         name = sp.get("name", "")
         if not name:
             return "未定"
@@ -191,8 +193,14 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
                 "",
             ]
         else:
-            adv = f"主 {home_cn} {hw}% > 客 {away_cn} {aw}%" if hw >= aw \
-                  else f"客 {away_cn} {aw}% > 主 {home_cn} {hw}%"
+            h_odds = pr.get("curr_home_odds", 0)
+            a_odds = pr.get("curr_away_odds", 0)
+            def odds_tag(o):
+                return f" [{o:.2f}]" if o and o > 1 else ""
+            if hw >= aw:
+                adv = f"主 {home_cn} {hw}%{odds_tag(h_odds)} > 客 {away_cn} {aw}%{odds_tag(a_odds)}"
+            else:
+                adv = f"客 {away_cn} {aw}%{odds_tag(a_odds)} > 主 {home_cn} {hw}%{odds_tag(h_odds)}"
             lines += [
                 f"{flag} {away_cn} @ {home_cn}{time_tag}",
                 pitcher_line,
@@ -387,9 +395,15 @@ def main():
             except Exception:
                 pass
 
+        ap_confirmed = bool(g.get("away_pitcher"))
+        hp_confirmed = bool(g.get("home_pitcher"))
         ap_name = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
         hp_name = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
-        g_for_pred = {**g, "away_pitcher": ap_name, "home_pitcher": hp_name}
+        # 用中文隊名覆蓋 g 裡的英文名，讓 bet_label 直接顯示中文
+        away_cn_name = TEAM_INFO.get(away, {}).get("name", g.get("away_name", away))
+        home_cn_name = TEAM_INFO.get(home, {}).get("name", g.get("home_name", home))
+        g_for_pred = {**g, "away_pitcher": ap_name, "home_pitcher": hp_name,
+                      "away_name": away_cn_name, "home_name": home_cn_name}
 
         pred = model.predict(g_for_pred, weather, odds,
                              pitchers=merged_pitchers, memory=memory)
@@ -446,6 +460,16 @@ def main():
         h_odds = float(of.get("curr_home_odds") or 0)
         a_odds = float(of.get("curr_away_odds") or 0)
 
+        # 無真實賠率時以 ELO 為市場基準（+ 5% vig），讓 decide() 可計算 edge
+        # edge = 完整模型概率 − ELO隱含概率 → 反映模型相對 ELO 的額外資訊優勢
+        if h_odds <= 1.0 and a_odds <= 1.0:
+            elo_h = max(0.05, min(0.95, pred.get("elo_base", 0.5)))
+            elo_a = 1.0 - elo_h
+            VIG   = 0.05
+            h_odds = round(1.0 / (elo_h * (1 + VIG)), 3)
+            a_odds = round(1.0 / (elo_a * (1 + VIG)), 3)
+            log.debug("ELO odds fallback %s@%s: h=%.3f a=%.3f", away, home, h_odds, a_odds)
+
         game_preds[f"{home}|{away}"] = {
             "home_win_prob": round(hp, 3),
             "market_total":  float(of.get("total_line") or 8.5),
@@ -455,8 +479,8 @@ def main():
             "matchup":       mu,
         }
 
-        asp_data = {**merged_pitchers.get(ap_name, {}), "name": ap_name} if ap_name else {}
-        hsp_data = {**merged_pitchers.get(hp_name, {}), "name": hp_name} if hp_name else {}
+        asp_data = {**merged_pitchers.get(ap_name, {}), "name": ap_name, "confirmed": ap_confirmed} if ap_name else {}
+        hsp_data = {**merged_pitchers.get(hp_name, {}), "name": hp_name, "confirmed": hp_confirmed} if hp_name else {}
 
         base = dict(
             away=away, home=home,
@@ -505,11 +529,11 @@ def main():
 
         # ── 參考方向（無論是否推薦都記錄）──
         if hp >= ap:
-            ref_label = f"{g.get('home_name', home)} 勝算較高"
+            ref_label = f"{home_cn_name} 勝算較高"
             ref_prob  = round(hp * 100, 1)
             ref_odds  = h_odds
         else:
-            ref_label = f"{g.get('away_name', away)} 勝算較高"
+            ref_label = f"{away_cn_name} 勝算較高"
             ref_prob  = round(ap * 100, 1)
             ref_odds  = a_odds
 

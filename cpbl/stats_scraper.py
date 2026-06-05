@@ -479,29 +479,50 @@ def fetch_espn_web_schedule(game_date: date) -> list[dict]:
 
 
 def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
-    """MLB Stats API 備援（statsapi.mlb.com，sportId=6 NPB / sportId=5 KBO）。"""
+    """MLB Stats API 備援（statsapi.mlb.com，sportId=6 NPB / sportId=5 KBO）。
+    hydrate=probablePitcher 讓 API 一併回傳先發投手資料。"""
     date_str_us = game_date.strftime("%m/%d/%Y")
     date_iso    = game_date.isoformat()
     games: list[dict] = []
     for sport_id, league in [(6, "NPB"), (5, "KBO")]:
-        url = f"https://statsapi.mlb.com/api/v1/schedule?sportId={sport_id}&date={date_str_us}"
+        url = (f"https://statsapi.mlb.com/api/v1/schedule"
+               f"?sportId={sport_id}&date={date_str_us}&hydrate=probablePitcher")
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=10)
             if resp.status_code != 200:
                 continue
             for date_entry in resp.json().get("dates", []):
                 for game in date_entry.get("games", []):
-                    home = game.get("teams", {}).get("home", {}).get("team", {})
-                    away = game.get("teams", {}).get("away", {}).get("team", {})
+                    home_t = game.get("teams", {}).get("home", {})
+                    away_t = game.get("teams", {}).get("away", {})
+                    home   = home_t.get("team", {})
+                    away   = away_t.get("team", {})
                     home_name = home.get("name", "")
                     away_name = away.get("name", "")
                     home_code = _ESPN_TEAM_MAP.get(home_name, home.get("abbreviation", (home_name[:3].upper() if home_name else "???")))
                     away_code = _ESPN_TEAM_MAP.get(away_name, away.get("abbreviation", (away_name[:3].upper() if away_name else "???")))
                     state = game.get("status", {}).get("abstractGameState", "Preview")
+
+                    # 先發投手（hydrate=probablePitcher 提供）
+                    home_pitcher = home_t.get("probablePitcher", {}).get("fullName", "")
+                    away_pitcher = away_t.get("probablePitcher", {}).get("fullName", "")
+
+                    # 比賽時間（gameDate 為 UTC ISO，轉台灣時間）
+                    game_time = ""
+                    try:
+                        import datetime as _dt
+                        raw = game.get("gameDate", "")
+                        if raw:
+                            dt_utc = _dt.datetime.strptime(raw[:19], "%Y-%m-%dT%H:%M:%S")
+                            dt_tw  = dt_utc + _dt.timedelta(hours=8)
+                            game_time = dt_tw.strftime("%H:%M")
+                    except Exception:
+                        pass
+
                     games.append({
                         "game_id":      f"{date_iso}-{away_code}-{home_code}",
                         "date":         date_iso,
-                        "time":         "",
+                        "time":         game_time,
                         "away":         away_code,
                         "away_name":    away_name,
                         "home":         home_code,
@@ -511,8 +532,8 @@ def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
                         "status":       "結束" if state == "Final" else "預定",
                         "away_score":   None,
                         "home_score":   None,
-                        "away_pitcher": "",
-                        "home_pitcher": "",
+                        "away_pitcher": away_pitcher,
+                        "home_pitcher": home_pitcher,
                         "_source":      "mlbstats",
                     })
         except Exception as e:

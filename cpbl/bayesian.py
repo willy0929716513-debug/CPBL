@@ -95,15 +95,15 @@ def posterior_prob(prior: float, model_prob: float, confidence: float,
 
 def cold_start_factor(total_games: int) -> float:
     """
-    回傳信心壓縮因子 (0.60 ~ 1.00)。
-    樣本不足時壓縮 EV，避免過度下注。
+    回傳信心壓縮因子 (0.75 ~ 1.00)。
+    樣本不足時輕微壓縮 EV，避免過度下注。
     """
     if total_games < 5:
-        return 0.60
-    if total_games < 15:
         return 0.75
+    if total_games < 15:
+        return 0.85
     if total_games < 30:
-        return 0.88
+        return 0.92
     if total_games < 50:
-        return 0.95
+        return 0.97
     return 1.00
