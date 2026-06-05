@@ -2,7 +2,7 @@
 from __future__ import annotations
 from .mock_data import PITCHERS, BATTERS
 
-_LEAGUE_OPS = 0.760
+_LEAGUE_OPS = 0.730  # NPB/KBO blended average
 
 
 def _pitcher_hand(name: str) -> str:

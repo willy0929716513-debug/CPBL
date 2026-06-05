@@ -1,9 +1,9 @@
 """
-CPBL 賠率模組
+NPB / KBO 賠率模組
 
 資料來源優先順序：
-  1. The Odds API  (the-odds-api.com)  — 需設定 ODDS_API_KEY 環境變數
-  2. 台灣運彩 API  (sportslottery.com.tw)  — 自動 fallback
+  1. data/odds_today.json（本地 scripts/update_stats.py 抓取後儲存）
+  2. The Odds API  (the-odds-api.com)  — KBO: baseball_kbo（需 ODDS_API_KEY）
   3. Mock 資料  — Demo 模式 / 以上都失敗時
 
 The Odds API 免費方案：500 req/月 (夠每天用)
@@ -11,6 +11,7 @@ The Odds API 免費方案：500 req/月 (夠每天用)
 """
 import os
 import re
+import json
 import logging
 import requests
 from bs4 import BeautifulSoup
@@ -21,24 +22,40 @@ log = logging.getLogger(__name__)
 
 # ── The Odds API ──────────────────────────────
 _ODDS_API_BASE   = "https://api.the-odds-api.com/v4"
-_CPBL_SPORT_KEY  = "baseball_cpbl"        # CPBL sport key
+_KBO_SPORT_KEY   = "baseball_kbo"         # KBO は The Odds API でサポート
 _PREFERRED_BMS   = ["pinnacle", "bet365", "betway", "unibet"]  # 越前越優先
 
-# The Odds API 英文隊名 → 我們的代碼
+# The Odds API 英文隊名 → 我們的代碼  (KBO)
 _EN_TO_CODE: dict[str, str] = {
-    "rakuten monkeys":              "WL",
-    "ctbc brothers":                "AEL",
-    "fubon guardians":              "FG",
-    "uni-president 7-eleven lions": "CT",
-    "uni president 7-eleven lions": "CT",
-    "tsg hawks":                    "TSG",
-    "taiwan steel hawks":           "TSG",
-    "taiwan steel guardians":       "TSG",
+    # KBO
+    "samsung lions":        "SSL",
+    "lg twins":             "LGT",
+    "doosan bears":         "DSB",
+    "kt wiz":               "KTW",
+    "ssg landers":          "SSG",
+    "nc dinos":             "NCD",
+    "kia tigers":           "KIA",
+    "lotte giants":         "LTG",
+    "hanwha eagles":        "HWE",
+    "kiwoom heroes":        "KWH",
+    # NPB (The Odds API may carry these under baseball_npb or similar)
+    "yomiuri giants":       "GNT",
+    "hanshin tigers":       "HNS",
+    "hiroshima carp":       "HRC",
+    "yokohama dena baystars":"YDB",
+    "yakult swallows":      "YKL",
+    "chunichi dragons":     "CND",
+    "fukuoka softbank hawks":"SBH",
+    "orix buffaloes":       "ORX",
+    "rakuten eagles":       "RKT",
+    "chiba lotte marines":  "LTT",
+    "saitama seibu lions":  "SEI",
+    "hokkaido nippon-ham fighters": "HAM",
 }
 
-# ── 台灣運彩 ──────────────────────────────────
-_SL_URL = "https://www.sportslottery.com.tw/sport/baseball/cpbl"
-_SL_API = "https://api2.sportslottery.com.tw/sport/events?sport=baseball&league=cpbl"
+# ── 台灣運彩 (已不支援 NPB/KBO，保留架構供未來擴展) ────
+_SL_URL = "https://www.sportslottery.com.tw/sport/baseball"
+_SL_API = "https://api2.sportslottery.com.tw/sport/events?sport=baseball&league=kbo"
 
 _HEADERS = {
     "User-Agent": (
@@ -81,44 +98,57 @@ def _mock(away_odds: float, home_odds: float, total: float = 8.5, note: str = ""
 
 
 MOCK_ODDS: dict[str, dict] = {
-    # ── 原有 Demo 賠率 ─────────────────────────
-    "FG-WL":  _mock(2.45, 1.58, 8.5, "主隊賠率從1.65縮至1.58→莊家看好主隊"),
-    "TSG-AEL": _mock(2.15, 1.72, 7.5, "盤口穩定"),
-    # ── 2026 年六月賽程常見對陣 ───────────────
-    # FG (富邦) 作客
-    "FG-TSG": _mock(2.10, 1.78, 8.0, "兩隊實力相近"),
-    "FG-AEL": _mock(2.20, 1.70, 8.5, ""),
-    "FG-CT":  _mock(2.30, 1.65, 9.0, "台南主場加成"),
-    "FG-WC":  _mock(2.00, 1.85, 8.5, ""),
-    # WL (樂天) 作客
-    "WL-AEL": _mock(1.85, 2.00, 9.0, "強客出擊"),
-    "WL-CT":  _mock(1.90, 1.95, 8.5, ""),
-    "WL-TSG": _mock(1.80, 2.10, 8.5, "樂天強勢"),
-    "WL-FG":  _mock(1.88, 1.98, 8.5, ""),
-    "WL-WC":  _mock(1.82, 2.05, 8.5, ""),
-    # WC (味全) 作客
-    "WC-AEL": _mock(2.05, 1.80, 8.5, ""),
-    "WC-CT":  _mock(2.15, 1.75, 9.0, ""),
-    "WC-TSG": _mock(1.95, 1.90, 8.0, ""),
-    "WC-WL":  _mock(2.20, 1.68, 8.5, ""),
-    "WC-FG":  _mock(2.10, 1.78, 8.5, ""),
-    # AEL (中信) 作客
-    "AEL-CT":  _mock(2.10, 1.78, 8.5, ""),
-    "AEL-WL":  _mock(2.30, 1.65, 9.0, ""),
-    "AEL-TSG": _mock(1.80, 2.10, 7.5, ""),
-    "AEL-WC":  _mock(1.88, 1.98, 8.5, ""),
-    "AEL-FG":  _mock(2.05, 1.82, 8.5, ""),
-    # CT (統一) 作客
-    "CT-AEL":  _mock(2.20, 1.72, 8.0, ""),
-    "CT-WL":   _mock(2.40, 1.60, 8.5, ""),
-    "CT-TSG":  _mock(2.00, 1.85, 8.0, ""),
-    "CT-WC":   _mock(2.10, 1.78, 9.0, ""),
-    "CT-FG":   _mock(2.15, 1.75, 8.5, ""),
-    # TSG (台鋼) 作客
-    "TSG-CT":  _mock(2.25, 1.68, 7.5, ""),
-    "TSG-WL":  _mock(2.50, 1.55, 8.5, ""),
-    "TSG-FG":  _mock(2.15, 1.75, 8.0, ""),
-    "TSG-WC":  _mock(2.05, 1.80, 8.0, ""),
+    # ── NPB Central League ─────────────────────
+    "YDB-GNT": _mock(2.15, 1.75, 7.5, "橫浜主場打者有利，大分進攻"),
+    "HNS-HRC": _mock(1.88, 1.98, 7.0, "甲子園投手有利"),
+    "YKL-CND": _mock(1.95, 1.92, 8.0, ""),
+    "GNT-YKL": _mock(1.72, 2.18, 7.5, "巨人主場強勢"),
+    "HRC-YDB": _mock(2.05, 1.82, 7.5, "廣島主場均衡"),
+    "CND-HNS": _mock(2.20, 1.70, 7.0, ""),
+    "GNT-HNS": _mock(1.95, 1.92, 7.5, "頂級對決"),
+    "GNT-HRC": _mock(1.80, 2.08, 7.5, ""),
+    "HNS-YDB": _mock(1.92, 1.95, 8.0, ""),
+    "YDB-HNS": _mock(2.10, 1.78, 8.0, ""),
+    "HRC-GNT": _mock(2.12, 1.76, 7.5, ""),
+    "YDB-YKL": _mock(1.75, 2.15, 8.0, ""),
+    "YKL-GNT": _mock(2.35, 1.62, 8.0, ""),
+    "CND-GNT": _mock(2.40, 1.60, 7.5, ""),
+    "CND-YDB": _mock(2.25, 1.68, 7.5, ""),
+    # ── NPB Pacific League ─────────────────────
+    "ORX-SBH": _mock(2.25, 1.68, 7.0, "兩強對決，投手戰"),
+    "LTT-RKT": _mock(1.92, 1.95, 8.5, ""),
+    "SEI-HAM": _mock(1.98, 1.90, 9.0, "エスコン打者天堂"),
+    "SBH-LTT": _mock(1.72, 2.18, 7.5, "ソフトバンク主場強"),
+    "RKT-SEI": _mock(1.85, 2.02, 8.0, ""),
+    "HAM-ORX": _mock(2.05, 1.82, 8.5, ""),
+    "SBH-HAM": _mock(1.68, 2.22, 7.5, ""),
+    "ORX-RKT": _mock(1.88, 1.98, 7.5, ""),
+    "LTT-SEI": _mock(1.90, 1.96, 8.5, ""),
+    "SBH-ORX": _mock(1.75, 2.12, 7.0, ""),
+    # ── KBO ─────────────────────────────────────
+    "KIA-LGT": _mock(2.05, 1.82, 9.5, "兩強對決"),
+    "KTW-SSL": _mock(1.92, 1.95, 9.0, ""),
+    "NCD-SSG": _mock(2.10, 1.78, 9.5, ""),
+    "HWE-DSB": _mock(1.98, 1.90, 9.0, ""),
+    "LTG-KWH": _mock(1.88, 1.98, 9.5, ""),
+    "LGT-SSL": _mock(1.72, 2.18, 10.0, "LG 主場強勢"),
+    "SSG-KTW": _mock(1.90, 1.96, 9.5, ""),
+    "KIA-NCD": _mock(1.78, 2.10, 9.5, ""),
+    "DSB-KWH": _mock(1.85, 2.02, 9.0, ""),
+    "KTW-HWE": _mock(1.82, 2.05, 9.5, ""),
+    "LGT-KIA": _mock(1.75, 2.12, 10.0, "首位爭奪"),
+    "SSL-SSG": _mock(1.95, 1.92, 9.5, ""),
+    "NCD-KTW": _mock(2.00, 1.88, 9.0, ""),
+    "KWH-DSB": _mock(1.98, 1.90, 9.5, ""),
+    "HWE-LTG": _mock(1.95, 1.92, 9.0, ""),
+    "SSG-LGT": _mock(2.08, 1.80, 9.5, ""),
+    "KTW-KIA": _mock(2.12, 1.76, 9.5, ""),
+    "SSL-LGT": _mock(2.20, 1.72, 10.0, ""),
+    "NCD-KIA": _mock(2.15, 1.75, 9.5, ""),
+    "KWH-SSG": _mock(2.18, 1.72, 9.5, ""),
+    "LTG-SSL": _mock(2.05, 1.82, 9.5, ""),
+    "HWE-NCD": _mock(2.10, 1.78, 9.0, ""),
+    "DSB-LGT": _mock(2.25, 1.68, 9.5, ""),
 }
 
 
@@ -184,11 +214,11 @@ class TheOddsAPIClient:
                 parsed["open_away_odds"] = _opening_cache[game_key]["open_away_odds"]
                 result[game_key] = parsed
 
-        log.info(f"The Odds API: {len(result)} CPBL games fetched")
+        log.info(f"The Odds API: {len(result)} KBO games fetched")
         return result
 
     def _fetch_market(self, market: str) -> list:
-        url = f"{_ODDS_API_BASE}/sports/{_CPBL_SPORT_KEY}/odds/"
+        url = f"{_ODDS_API_BASE}/sports/{_KBO_SPORT_KEY}/odds/"
         params = {
             "apiKey":      self.api_key,
             "regions":     "eu,us,uk,au",
@@ -202,7 +232,7 @@ class TheOddsAPIClient:
                 log.error("The Odds API: 無效的 API Key")
                 return []
             if resp.status_code == 422:
-                log.warning(f"The Odds API: CPBL 不在此方案涵蓋範圍（{resp.text[:100]}）")
+                log.warning(f"The Odds API: KBO 不在此方案涵蓋範圍（{resp.text[:100]}）")
                 return []
             resp.raise_for_status()
             remaining = resp.headers.get("x-requests-remaining", "?")
@@ -457,18 +487,52 @@ class OddsFetcher:
         self._sl_scraper  = SportslotteryScraper()
         self._cache: dict[str, dict] = {}
 
-    def fetch_all(self) -> dict[str, dict]:
-        """一次抓今日所有比賽賠率，快取起來"""
+    def fetch_all(self, game_date: str = None) -> dict[str, dict]:
+        """一次抓今日所有比賽賠率，快取起來
+
+        優先順序：
+          0. data/odds_today.json（本地腳本 scripts/update_stats.py 抓取後儲存）
+          1. The Odds API（需 ODDS_API_KEY）
+          2. Mock 資料
+        """
+        if game_date is None:
+            game_date = str(date.today())
+
+        # 0. 本地預存賠率（由 scripts/update_stats.py 在個人電腦執行後產生）
+        _odds_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "data", "odds_today.json"
+        )
+        if os.path.exists(_odds_file):
+            try:
+                with open(_odds_file, encoding="utf-8") as f:
+                    saved = json.load(f)
+                if saved.get("game_date") == game_date and saved.get("odds"):
+                    self._cache = saved["odds"]
+                    log.info(
+                        "OddsFetcher: 使用本地 odds_today.json (%s) — %d 場 [來源: %s]",
+                        game_date, len(self._cache), saved.get("source", "?"),
+                    )
+                    return self._cache
+                else:
+                    log.info(
+                        "OddsFetcher: odds_today.json 日期 %s ≠ 今日 %s，略過",
+                        saved.get("game_date", "?"), game_date,
+                    )
+            except Exception as e:
+                log.warning("OddsFetcher: 讀取 odds_today.json 失敗 → %s", e)
+
+        # 1. The Odds API
         if self._odds_api:
             try:
                 data = self._odds_api.fetch_all()
                 if data:
                     self._cache = data
-                    log.info(f"OddsFetcher: The Odds API 成功，{len(data)} 場比賽")
+                    log.info("OddsFetcher: The Odds API 成功，%d 場比賽", len(data))
                     return data
             except Exception as e:
-                log.warning(f"OddsFetcher: The Odds API 失敗 → {e}")
-        log.info("OddsFetcher: 使用 Mock 資料")
+                log.warning("OddsFetcher: The Odds API 失敗 → %s", e)
+
+        log.info("OddsFetcher: 使用 Mock 資料（執行 scripts/update_stats.py --odds 可取得真實賠率）")
         self._cache = dict(MOCK_ODDS)
         return self._cache
 
