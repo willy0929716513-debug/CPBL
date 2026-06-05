@@ -53,13 +53,12 @@ jobs:
           import urllib.request, ssl
           ctx = ssl.create_default_context()
           sites = [
-              ("Yahoo Japan Baseball",   "https://baseball.yahoo.co.jp/npb/schedule/"),
-              ("MLB Stats API (KBO/NPB)","https://statsapi.mlb.com/api/v1/schedule?sportId=5&date=2026-06-05"),
-              ("Statiz KBO",             "https://statiz.co.kr/schedule.php"),
-              ("Naver KBO schedule",     "https://sports.news.naver.com/kbaseball/schedule/index.nhn"),
-              ("koreabaseball.com",      "https://www.koreabaseball.com/Schedule/Schedule.aspx"),
-              ("Daum Sports KBO",        "https://sports.daum.net/schedule/kbo"),
-              ("The Odds API events",    "https://api.the-odds-api.com/v4/sports/baseball_kbo/events"),
+              ("Yahoo Japan Baseball (NPB)", "https://baseball.yahoo.co.jp/npb/schedule/"),
+              ("koreabaseball.com (KBO)",    "https://www.koreabaseball.com/Schedule/Schedule.aspx"),
+              ("Naver Sports KBO",           "https://sports.news.naver.com/kbaseball/schedule/index.nhn"),
+              ("Statiz KBO",                 "https://statiz.co.kr/schedule.php"),
+              ("Daum Sports KBO",            "https://sports.daum.net/schedule/kbo"),
+              ("The Odds API events",        "https://api.the-odds-api.com/v4/sports/baseball_kbo/events"),
           ]
           h = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
           for name, url in sites:
