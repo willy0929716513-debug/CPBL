@@ -1,6 +1,6 @@
 {
   "game_date": "2026-06-05",
-  "updated_at": "2026-06-05 03:00",
+  "updated_at": "2026-06-05 04:20",
   "source": "The Odds API (KBO)",
   "odds": {
     "KWH-DSB": {
@@ -26,9 +26,9 @@
     "HWE-LTG": {
       "source": "The Odds API (KBO)",
       "curr_away_odds": 1.5,
-      "curr_home_odds": 2.6,
+      "curr_home_odds": 2.62,
       "open_away_odds": 1.5,
-      "open_home_odds": 2.6,
+      "open_home_odds": 2.62,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -37,7 +37,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 5.13,
+      "vig_pct": 4.83,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
