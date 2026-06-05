@@ -1,6 +1,107 @@
 {
   "game_date": "2026-06-05",
-  "updated_at": "2026-06-05 14:49",
-  "source": "none",
-  "odds": {}
+  "updated_at": "2026-06-05 15:37",
+  "source": "The Odds API (KBO)",
+  "odds": {
+    "KTW-SSG": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 1.85,
+      "curr_home_odds": 1.96,
+      "open_away_odds": 1.85,
+      "open_home_odds": 1.96,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 5.07,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "KWH-DSB": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 1.79,
+      "curr_home_odds": 2.04,
+      "open_away_odds": 1.79,
+      "open_home_odds": 2.04,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 4.89,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "HWE-LTG": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 1.55,
+      "curr_home_odds": 2.48,
+      "open_away_odds": 1.55,
+      "open_home_odds": 2.48,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 4.84,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "SSL-KIA": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 2.14,
+      "curr_home_odds": 1.72,
+      "open_away_odds": 2.14,
+      "open_home_odds": 1.72,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 4.87,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    },
+    "LGT-NCD": {
+      "source": "The Odds API (KBO)",
+      "curr_away_odds": 1.58,
+      "curr_home_odds": 2.4,
+      "open_away_odds": 1.58,
+      "open_home_odds": 2.4,
+      "run_line": -1.5,
+      "rl_home_odds": 1.9,
+      "rl_away_odds": 1.9,
+      "total": 8.5,
+      "over_odds": 1.9,
+      "under_odds": 1.9,
+      "public_home_pct": 50,
+      "public_away_pct": 50,
+      "vig_pct": 4.96,
+      "bookmakers": [
+        "The Odds API (KBO)"
+      ],
+      "note": "The Odds API baseball_kbo"
+    }
+  }
 }
