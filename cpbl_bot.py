@@ -97,149 +97,99 @@ def send_discord_no_games(game_date, reason="無法取得今日賽程"):
         f"ℹ️ 今日無推薦：{reason}"
     )
     try:
-        requests.post(DISCORD_URL, json={"content": msg}, timeout=8)
+        r = requests.post(DISCORD_URL, json={"content": msg}, timeout=8)
+        if r.status_code not in (200, 204):
+            log.warning("Discord no-games HTTP %s: %s", r.status_code, r.text[:200])
     except Exception as e:
         log.warning("Discord no-games: %s", e)
 
 
+def _discord_post(content: str):
+    """Discord webhook 發送，自動處理 2000 字元上限分段。"""
+    LIMIT = 1900
+    chunks = []
+    if len(content) <= LIMIT:
+        chunks = [content]
+    else:
+        # 按換行切，每段不超過 LIMIT
+        current = []
+        current_len = 0
+        for line in content.split("\n"):
+            if current_len + len(line) + 1 > LIMIT and current:
+                chunks.append("\n".join(current))
+                current = []
+                current_len = 0
+            current.append(line)
+            current_len += len(line) + 1
+        if current:
+            chunks.append("\n".join(current))
+
+    for chunk in chunks:
+        try:
+            r = requests.post(DISCORD_URL, json={"content": chunk}, timeout=8)
+            if r.status_code not in (200, 204):
+                log.warning("Discord HTTP %s: %s", r.status_code, r.text[:200])
+        except Exception as e:
+            log.warning("Discord: %s", e)
+
+
 def send_discord(picks, all_preds, game_date, history=None, memory=None):
-    if not DISCORD_URL or not all_preds: return
+    if not DISCORD_URL or not all_preds:
+        return
     now_tw   = datetime.datetime.now(TW)
     time_str = now_tw.strftime("%m/%d %H:%M")
+    rec_count = len(picks)
 
-    hist_str = "尚無歷史記錄"
+    TIER_LABEL = agent_module.TIER_LABEL
+    pick_map   = {(p["away"], p["home"]): p for p in picks}
+
+    lines = [
+        f"⚾ **NPB/KBO {game_date} 賽前分析**",
+        f"🕐 {time_str} 台灣時間 | 共 {len(all_preds)} 場"
+        + (f" | **推薦 {rec_count} 場下注**" if rec_count else ""),
+        "",
+    ]
+
+    for pr in all_preds:
+        away    = pr["away"]
+        home    = pr["home"]
+        away_cn = pr.get("away_cn", away)
+        home_cn = pr.get("home_cn", home)
+        hw      = round(pr.get("home_win_prob", 0.5) * 100, 1)
+        aw      = round(pr.get("away_win_prob", 0.5) * 100, 1)
+        g_time  = pr.get("game_time", pr.get("time", ""))
+        league  = pr.get("league", "")
+        flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
+        time_tag = f"🗓️{g_time}" if g_time else ""
+
+        if (away, home) in pick_map:
+            p    = pick_map[(away, home)]
+            tier = TIER_LABEL.get(p["tier"], "⭐ 穩定")
+            be   = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
+            lines += [
+                f"{flag} **{away_cn} @ {home_cn}**  {time_tag}",
+                f"    {tier}  💰 `{p['bet_label']}` @ **{p['bp']}**  "
+                f"客{aw}% vs 主{hw}%  Edge {p['edge']*100:+.1f}%  BEP {be}%",
+            ]
+        else:
+            adv = f"主{home_cn} {hw}% > 客{away_cn} {aw}%" if hw >= aw \
+                  else f"客{away_cn} {aw}% > 主{home_cn} {hw}%"
+            lines.append(
+                f"{flag} {away_cn} @ {home_cn}  {time_tag}  {adv}（不推薦下注）"
+            )
+
+    # 歷史摘要（有才顯示）
     if history:
         settled = [h for h in history if h.get("result") is not None]
         if settled:
             wins = sum(1 for h in settled if h["result"] == "W")
-            ml_rec  = [h for h in settled if h.get("bet_type") == "ML"]
-            rl_rec  = [h for h in settled if h.get("bet_type") == "RL"]
-            tot_rec = [h for h in settled if h.get("bet_type") in ("TOT",)]
-            def wr(lst): return f"{sum(1 for x in lst if x['result']=='W')}/{len(lst)}" if lst else ""
-            parts = [f"{wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)"]
-            if ml_rec:  parts.append(f"ML {wr(ml_rec)}")
-            if rl_rec:  parts.append(f"RL {wr(rl_rec)}")
-            if tot_rec: parts.append(f"TOT {wr(tot_rec)}")
-            hist_str = "  ".join(parts)
-
-    TIER_LABEL = agent_module.TIER_LABEL
-
-    # V8 記憶摘要
-    mem_line = ""
-    if memory and memory.get("total_games", 0) > 0:
-        acc    = mem_module.accuracy(memory)
-        r_acc  = mem_module.rolling_accuracy(memory)
-        roi    = memory.get("roi_units", 0.0)
-        clv_s  = clv_module.summary(clv_records)
-        clv_str = f"CLV均值{clv_s['avg_clv']*100:+.1f}%" if clv_s["n"] > 0 else ""
-        mem_line = (
-            f"\n🧠 V8: {memory['total_games']}局 "
-            f"全期{acc*100:.0f}% 近50場{r_acc*100:.0f}% ROI{roi:+.1f}u "
-            f"{clv_str} | "
-            f"連{'✅' if memory.get('streak_correct',0) > memory.get('streak_wrong',0) else '❌'}"
-            f"{max(memory.get('streak_correct',0), memory.get('streak_wrong',0))}"
-        )
-
-    rec_count = len(picks)
-    lines = [
-        "⚾ **NPB/KBO V8 分析報告**",
-        f"🕐 {time_str} (台灣時間) | ✅賽程 ✅盤口 ✅MC ✅Ensemble ✅CLV ✅Matchup ✅RLv8",
-        f"📊 歷史: {hist_str}{mem_line}",
-        "",
-        f"**今日 {len(all_preds)} 場賽事 — {'推薦 ' + str(rec_count) + ' 場下注' if rec_count else '今日無推薦下注'}**",
-    ]
-
-    def fmt_sp(pitcher: dict) -> str:
-        name = pitcher.get("name", "")
-        if not name: return "TBD"
-        tag = "🌏" if pitcher.get("foreign") else ""
-        era = pitcher.get("era", "?")
-        r3  = pitcher.get("recent_3_era", era)
-        k9  = pitcher.get("k9", "?")
-        return f"{tag}{name}(ERA {era} 近3場ERA {r3} K/9:{k9})"
-
-    # ── 推薦下注的場次 ──
-    pick_keys = {(p["away"], p["home"]) for p in picks}
-    for p in picks:
-        asp = p.get("away_sp") or {}
-        hsp = p.get("home_sp") or {}
-        vf        = VENUE_FACTORS.get(p.get("venue", ""), {})
-        pf_str    = f" PF{vf.get('run_factor',1.0):.2f}" if vf else ""
-        venue_tag = f"🏟️{p.get('venue','')}{pf_str}" if p.get("venue") else ""
-        g_time    = p.get("game_time", p.get("time", ""))
-        hw        = round(p.get("home_win_prob", 0.5) * 100, 1)
-        aw        = round(p.get("away_win_prob", 0.5) * 100, 1)
-        market    = round(p.get("market_home_prob", 0), 1)
-        be_pct    = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
-        total     = p.get("market_total", "")
-        lines += [
-            "",
-            f"**{TIER_LABEL.get(p['tier'],'⭐ 穩定')}  {p['away_cn']} @ {p['home_cn']}**",
-            f"🗓️ {game_date} {g_time} {venue_tag}",
-            f"⚾ 先發: {fmt_sp(asp)} — {fmt_sp(hsp)}",
-            f"💰 推薦: `{p['bet_label']}` @ **{p['bp']}**",
-            f"> 勝率: 客 {aw}% vs 主 {hw}% | 市場主隊: {market}% | 盈虧平衡: {be_pct}%",
-            f"> Edge: **{p['edge']*100:+.1f}%** 信心{p['conf']*100:.0f}% | Kelly: ${p['stake']:.0f}",
-        ]
-        if total:
-            lines.append(f"> 大小分: {total}")
-        mc_p = p.get("mc") or {}
-        if mc_p.get("std_dev") is not None:
-            ci = mc_p.get("ci_90", [0, 1])
-            lines.append(
-                f"> 🎲 MC {mc_p.get('n','?')}次: "
-                f"90%CI [{ci[0]*100:.0f}%,{ci[1]*100:.0f}%] "
-                f"σ={mc_p['std_dev']:.3f}"
-            )
-        for sig in (p.get("signals") or [])[:2]:
-            lines.append(f"> {sig}")
-        for reason in (p.get("reasoning") or [])[:1]:
-            lines.append(f"> {reason}")
-
-    # ── 僅供參考（不推薦）的場次 ──
-    ref_preds = [pr for pr in all_preds if not pr.get("recommended")]
-    if ref_preds:
-        lines += ["", "━" * 18, "📊 **今日其他比賽（僅供參考，不建議下注）**"]
-        for pr in ref_preds:
-            asp = pr.get("away_sp") or {}
-            hsp = pr.get("home_sp") or {}
-            g_time = pr.get("game_time", pr.get("time", ""))
-            hw = round(pr.get("home_win_prob", 0.5) * 100, 1)
-            aw = round(pr.get("away_win_prob", 0.5) * 100, 1)
-            # 決定優勢方
-            if hw >= aw:
-                adv = f"主隊 **{pr['home_cn']}** 勝算略高 ({hw}% vs {aw}%)"
-            else:
-                adv = f"客隊 **{pr['away_cn']}** 勝算略高 ({aw}% vs {hw}%)"
-            vf  = VENUE_FACTORS.get(pr.get("venue", ""), {})
-            vt  = f"🏟️{pr.get('venue','')}" if pr.get("venue") else ""
-            mc_pr = pr.get("mc") or {}
-            mc_str = ""
-            if mc_pr.get("uncertain"):
-                mc_str = " ⚠️高波動"
-            elif mc_pr.get("std_dev"):
-                mc_str = f" σ={mc_pr['std_dev']:.3f}"
             lines += [
                 "",
-                f"**{pr['away_cn']} @ {pr['home_cn']}**  🗓️ {g_time} {vt}",
-                f"⚾ 先發: {fmt_sp(asp)} — {fmt_sp(hsp)}",
-                f"> {adv}{mc_str}",
-                f"> ⚠️ 差距不足或波動過大，不建議下注",
+                f"📊 歷史: {wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)",
             ]
 
-    lines += [
-        "",
-        "━" * 22,
-        "V8: Ensemble(ELO+ML+Market+MC) · Bayesian · CLV · Matchup Matrix",
-        "Risk-Adj EV · Feature Store · Market Move · Cold-start Guard · RL Decay",
-        f"📡 場中分析: 執行 Live Monitor 取得即時推薦",
-    ]
-
-    try:
-        requests.post(DISCORD_URL, json={"content": "\n".join(lines)}, timeout=8)
-        log.info("Discord sent (%d picks, %d predictions)", len(picks), len(all_preds))
-    except Exception as e:
-        log.warning("Discord: %s", e)
+    _discord_post("\n".join(lines))
+    log.info("Discord sent (%d picks, %d predictions)", len(picks), len(all_preds))
 
 # ── Main ───────────────────────────────────────────────────────────────────
 
