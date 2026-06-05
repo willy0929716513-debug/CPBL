@@ -742,7 +742,7 @@ def scrape_schedule(year: int, months: list[int], session: requests.Session) -> 
     import datetime
 
     all_games = []
-    today = datetime.date.today()
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).date()
     start = today - datetime.timedelta(days=1)
     end   = today + datetime.timedelta(days=14)
 
@@ -1157,13 +1157,14 @@ def update_schedule(games: list, dry: bool = False):
 # ─────────────────────────────────────────────────────────────
 
 def main():
+    _TW_TZ = datetime.timezone(datetime.timedelta(hours=8))
+    _now_tw = datetime.datetime.now(_TW_TZ)
     ap = argparse.ArgumentParser(description="NPB/KBO 數據更新腳本")
     ap.add_argument("--dry",          action="store_true", help="只爬不寫入")
     ap.add_argument("--push",         action="store_true", help="完成後自動 git commit + push")
-    ap.add_argument("--year",         type=int, default=datetime.date.today().year)
+    ap.add_argument("--year",         type=int, default=_now_tw.year)
     ap.add_argument("--months",       nargs="+", type=int,
-                    default=[datetime.date.today().month,
-                             min(12, datetime.date.today().month + 1)],
+                    default=[_now_tw.month, min(12, _now_tw.month + 1)],
                     help="要抓的月份（預設：本月+下月）")
     ap.add_argument("--skip-schedule", action="store_true", help="跳過賽程爬取")
     ap.add_argument("--skip-odds",     action="store_true", help="跳過賠率爬取")
@@ -1178,7 +1179,7 @@ def main():
     session = requests.Session()
     session.headers.update(_HEADERS)
 
-    today_str = datetime.date.today().isoformat()
+    today_str = _now_tw.date().isoformat()
     live_stats = {}
 
     # ── 投手成績：NPB → KBO → BB-Ref 補漏 ──

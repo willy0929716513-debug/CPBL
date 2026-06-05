@@ -4,7 +4,7 @@
 import os
 import logging
 import requests
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from flask import Flask, render_template, jsonify, request
 
 from cpbl.scraper import CPBLScraper
@@ -42,7 +42,7 @@ odds_fetcher = OddsFetcher()   # The Odds API → 運彩 → Mock
 
 def refresh(game_date: date | None = None) -> list:
     if game_date is None:
-        game_date = date.today()
+        game_date = datetime.now(timezone(timedelta(hours=8))).date()
 
     log.info(f"Refreshing data for {game_date}  (demo={DEMO_MODE})")
 

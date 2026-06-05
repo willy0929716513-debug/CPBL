@@ -25,6 +25,26 @@ log = logging.getLogger("cpbl_bot")
 
 TW = datetime.timezone(datetime.timedelta(hours=8))
 
+
+def _game_ended(game: dict, now_tw: datetime.datetime) -> bool:
+    """Returns True if this game has very likely ended (start + 3h30m elapsed)."""
+    date_str = (game.get("date") or "").strip()
+    time_str = (game.get("time") or "").strip()
+    if not date_str:
+        return False
+    try:
+        y, mo, d = map(int, date_str.split("-"))
+        if time_str and ":" in time_str:
+            parts = time_str.split(":")
+            h, m = int(parts[0]), int(parts[1])
+        else:
+            h, m = 18, 0  # 假設下午六點開打
+        start = datetime.datetime(y, mo, d, h, m, tzinfo=TW)
+        return now_tw >= start + datetime.timedelta(hours=3, minutes=30)
+    except (ValueError, TypeError):
+        return now_tw.hour >= 23
+
+
 # ── Config ─────────────────────────────────────────────────────────────────
 JSON_PATH   = "docs/picks_latest.json"
 GIST_DESC   = "cpbl_bot_history"
@@ -419,6 +439,48 @@ def main():
         log.info("Games filtered: %d → %d (removed %d bad/duplicate entries)",
                  len(games), len(valid_games), len(games) - len(valid_games))
     games = valid_games
+
+    # Filter out games that have already ended (start + 3h30m in the past)
+    active = [g for g in games if not _game_ended(g, now_tw)]
+    if len(active) != len(games):
+        log.info("Ended-game filter: %d → %d (dropped %d finished games)",
+                 len(games), len(active), len(games) - len(active))
+    games = active
+
+    # If all today's games are done and it's evening, look ahead to tomorrow
+    if not games and not DEMO_MODE and now_tw.hour >= 20:
+        tomorrow = today + datetime.timedelta(days=1)
+        tomorrow_str = str(tomorrow)
+        log.info("All today's games ended — fetching tomorrow's schedule (%s)", tomorrow_str)
+        found_tmr = False
+        try:
+            tmr = stats_scraper.fetch_schedule_multi(
+                tomorrow, odds_api_key=os.environ.get("ODDS_API_KEY", "")
+            )
+            if tmr:
+                games = tmr
+                today_str = tomorrow_str
+                found_tmr = True
+                log.info("Tomorrow's schedule: %d games", len(games))
+        except Exception as _e:
+            log.warning("Tomorrow schedule fetch failed: %s", _e)
+
+        if not found_tmr:
+            sched_path = os.path.join(os.path.dirname(__file__), "data", "schedule.json")
+            try:
+                with open(sched_path, encoding="utf-8") as _f:
+                    sched_d = json.load(_f)
+                games = [
+                    g for g in sched_d.get("games", [])
+                    if g.get("date") == tomorrow_str
+                    and g.get("away") and g.get("home")
+                    and g.get("status") not in ("休兵日", "輪休")
+                ]
+                if games:
+                    today_str = tomorrow_str
+                    log.info("Tomorrow from schedule.json: %d games", len(games))
+            except Exception as _ef:
+                log.warning("Schedule file for tomorrow failed: %s", _ef)
 
     for g in games:
         away, home = g.get("away", ""), g.get("home", "")
