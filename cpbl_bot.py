@@ -384,6 +384,32 @@ def main():
     game_preds: dict = {}
     MC_N = 200 if DEMO_MODE else 2000   # Demo 省時間用 200次
 
+    # Deduplicate games and validate team codes before prediction loop.
+    # Removes: unknown codes, cross-league matchups, duplicate (date, away, home) entries.
+    _seen: set = set()
+    valid_games = []
+    for g in games:
+        away, home = g.get("away", ""), g.get("home", "")
+        if not away or not home:
+            continue
+        if away not in TEAM_INFO or home not in TEAM_INFO:
+            log.warning("Unknown team code %s@%s — skipped", away, home)
+            continue
+        if TEAM_INFO[away]["league"] != TEAM_INFO[home]["league"]:
+            log.warning("Cross-league game %s(%s)@%s(%s) — skipped",
+                        away, TEAM_INFO[away]["league"], home, TEAM_INFO[home]["league"])
+            continue
+        key = (g.get("date", ""), away, home)
+        if key in _seen:
+            log.debug("Duplicate %s@%s on %s — skipped", away, home, g.get("date", ""))
+            continue
+        _seen.add(key)
+        valid_games.append(g)
+    if len(valid_games) != len(games):
+        log.info("Games filtered: %d → %d (removed %d bad/duplicate entries)",
+                 len(games), len(valid_games), len(games) - len(valid_games))
+    games = valid_games
+
     for g in games:
         away, home = g.get("away", ""), g.get("home", "")
         if not (away and home):
