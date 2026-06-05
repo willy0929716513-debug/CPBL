@@ -1072,6 +1072,34 @@ _JP_PITCHER_NAME_MAP = {
     "マルティネス": "馬丁尼斯",
 }
 
+# 中文投手名 → NPB 球隊代碼（用於把頁面上找到的投手對應到正確球隊）
+_NPB_PITCHER_TEAM: dict[str, str] = {
+    # GNT 讀賣巨人
+    "菅野智之": "GNT", "戶鄉翔征": "GNT", "葛瑞芬": "GNT", "赤星優志": "GNT",
+    # HNS 阪神虎
+    "才木浩人": "HNS", "村上頌樹": "HNS", "西勇輝": "HNS", "比茲利": "HNS",
+    # HRC 廣島鯉魚
+    "大瀨良大地": "HRC", "床田寬樹": "HRC", "九里亞蓮": "HRC", "漢恩": "HRC",
+    # YDB 橫濱DeNA海星
+    "東克樹": "YDB", "石田裕太郎": "YDB", "傑克森": "YDB", "大貫晉一": "YDB",
+    # YKL 養樂多燕子
+    "小川泰弘": "YKL", "高橋奎二": "YKL", "賽斯尼德": "YKL", "吉村貢司郎": "YKL",
+    # CND 中日龍
+    "大野雄大": "CND", "柳裕也": "CND", "梅希亞": "CND", "涌井秀章": "CND",
+    # SBH 福岡軟銀鷹
+    "莫伊內羅": "SBH", "有原航平": "SBH", "史都華特二世": "SBH", "東濱巨": "SBH",
+    # ORX 歐力士水牛
+    "山下舜平太": "ORX", "田嶋大樹": "ORX", "宮城大彌": "ORX", "艾斯皮諾薩": "ORX",
+    # RKT 東北樂天金鷹
+    "早川隆久": "RKT", "岸孝之": "RKT", "田中將大": "RKT", "塔利": "RKT",
+    # LTT 千葉羅德水手
+    "佐佐木朗希": "LTT", "小島和哉": "LTT", "種市篤暉": "LTT", "梅賽德斯": "LTT",
+    # SEI 埼玉西武獅
+    "高橋光成": "SEI", "平良海馬": "SEI", "今井達也": "SEI", "寶高橋": "SEI",
+    # HAM 北海道火腿鬥士
+    "伊藤大海": "HAM", "加藤貴之": "HAM", "金村尚真": "HAM", "馬丁尼斯": "HAM",
+}
+
 
 def _yahoo_team_code(text: str) -> str:
     t = text.strip()
@@ -1121,48 +1149,43 @@ def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
 
 def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     """
-    Parse Yahoo Japan NPB schedule using text-scan approach.
+    Parse Yahoo Japan NPB schedule using two-phase text-scan approach.
 
-    Instead of CSS class matching (which breaks when Yahoo redesigns the page),
-    we scan every small text node for known team names and pair consecutive
-    different codes into games. This is HTML-structure-agnostic.
+    Phase 1: scan every small text node for known team names; pair consecutive
+    different codes into games (HTML-structure-agnostic, avoids concatenation bugs).
+
+    Phase 2: scan for Japanese pitcher names from _JP_PITCHER_NAME_MAP, convert
+    to Chinese names, then assign each pitcher to the game whose team matches
+    the pitcher's team in _NPB_PITCHER_TEAM. This works regardless of where
+    in the HTML the pitcher names appear.
     """
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
         tag.decompose()
 
-    # Build a sorted pattern — longer names first to avoid "巨人" matching inside "読売ジャイアンツ"
-    sorted_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
-    pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
+    # ── Phase 1: Team code extraction ────────────────────────────────────
+    sorted_team_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_team_keys) + ')')
 
-    # Scan every text node; record codes in document order
     codes_in_order: list[str] = []
     for node in soup.find_all(string=True):
         text = node.strip()
-        if not text:
+        if not text or len(text) > 50:
             continue
-        # Only process short text nodes — team names are never 50+ chars
-        if len(text) > 50:
-            continue
-        for m in pattern.finditer(text):
+        for m in team_pattern.finditer(text):
             code = _YAHOO_NPB_TEAM_MAP[m.group()]
-            # Avoid consecutive duplicates (same team name repeated in the same node)
             if not codes_in_order or codes_in_order[-1] != code:
                 codes_in_order.append(code)
 
-    # Pair consecutive DIFFERENT codes into games; skip duplicates
     games: list[dict] = []
     seen: set[tuple] = set()
     i = 0
     while i < len(codes_in_order) - 1:
         c1, c2 = codes_in_order[i], codes_in_order[i + 1]
         if c1 != c2:
-            # Normalise to (away, home) — we don't know order so use sorted order for dedup
             key = tuple(sorted((c1, c2)))
             if key not in seen:
                 seen.add(key)
-                # Try to extract pitcher names from surrounding text context
-                # (best-effort; empty string is fine, caller falls back to rotation)
                 games.append({
                     "game_id":      f"{date_str}-{c1}-{c2}",
                     "date":         date_str,
@@ -1184,7 +1207,35 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
         else:
             i += 1
 
-    # Validate: every code must be a real NPB team
+    # ── Phase 2: Pitcher name extraction ─────────────────────────────────
+    if games and _JP_PITCHER_NAME_MAP:
+        sorted_pitcher_keys = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
+        pitcher_pattern = re.compile(
+            '(' + '|'.join(re.escape(k) for k in sorted_pitcher_keys) + ')'
+        )
+        # Collect all pitcher names found anywhere on the page (short text nodes only)
+        found_zh: set[str] = set()
+        for node in soup.find_all(string=True):
+            text = node.strip()
+            if not text or len(text) > 20:
+                continue
+            for m in pitcher_pattern.finditer(text):
+                found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
+
+        # Assign each found pitcher to the game matching their team
+        for g in games:
+            for zh in found_zh:
+                team = _NPB_PITCHER_TEAM.get(zh, "")
+                if team == g["away"] and not g["away_pitcher"]:
+                    g["away_pitcher"] = zh
+                elif team == g["home"] and not g["home_pitcher"]:
+                    g["home_pitcher"] = zh
+
+        pitcher_count = sum(1 for g in games if g["away_pitcher"] or g["home_pitcher"])
+        if pitcher_count:
+            log.info("Yahoo Japan: extracted pitchers for %d/%d games", pitcher_count, len(games))
+
+    # ── Validate ──────────────────────────────────────────────────────────
     valid = [g for g in games
              if g["away"] in _YAHOO_NPB_TEAM_MAP.values()
              and g["home"] in _YAHOO_NPB_TEAM_MAP.values()]
