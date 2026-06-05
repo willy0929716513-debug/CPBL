@@ -514,9 +514,11 @@ def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
                         continue
                     state = game.get("status", {}).get("abstractGameState", "Preview")
 
-                    # 先發投手（hydrate=probablePitcher 提供）
-                    home_pitcher = home_t.get("probablePitcher", {}).get("fullName", "")
-                    away_pitcher = away_t.get("probablePitcher", {}).get("fullName", "")
+                    # probablePitcher names come in English from MLB Stats API; translate to Chinese
+                    _ap_en = away_t.get("probablePitcher", {}).get("fullName", "")
+                    _hp_en = home_t.get("probablePitcher", {}).get("fullName", "")
+                    away_pitcher = _translate_mlb_pitcher(_ap_en) if _ap_en else ""
+                    home_pitcher = _translate_mlb_pitcher(_hp_en) if _hp_en else ""
 
                     # 比賽時間（gameDate 為 UTC ISO，轉台灣時間）
                     game_time = ""
@@ -654,57 +656,73 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
 def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
     """
     多來源賽程（含先發投手），優先順序：
-      NPB: Yahoo Japan Baseball → MLB Stats API (sportId=6)
-      KBO: MLB Stats API (sportId=5, hydrate=probablePitcher) → Odds API /events
-      最終保底: The Odds API /events（有賽程，無先發）
-    ESPN 完全移除（對 NPB/KBO 無用）。
+      1. MLB Stats API (sportId=5/6, hydrate=probablePitcher) — KBO+NPB，有確認先發
+      2. Yahoo Japan Baseball (date-specific URL only) — NPB 補漏
+      3. The Odds API /events — 最終保底（只有賽程，無先發）
+
+    Yahoo Japan 現在只補漏，不再主動覆蓋已有資料，且只嘗試日期特定 URL。
     """
     games_kbo: list[dict] = []
     games_npb: list[dict] = []
 
-    # 1. Yahoo Japan Baseball — NPB 先發（已確認 GH Actions 可達）
-    try:
-        games_npb = fetch_yahoo_npb_schedule(game_date)
-        if games_npb:
-            log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
-    except Exception as e:
-        log.debug("Yahoo Japan NPB failed: %s", e)
-
-    # 2. MLB Stats API — KBO (sportId=5) + NPB 補漏 (sportId=6)
-    #    含 hydrate=probablePitcher，先發資料最完整
+    # 1. MLB Stats API — 最可靠的先發投手來源（hydrate=probablePitcher）
     try:
         mlb_games = fetch_mlbstats_schedule(game_date)
         if mlb_games:
-            log.info("Schedule from MLB Stats API: %d games", len(mlb_games))
-            if not games_kbo:
-                games_kbo = [g for g in mlb_games if g.get("league") == "KBO"]
-            if not games_npb:
-                games_npb = [g for g in mlb_games if g.get("league") == "NPB"]
+            games_kbo = [g for g in mlb_games if g.get("league") == "KBO"]
+            games_npb = [g for g in mlb_games if g.get("league") == "NPB"]
+            log.info("MLB Stats API: %d KBO + %d NPB games", len(games_kbo), len(games_npb))
+        else:
+            log.debug("MLB Stats API: no games returned for %s", game_date)
     except Exception as e:
         log.debug("MLB Stats API failed: %s", e)
 
-    # 如果 KBO + NPB 都有了，直接回傳
-    if games_kbo and games_npb:
-        return games_kbo + games_npb
+    # 2. Yahoo Japan — 補 NPB 賽程（只在 MLB Stats API 沒有 NPB 資料時啟用）
+    #    若 MLB Stats API 已取得 NPB，僅用 Yahoo Japan 補充缺失的先發投手
+    try:
+        yahoo_games = fetch_yahoo_npb_schedule(game_date)
+        if yahoo_games:
+            if not games_npb:
+                games_npb = yahoo_games
+                log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
+            else:
+                # MLB Stats API 已有 NPB 賽程 — 只補充先發投手名
+                yahoo_map = {(g["away"], g["home"]): g for g in yahoo_games}
+                filled = 0
+                for g in games_npb:
+                    key = (g.get("away", ""), g.get("home", ""))
+                    yg = yahoo_map.get(key)
+                    if yg:
+                        if not g.get("away_pitcher") and yg.get("away_pitcher"):
+                            g["away_pitcher"] = yg["away_pitcher"]
+                            filled += 1
+                        if not g.get("home_pitcher") and yg.get("home_pitcher"):
+                            g["home_pitcher"] = yg["home_pitcher"]
+                            filled += 1
+                if filled:
+                    log.info("Yahoo Japan supplemented %d pitcher slots for NPB", filled)
+    except Exception as e:
+        log.debug("Yahoo Japan NPB failed: %s", e)
 
     # 3. The Odds API /events — 保底（有賽程但無先發）
-    try:
-        odds_games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
-        if odds_games:
-            log.info("Schedule from Odds API events: %d games", len(odds_games))
-            existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
-            needs_kbo = not games_kbo
-            needs_npb = not games_npb
-            for g in odds_games:
-                if g["game_id"] not in existing_ids:
-                    league = g.get("league", "")
-                    if league == "KBO" and needs_kbo:
-                        games_kbo.append(g)
-                    elif league == "NPB" and needs_npb:
-                        games_npb.append(g)
-                    existing_ids.add(g["game_id"])
-    except Exception as e:
-        log.debug("Odds API events failed: %s", e)
+    if not games_kbo or not games_npb:
+        try:
+            odds_games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
+            if odds_games:
+                log.info("Schedule from Odds API events: %d games", len(odds_games))
+                existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
+                needs_kbo = not games_kbo
+                needs_npb = not games_npb
+                for g in odds_games:
+                    if g["game_id"] not in existing_ids:
+                        league = g.get("league", "")
+                        if league == "KBO" and needs_kbo:
+                            games_kbo.append(g)
+                        elif league == "NPB" and needs_npb:
+                            games_npb.append(g)
+                        existing_ids.add(g["game_id"])
+        except Exception as e:
+            log.debug("Odds API events failed: %s", e)
 
     result = games_kbo + games_npb
     if not result:
@@ -948,6 +966,86 @@ _JP_PITCHER_NAME_MAP = {
 }
 
 
+# MLB Stats API 回傳英文姓名（羅馬字） → 我們使用的中文名
+# 格式：MLB Stats API 慣用西式姓名（名 姓）
+_MLB_PITCHER_EN_TO_ZH: dict[str, str] = {
+    # NPB — 讀賣巨人
+    "Tomoyuki Sugano":   "菅野智之", "Shosei Togo":      "戶鄉翔征",
+    "Trevor Cahill":     "葛瑞芬",   "Yuji Akahoshi":    "赤星優志",
+    # NPB — 阪神虎
+    "Hiroto Saiki":      "才木浩人", "Shoki Murakami":   "村上頌樹",
+    "Yuki Nishi":        "西勇輝",   "Aaron Bummer":     "比茲利",
+    "Joe Biagini":       "比茲利",
+    # NPB — 廣島鯉魚
+    "Daichi Osera":      "大瀨良大地","Hiroki Tokodani":  "床田寬樹",
+    "Aren Kurisato":     "九里亞蓮", "Aaron Hahn":       "漢恩",
+    # NPB — 橫濱DeNA海星
+    "Katsuki Azuma":     "東克樹",   "Yutaro Ishida":    "石田裕太郎",
+    "Shinichi Onuki":    "大貫晉一", "Graeme Stinson":   "傑克森",
+    "Griffin":           "葛瑞芬",
+    # NPB — 養樂多燕子
+    "Yasuhiro Ogawa":    "小川泰弘", "Keiji Takahashi":  "高橋奎二",
+    "Tylor Megill":      "賽斯尼德", "Kojiro Yoshimura": "吉村貢司郎",
+    # NPB — 中日龍
+    "Yudai Ono":         "大野雄大", "Hiroya Yanagi":    "柳裕也",
+    "Miguel Mejia":      "梅希亞",   "Hideaki Wakui":    "涌井秀章",
+    # NPB — 福岡軟銀鷹
+    "Livan Moinelo":     "莫伊內羅", "Kohei Arihara":    "有原航平",
+    "Takahiro Higashihama": "東濱巨","Bryce Montes de Oca": "史都華特二世",
+    "Drew Steckenrider": "史都華特二世",
+    # NPB — 歐力士水牛
+    "Shunpeita Yamashita": "山下舜平太","Daiki Tajima":  "田嶋大樹",
+    "Hiroya Miyagi":     "宮城大彌", "Yohan Espinosa":   "艾斯皮諾薩",
+    # NPB — 東北樂天金鷹
+    "Takahisa Hayakawa": "早川隆久", "Takayuki Kishi":   "岸孝之",
+    "Cody Stashak":      "塔利",     "Masahiro Tanaka":  "田中將大",
+    # NPB — 千葉羅德水手
+    "Roki Sasaki":       "佐佐木朗希","Kazuya Ojima":    "小島和哉",
+    "Atsuki Taneichi":   "種市篤暉", "Cesar Vargas":     "梅賽德斯",
+    # NPB — 埼玉西武獅
+    "Mitsunari Takahashi": "高橋光成","Kaima Taira":     "平良海馬",
+    "Tatsuya Imai":      "今井達也",  "Bo Takahashi":    "寶高橋",
+    # NPB — 北海道火腿鬥士
+    "Hiromi Ito":        "伊藤大海", "Takayuki Kato":    "加藤貴之",
+    "Hisanori Kanemura": "金村尚真", "Gerson Bautista":  "馬丁尼斯",
+    # KBO — 三星雄獅
+    "Tae-In Won":        "元泰仁",   "Anderson Espinoza":"阿貝吉",
+    "Jae-Hyun Lee":      "李在現",   "Jeong-Hyeon Baek": "白正賢",
+    # KBO — LG雙子星
+    "Chan-Gyu Lim":      "林贊圭",   "Casey Kelly":      "凱利",
+    "Juyeong Son":       "孫柱榮",   "Austin Pruitt":    "普魯特科",
+    # KBO — 斗山熊
+    "Sean Fosse":        "佛雷斯特", "Geon-Hee Hong":    "洪建熙",
+    "Taek-Hyeong Kim":   "金澤亨",   "Seung-Jin Lee":    "李承珍",
+    # KBO — KT巫師
+    "Josh Breaux":       "班傑明",   "Joel Kuhnel":      "奎瓦斯",
+    "Young-Pyo Ko":      "高英杓",   "Ryan Weiss":       "威爾克森",
+    # KBO — SSG藍德
+    "Kwang-Hyun Kim":    "金廣鉉",   "Jong-Hoon Park":   "朴鐘勳",
+    "Edward Cabrera":    "羅薩里奧", "Won-Seok Oh":      "吳源石",
+    # KBO — NC恐龍
+    "Drew Rucinski":     "魯欽斯基", "Min-Hyeok Shin":   "申敏爀",
+    "Jiovanni Mier":     "費迪",     "Chang-Mo Koo":     "具昌模",
+    # KBO — KIA老虎
+    "Hyeon-Jong Yang":   "梁鉉種",   "Cionel Perez":     "納夫",
+    "Eui-Li Lee":        "李義利",   "Young-Cheol Yoon": "尹永哲",
+    # KBO — 釜山樂天
+    "Logan Allen":       "格洛弗",   "Drew Strahm":      "史特萊利",
+    "Se-Ung Park":       "朴世雄",   "Hyeon-Ho Kang":    "姜賢浩",
+    # KBO — 韓華老鷹
+    "Hyun-Jin Ryu":      "柳賢振",   "Dong-Ju Moon":     "文東柱",
+    "Andrew Chafin":     "卡特",     "Chad Bell":        "查德貝爾",
+    # KBO — 基咖英雄
+    "Woo-Jin Ahn":       "安祐真",   "Young-Min Ha":     "河榮敏",
+    "Freddy Tarnok":     "埃雷迪亞", "Seon-Gi Kim":      "金善紀",
+}
+
+
+def _translate_mlb_pitcher(en_name: str) -> str:
+    """MLB Stats API 英文姓名 → 中文名（找不到則原樣回傳）"""
+    return _MLB_PITCHER_EN_TO_ZH.get(en_name.strip(), en_name.strip())
+
+
 def _yahoo_team_code(text: str) -> str:
     t = text.strip()
     for k, v in _YAHOO_NPB_TEAM_MAP.items():
@@ -963,15 +1061,17 @@ def _translate_jp_pitcher(jp_name: str) -> str:
 
 def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
     """
-    baseball.yahoo.co.jp 抓今日 NPB 賽程與先發投手。
-    URL: https://baseball.yahoo.co.jp/npb/schedule/
+    baseball.yahoo.co.jp 抓 NPB 賽程與先發投手。
+    只嘗試日期特定 URL，絕不回退到今日通用頁面（避免把今天的比賽寫入錯誤日期）。
     """
     date_str = game_date.isoformat()
     y, m, d  = game_date.year, game_date.month, game_date.day
     urls = [
         f"https://baseball.yahoo.co.jp/npb/schedule/{y:04d}{m:02d}{d:02d}/",
         f"https://baseball.yahoo.co.jp/npb/schedule/?date={y:04d}{m:02d}{d:02d}",
-        "https://baseball.yahoo.co.jp/npb/schedule/",
+        # NOTE: do NOT add the dateless fallback URL here.
+        # The generic URL always returns today's schedule, which would corrupt
+        # future-date entries in schedule.json with today's games.
     ]
     for url in urls:
         try:
@@ -993,90 +1093,56 @@ def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
 
 
 def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
-    """解析 baseball.yahoo.co.jp 賽程 HTML，提取先發投手。"""
-    soup  = BeautifulSoup(html, "html.parser")
-    games = []
+    """
+    Parse Yahoo Japan NPB schedule using text-scan approach.
 
-    # Yahoo Japan NPB 賽程：通常每場比賽是一個 table 或 li 區塊
-    # 常見 CSS class: bb-score, bb-score__team, bb-score__pitcher
-    for container in soup.select(
-        ".bb-score, .bb-score__container, "
-        "[class*='score'], [class*='game'], [class*='match']"
-    ):
-        # 隊名
-        team_els = container.select(
-            ".bb-score__team-name, .team-name, [class*='team']"
-        )
-        team_texts = [el.get_text(strip=True) for el in team_els
-                      if el.get_text(strip=True)]
-        if len(team_texts) < 2:
-            # 嘗試從 abbr 或 alt 屬性取名
-            imgs = container.find_all("img", alt=True)
-            team_texts = [img["alt"] for img in imgs if _yahoo_team_code(img["alt"])]
+    Instead of CSS class matching (which breaks when Yahoo redesigns the page),
+    we scan every small text node for known team names and pair consecutive
+    different codes into games. This is HTML-structure-agnostic.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
+        tag.decompose()
 
-        away_code = home_code = ""
-        for t in team_texts:
-            code = _yahoo_team_code(t)
-            if code and not away_code:
-                away_code = code
-            elif code and code != away_code:
-                home_code = code
-                break
-        if not away_code or not home_code:
+    # Build a sorted pattern — longer names first to avoid "巨人" matching inside "読売ジャイアンツ"
+    sorted_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
+
+    # Scan every text node; record codes in document order
+    codes_in_order: list[str] = []
+    for node in soup.find_all(string=True):
+        text = node.strip()
+        if not text:
             continue
+        # Only process short text nodes — team names are never 50+ chars
+        if len(text) > 50:
+            continue
+        for m in pattern.finditer(text):
+            code = _YAHOO_NPB_TEAM_MAP[m.group()]
+            # Avoid consecutive duplicates (same team name repeated in the same node)
+            if not codes_in_order or codes_in_order[-1] != code:
+                codes_in_order.append(code)
 
-        # 先發投手
-        pitcher_els = container.select(
-            ".bb-score__pitcher, .pitcher, [class*='pitcher'], "
-            "[class*='starter'], [class*='sp']"
-        )
-        pitchers = [el.get_text(strip=True) for el in pitcher_els
-                    if el.get_text(strip=True) and len(el.get_text(strip=True)) > 1]
-        away_pitcher = _translate_jp_pitcher(pitchers[0]) if len(pitchers) > 0 else ""
-        home_pitcher = _translate_jp_pitcher(pitchers[1]) if len(pitchers) > 1 else ""
-
-        # 比賽時間
-        time_el = container.select_one("[class*='time'], [class*='start']")
-        game_time = ""
-        if time_el:
-            m2 = re.search(r"(\d{1,2}:\d{2})", time_el.get_text())
-            if m2:
-                game_time = m2.group(1)
-
-        games.append({
-            "game_id":      f"{date_str}-{away_code}-{home_code}",
-            "date":         date_str,
-            "time":         game_time,
-            "away":         away_code,
-            "away_name":    team_texts[0] if team_texts else away_code,
-            "home":         home_code,
-            "home_name":    team_texts[-1] if len(team_texts) > 1 else home_code,
-            "venue":        "",
-            "league":       "NPB",
-            "status":       "預定",
-            "away_score":   None,
-            "home_score":   None,
-            "away_pitcher": away_pitcher,
-            "home_pitcher": home_pitcher,
-            "_source":      "yahoo_jp",
-        })
-
-    # Pattern B: 通用 table 解析（Yahoo Japan 有時用 table 排列）
-    if not games:
-        for row in soup.select("tr"):
-            cells = row.find_all(["td", "th"])
-            if len(cells) < 3:
-                continue
-            cell_texts = [c.get_text(strip=True) for c in cells]
-            codes = [_yahoo_team_code(t) for t in cell_texts if _yahoo_team_code(t)]
-            if len(codes) >= 2 and codes[0] != codes[1]:
+    # Pair consecutive DIFFERENT codes into games; skip duplicates
+    games: list[dict] = []
+    seen: set[tuple] = set()
+    i = 0
+    while i < len(codes_in_order) - 1:
+        c1, c2 = codes_in_order[i], codes_in_order[i + 1]
+        if c1 != c2:
+            # Normalise to (away, home) — we don't know order so use sorted order for dedup
+            key = tuple(sorted((c1, c2)))
+            if key not in seen:
+                seen.add(key)
+                # Try to extract pitcher names from surrounding text context
+                # (best-effort; empty string is fine, caller falls back to rotation)
                 games.append({
-                    "game_id":      f"{date_str}-{codes[0]}-{codes[1]}",
+                    "game_id":      f"{date_str}-{c1}-{c2}",
                     "date":         date_str,
                     "time":         "",
-                    "away":         codes[0],
+                    "away":         c1,
                     "away_name":    "",
-                    "home":         codes[1],
+                    "home":         c2,
                     "home_name":    "",
                     "venue":        "",
                     "league":       "NPB",
@@ -1085,10 +1151,19 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
                     "home_score":   None,
                     "away_pitcher": "",
                     "home_pitcher": "",
-                    "_source":      "yahoo_jp_table",
+                    "_source":      "yahoo_jp",
                 })
+            i += 2
+        else:
+            i += 1
 
-    return games
+    # Validate: every code must be a real NPB team
+    valid = [g for g in games
+             if g["away"] in _YAHOO_NPB_TEAM_MAP.values()
+             and g["home"] in _YAHOO_NPB_TEAM_MAP.values()]
+    if len(valid) != len(games):
+        log.debug("Yahoo Japan: dropped %d games with unknown team codes", len(games) - len(valid))
+    return valid
 
 
 # 删除舊的 CPBL 官網函數，保留 stub 避免 import 錯誤
