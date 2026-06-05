@@ -151,6 +151,8 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     ]
 
     def fmt_sp(sp: dict) -> str:
+        if not sp or not sp.get("confirmed", False):
+            return "未定"
         name = sp.get("name", "")
         if not name:
             return "未定"
@@ -393,6 +395,8 @@ def main():
             except Exception:
                 pass
 
+        ap_confirmed = bool(g.get("away_pitcher"))
+        hp_confirmed = bool(g.get("home_pitcher"))
         ap_name = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
         hp_name = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
         g_for_pred = {**g, "away_pitcher": ap_name, "home_pitcher": hp_name}
@@ -461,8 +465,8 @@ def main():
             "matchup":       mu,
         }
 
-        asp_data = {**merged_pitchers.get(ap_name, {}), "name": ap_name} if ap_name else {}
-        hsp_data = {**merged_pitchers.get(hp_name, {}), "name": hp_name} if hp_name else {}
+        asp_data = {**merged_pitchers.get(ap_name, {}), "name": ap_name, "confirmed": ap_confirmed} if ap_name else {}
+        hsp_data = {**merged_pitchers.get(hp_name, {}), "name": hp_name, "confirmed": hp_confirmed} if hp_name else {}
 
         base = dict(
             away=away, home=home,
