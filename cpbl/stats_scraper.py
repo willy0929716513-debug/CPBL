@@ -40,21 +40,21 @@ _HEADERS = {
     "Accept-Language": "ja,ko,en-US;q=0.8",
 }
 
-# ESPN 球隊顯示名稱 → 內部代碼
+# ESPN / Odds API 球隊顯示名稱 → 內部代碼
 _ESPN_TEAM_MAP = {
-    # NPB
-    "Giants":           "GNT", "Yomiuri Giants":     "GNT",
-    "Tigers":           "HNS", "Hanshin Tigers":     "HNS",
-    "Carp":             "HRC", "Hiroshima Carp":     "HRC",
-    "BayStars":         "YDB", "DeNA BayStars":      "YDB",
-    "Swallows":         "YKL", "Yakult Swallows":    "YKL",
-    "Dragons":          "CND", "Chunichi Dragons":   "CND",
-    "Hawks":            "SBH", "SoftBank Hawks":     "SBH",
-    "Buffaloes":        "ORX", "Orix Buffaloes":     "ORX",
-    "Eagles":           "RKT", "Rakuten Eagles":     "RKT",
-    "Marines":          "LTT", "Lotte Marines":      "LTT",
-    "Lions":            "SEI", "Seibu Lions":        "SEI",
-    "Fighters":         "HAM", "Nippon-Ham Fighters":"HAM",
+    # NPB — 完整名稱（Odds API 帶城市前綴）
+    "Yomiuri Giants":                "GNT", "Giants":                "GNT",
+    "Hanshin Tigers":                "HNS", "Tigers":                "HNS",
+    "Hiroshima Toyo Carp":           "HRC", "Hiroshima Carp":        "HRC", "Carp": "HRC",
+    "Yokohama DeNA BayStars":        "YDB", "DeNA BayStars":         "YDB", "BayStars": "YDB",
+    "Tokyo Yakult Swallows":         "YKL", "Yakult Swallows":       "YKL", "Swallows": "YKL",
+    "Chunichi Dragons":              "CND", "Dragons":               "CND",
+    "Fukuoka SoftBank Hawks":        "SBH", "SoftBank Hawks":        "SBH", "Hawks": "SBH",
+    "Orix Buffaloes":                "ORX", "Buffaloes":             "ORX",
+    "Tohoku Rakuten Golden Eagles":  "RKT", "Rakuten Eagles":        "RKT", "Eagles": "RKT",
+    "Chiba Lotte Marines":           "LTT", "Lotte Marines":         "LTT", "Marines": "LTT",
+    "Saitama Seibu Lions":           "SEI", "Seibu Lions":           "SEI", "Lions": "SEI",
+    "Hokkaido Nippon-Ham Fighters":  "HAM", "Nippon-Ham Fighters":   "HAM", "Fighters": "HAM",
     # KBO
     "Samsung Lions":    "SSL",
     "LG Twins":         "LGT",
@@ -570,15 +570,17 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
                 away_lower = away_name.lower()
                 home_code = _ESPN_TEAM_MAP.get(home_name)
                 away_code = _ESPN_TEAM_MAP.get(away_name)
-                # Also try lower-case lookup against odds team map
+                # Fallback: case-insensitive exact, then substring match
                 if not home_code:
+                    home_lower = home_name.lower()
                     for k, v in _ESPN_TEAM_MAP.items():
-                        if k.lower() == home_lower:
+                        if k.lower() == home_lower or k.lower() in home_lower:
                             home_code = v
                             break
                 if not away_code:
+                    away_lower = away_name.lower()
                     for k, v in _ESPN_TEAM_MAP.items():
-                        if k.lower() == away_lower:
+                        if k.lower() == away_lower or k.lower() in away_lower:
                             away_code = v
                             break
                 home_code = home_code or home_name[:3].upper()
