@@ -19,8 +19,10 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
-BASE_ESPN_NPB = "https://site.api.espn.com/apis/site/v2/sports/baseball/jlb"
-BASE_ESPN_KBO = "https://site.api.espn.com/apis/site/v2/sports/baseball/kor"
+BASE_ESPN_NPB      = "https://site.api.espn.com/apis/site/v2/sports/baseball/jlb"
+BASE_ESPN_KBO      = "https://site.api.espn.com/apis/site/v2/sports/baseball/kor"
+BASE_ESPN_WEB_NPB  = "https://site.web.api.espn.com/apis/site/v2/sports/baseball/jlb"
+BASE_ESPN_WEB_KBO  = "https://site.web.api.espn.com/apis/site/v2/sports/baseball/kor"
 
 _FIP_CONSTANT_NPB = 3.20
 _FIP_CONSTANT_KBO = 3.60
@@ -459,15 +461,85 @@ def fetch_all_pitcher_stats(year: int) -> dict[str, dict]:
     return stats
 
 
+def fetch_espn_web_schedule(game_date: date) -> list[dict]:
+    """ESPN site.web.api 備援（不同子網域，較少被 GH Actions IP 封鎖）。"""
+    date_str = game_date.strftime("%Y%m%d")
+    games: list[dict] = []
+    for league, base_url in [("NPB", BASE_ESPN_WEB_NPB), ("KBO", BASE_ESPN_WEB_KBO)]:
+        url = f"{base_url}/scoreboard?dates={date_str}&lang=en&region=us"
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            resp.raise_for_status()
+            events = resp.json().get("events", [])
+            games.extend(_parse_espn_events(events, game_date.isoformat(), league))
+        except Exception as e:
+            log.debug("ESPN web [%s]: %s", league, e)
+    return games
+
+
+def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
+    """MLB Stats API 備援（statsapi.mlb.com，sportId=6 NPB / sportId=5 KBO）。"""
+    date_str_us = game_date.strftime("%m/%d/%Y")
+    date_iso    = game_date.isoformat()
+    games: list[dict] = []
+    for sport_id, league in [(6, "NPB"), (5, "KBO")]:
+        url = f"https://statsapi.mlb.com/api/v1/schedule?sportId={sport_id}&date={date_str_us}"
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            if resp.status_code != 200:
+                continue
+            for date_entry in resp.json().get("dates", []):
+                for game in date_entry.get("games", []):
+                    home = game.get("teams", {}).get("home", {}).get("team", {})
+                    away = game.get("teams", {}).get("away", {}).get("team", {})
+                    home_name = home.get("name", "")
+                    away_name = away.get("name", "")
+                    home_code = _ESPN_TEAM_MAP.get(home_name, home.get("abbreviation", (home_name[:3].upper() if home_name else "???")))
+                    away_code = _ESPN_TEAM_MAP.get(away_name, away.get("abbreviation", (away_name[:3].upper() if away_name else "???")))
+                    state = game.get("status", {}).get("abstractGameState", "Preview")
+                    games.append({
+                        "game_id":      f"{date_iso}-{away_code}-{home_code}",
+                        "date":         date_iso,
+                        "time":         "",
+                        "away":         away_code,
+                        "away_name":    away_name,
+                        "home":         home_code,
+                        "home_name":    home_name,
+                        "venue":        game.get("venue", {}).get("name", ""),
+                        "league":       league,
+                        "status":       "結束" if state == "Final" else "預定",
+                        "away_score":   None,
+                        "home_score":   None,
+                        "away_pitcher": "",
+                        "home_pitcher": "",
+                        "_source":      "mlbstats",
+                    })
+        except Exception as e:
+            log.debug("MLB Stats API [sport=%s]: %s", sport_id, e)
+    return games
+
+
 def fetch_schedule_multi(game_date: date) -> list[dict]:
-    """
-    多來源賽程：ESPN NPB + KBO
-    """
+    """多來源賽程：ESPN → ESPN Web → MLB Stats API"""
+    # 1. ESPN (primary)
     games = fetch_espn_schedule(game_date)
     if games:
         log.info("Schedule from ESPN: %d games", len(games))
         return games
-    log.warning("ESPN schedule empty, will use mock data")
+
+    # 2. ESPN web API (different subdomain)
+    games = fetch_espn_web_schedule(game_date)
+    if games:
+        log.info("Schedule from ESPN web: %d games", len(games))
+        return games
+
+    # 3. MLB Stats API (statsapi.mlb.com, covers NPB/KBO international leagues)
+    games = fetch_mlbstats_schedule(game_date)
+    if games:
+        log.info("Schedule from MLB Stats API: %d games", len(games))
+        return games
+
+    log.warning("All schedule APIs failed for %s", game_date)
     return []
 
 
