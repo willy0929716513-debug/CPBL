@@ -8,8 +8,9 @@ NPB/KBO 自成獨立體系，完全不依賴 MLB 任何 API。
   KBO: koreabaseball.com 官方 → Naver Sports KBO
   保底: The Odds API /events — 有賽程，無先發
 
-ESPN 保底：KBO (kor) / NPB (jlb) scoreboard API 提供 probables 先發資料，無需 API key，
-  GH Actions 可達。作為 HTML 來源的最終保底使用。
+先發保底（原生官網）：
+  NPB: npb.jp 官方月賽程（baseball.yahoo.co.jp 找不到投手時觸發）
+  KBO: Daum Sports KBO 賽程（koreabaseball.com / Naver 找不到投手時觸發）
 
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
   NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
@@ -715,101 +716,136 @@ def _enrich_kbo_pitchers_from_html(soup_before_decompose, games: list[dict]) -> 
                 g["home_pitcher"] = zh
 
 
-def fetch_espn_kbo_pitchers(game_date: date) -> dict[str, tuple]:
+def fetch_npb_official_pitchers(game_date: date, games: list[dict]) -> None:
     """
-    ESPN KBO scoreboard API 取得確認先發投手。
-    無需 API key，不受 WAF 封鎖，GH Actions 可達。
+    npb.jp 官方月賽程頁面取得先發投手並填入 games。
 
-    Returns: dict of game_id → (away_pitcher_zh, home_pitcher_zh)
-    Empty strings if pitcher not announced or not in our name map.
+    URL: https://npb.jp/games/{year}/schedule_{month:02d}_detail.html
+    使用與 Yahoo Japan 完全相同的 Phase 0/2 掃描法：
+    先掃 <script> 標籤（JS 資料常嵌在這裡），再掃文字節點，
+    透過 _JP_PITCHER_NAME_MAP 轉譯，再由 _NPB_PITCHER_TEAM 指派到比賽。
     """
-    date_str = game_date.strftime("%Y%m%d")
-    url = f"{BASE_ESPN_KBO}/scoreboard?dates={date_str}"
-    result: dict[str, tuple] = {}
+    if not games:
+        return
+    url = (f"https://npb.jp/games/{game_date.year}/"
+           f"schedule_{game_date.month:02d}_detail.html")
     try:
-        resp = requests.get(url, headers=_HEADERS, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        for ev in data.get("events", []):
-            comps = ev.get("competitions", [{}])[0]
-            competitors = comps.get("competitors", [])
-            if len(competitors) < 2:
+        resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
+        if resp.status_code != 200:
+            log.debug("NPB official HTTP %s for %s", resp.status_code, url)
+            return
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        sorted_keys = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
+        pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
+
+        found_zh: set[str] = set()
+
+        # Phase 0 — script tags before decompose
+        for script in soup.find_all('script'):
+            for m in pat.finditer(script.get_text() or ""):
+                found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
+        if found_zh:
+            log.info("NPB official Phase-0: found %s", found_zh)
+
+        for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
+            tag.decompose()
+
+        # Phase 2 — text nodes
+        for node in soup.find_all(string=True):
+            text = node.strip()
+            if not text or len(text) > 50:
                 continue
-            home_c = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
-            away_c = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+            for m in pat.finditer(text):
+                found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
 
-            home_name = home_c.get("team", {}).get("displayName", "")
-            away_name = away_c.get("team", {}).get("displayName", "")
-            home_code = _KBO_TEAM_MAP.get(home_name, "")
-            away_code = _KBO_TEAM_MAP.get(away_name, "")
-            if not home_code or not away_code:
-                continue
+        if not found_zh:
+            log.debug("NPB official: no pitcher names found for %s", game_date)
+            return
+        log.info("NPB official: found pitchers %s", found_zh)
 
-            away_en = _espn_starter(away_c)
-            home_en = _espn_starter(home_c)
-
-            # Translate English names → Chinese; fall back to English name if unknown
-            away_zh = _KBO_PITCHER_EN_MAP.get(away_en, away_en) if away_en else ""
-            home_zh = _KBO_PITCHER_EN_MAP.get(home_en, home_en) if home_en else ""
-
-            gid = f"{game_date.isoformat()}-{away_code}-{home_code}"
-            result[gid] = (away_zh, home_zh)
-
-        if result:
-            log.info("ESPN KBO pitchers: enriched %d games", len(result))
-        else:
-            log.debug("ESPN KBO: scoreboard returned no pitcher data for %s", game_date)
+        for g in games:
+            for zh in found_zh:
+                team = _NPB_PITCHER_TEAM.get(zh, "")
+                if team == g["away"] and not g.get("away_pitcher"):
+                    g["away_pitcher"] = zh
+                elif team == g["home"] and not g.get("home_pitcher"):
+                    g["home_pitcher"] = zh
     except Exception as e:
-        log.debug("ESPN KBO pitchers fetch failed: %s", e)
-    return result
+        log.debug("NPB official fetch failed: %s", e)
 
 
-def fetch_espn_npb_pitchers(game_date: date) -> dict[str, tuple]:
+def fetch_daum_kbo_pitchers(game_date: date, games: list[dict]) -> None:
     """
-    ESPN NPB (jlb) scoreboard API 取得確認先發投手。
-    無需 API key，不受 WAF 封鎖，GH Actions 可達。
+    Daum Sports KBO 賽程頁面取得先發投手並填入 games。
 
-    Returns: dict of game_id → (away_pitcher_zh, home_pitcher_zh)
-    Empty strings if pitcher not announced or not in our name map.
+    URL: https://sports.daum.net/schedule/kbo?date={YYYYMMDD}
+    使用與 koreabaseball.com 相同的 Phase 0/2 掃描法：
+    掃 <script> 及文字節點，透過 _KBO_PITCHER_KR_MAP 轉譯，
+    再由 _KBO_PITCHER_TEAM 指派到比賽。
     """
+    if not games:
+        return
     date_str = game_date.strftime("%Y%m%d")
-    url = f"{BASE_ESPN_NPB}/scoreboard?dates={date_str}"
-    result: dict[str, tuple] = {}
+    url = f"https://sports.daum.net/schedule/kbo?date={date_str}"
+    _daum_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8",
+        "Referer": "https://sports.daum.net/",
+    }
     try:
-        resp = requests.get(url, headers=_HEADERS, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        for ev in data.get("events", []):
-            comps = ev.get("competitions", [{}])[0]
-            competitors = comps.get("competitors", [])
-            if len(competitors) < 2:
+        resp = requests.get(url, headers=_daum_headers, timeout=15)
+        if resp.status_code != 200:
+            log.debug("Daum KBO HTTP %s for %s", resp.status_code, url)
+            return
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        if not _KBO_PITCHER_KR_MAP:
+            return
+        sorted_kr = sorted(_KBO_PITCHER_KR_MAP.keys(), key=len, reverse=True)
+        pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_kr) + ')')
+
+        found_zh: set[str] = set()
+
+        # Phase 0 — script tags
+        for script in soup.find_all('script'):
+            for m in pat.finditer(script.get_text() or ""):
+                found_zh.add(_KBO_PITCHER_KR_MAP[m.group()])
+        if found_zh:
+            log.info("Daum KBO Phase-0: found %s", found_zh)
+
+        for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
+            tag.decompose()
+
+        # Phase 2 — text nodes
+        for node in soup.find_all(string=True):
+            text = node.strip()
+            if not text or len(text) > 50:
                 continue
-            home_c = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
-            away_c = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+            for m in pat.finditer(text):
+                found_zh.add(_KBO_PITCHER_KR_MAP[m.group()])
 
-            home_name = home_c.get("team", {}).get("displayName", "")
-            away_name = away_c.get("team", {}).get("displayName", "")
-            home_code = _NPB_TEAM_MAP.get(home_name, "")
-            away_code = _NPB_TEAM_MAP.get(away_name, "")
-            if not home_code or not away_code:
-                continue
+        if not found_zh:
+            log.debug("Daum KBO: no pitcher names found for %s", game_date)
+            return
+        log.info("Daum KBO: found pitchers %s", found_zh)
 
-            away_en = _espn_starter(away_c)
-            home_en = _espn_starter(home_c)
-
-            away_zh = _NPB_PITCHER_EN_MAP.get(away_en, away_en) if away_en else ""
-            home_zh = _NPB_PITCHER_EN_MAP.get(home_en, home_en) if home_en else ""
-
-            gid = f"{game_date.isoformat()}-{away_code}-{home_code}"
-            result[gid] = (away_zh, home_zh)
-
-        if result:
-            log.info("ESPN NPB pitchers: enriched %d games", len(result))
-        else:
-            log.debug("ESPN NPB: scoreboard returned no pitcher data for %s", game_date)
+        for g in games:
+            for zh in found_zh:
+                team = _KBO_PITCHER_TEAM.get(zh, "")
+                if team == g["away"] and not g.get("away_pitcher"):
+                    g["away_pitcher"] = zh
+                elif team == g["home"] and not g.get("home_pitcher"):
+                    g["home_pitcher"] = zh
     except Exception as e:
-        log.debug("ESPN NPB pitchers fetch failed: %s", e)
-    return result
+        log.debug("Daum KBO fetch failed: %s", e)
 
 
 def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
@@ -962,38 +998,13 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
         except Exception as e:
             log.debug("Odds API events failed: %s", e)
 
-    # 4. ESPN KBO pitcher enrichment — fills in pitchers still missing after all HTML sources
-    #    ESPN scoreboard API is reliably accessible from GH Actions (no auth, no WAF block).
-    kbo_missing = [g for g in games_kbo if not g.get("away_pitcher") or not g.get("home_pitcher")]
-    if kbo_missing:
-        try:
-            espn_pitchers = fetch_espn_kbo_pitchers(game_date)
-            for g in games_kbo:
-                info = espn_pitchers.get(g["game_id"])
-                if info:
-                    away_p, home_p = info
-                    if away_p and not g.get("away_pitcher"):
-                        g["away_pitcher"] = away_p
-                    if home_p and not g.get("home_pitcher"):
-                        g["home_pitcher"] = home_p
-        except Exception as e:
-            log.debug("ESPN KBO pitcher enrichment failed: %s", e)
+    # 4. NPB 保底：npb.jp 官方月賽程（Yahoo Japan 未找到投手時才觸發）
+    if any(not g.get("away_pitcher") or not g.get("home_pitcher") for g in games_npb):
+        fetch_npb_official_pitchers(game_date, games_npb)
 
-    # 5. ESPN NPB pitcher enrichment — fills in pitchers still missing after Yahoo Japan
-    npb_missing = [g for g in games_npb if not g.get("away_pitcher") or not g.get("home_pitcher")]
-    if npb_missing:
-        try:
-            espn_npb_pitchers = fetch_espn_npb_pitchers(game_date)
-            for g in games_npb:
-                info = espn_npb_pitchers.get(g["game_id"])
-                if info:
-                    away_p, home_p = info
-                    if away_p and not g.get("away_pitcher"):
-                        g["away_pitcher"] = away_p
-                    if home_p and not g.get("home_pitcher"):
-                        g["home_pitcher"] = home_p
-        except Exception as e:
-            log.debug("ESPN NPB pitcher enrichment failed: %s", e)
+    # 5. KBO 保底：Daum Sports（koreabaseball / Naver 未找到投手時才觸發）
+    if any(not g.get("away_pitcher") or not g.get("home_pitcher") for g in games_kbo):
+        fetch_daum_kbo_pitchers(game_date, games_kbo)
 
     result = games_kbo + games_npb
     if not result:
@@ -1319,100 +1330,6 @@ _KBO_PITCHER_KR_MAP: dict[str, str] = {
     # KWH 基咖英雄
     "안우진": "安祐真", "하영민": "河榮敏", "김선기": "金善紀",
     "에레디아": "埃雷迪亞",
-}
-
-# ESPN 英文 displayName → 中文名（ESPN KBO scoreboard API）
-_KBO_PITCHER_EN_MAP: dict[str, str] = {
-    # SSL 三星雄獅 — Korean nationals (ESPN uses romanized format)
-    "Won Tae-In": "元泰仁", "Tae-In Won": "元泰仁",
-    "Lee Jae-Hyeon": "李在現", "Jae-Hyeon Lee": "李在現",
-    "Baek Jeong-Hyeon": "白正賢",
-    # LGT LG雙子星
-    "Im Chan-Gyu": "林贊圭", "Chan-Gyu Im": "林贊圭",
-    "Son Ju-Yeong": "孫柱榮",
-    # DSB 斗山熊
-    "Hong Geon-Hui": "洪建熙",
-    "Kim Taek-Hyeong": "金澤亨",
-    "Lee Seung-Jin": "李承珍",
-    # KTW KT巫師
-    "Go Yeong-Pyo": "高英杓", "Yeong-Pyo Go": "高英杓",
-    # SSG SSG藍德
-    "Kim Kwang-Hyun": "金廣鉉", "Kwang-Hyun Kim": "金廣鉉",
-    "Park Jong-Hun": "朴鐘勳",
-    "Oh Won-Seok": "吳源石",
-    # NCD NC恐龍
-    "Shin Min-Hyeok": "申敏爀",
-    "Gu Chang-Mo": "具昌模", "Koo Chang-Mo": "具昌模",
-    # KIA KIA老虎
-    "Yang Hyeon-Jong": "梁鉉種", "Hyeon-Jong Yang": "梁鉉種",
-    "Lee Eui-Ri": "李義利",
-    "Yun Yeong-Cheol": "尹永哲",
-    # LTG 釜山樂天
-    "Park Se-Ung": "朴世雄",
-    "Gang Hyeon-Ho": "姜賢浩", "Kang Hyeon-Ho": "姜賢浩",
-    # HWE 韓華老鷹
-    "Hyun-Jin Ryu": "柳賢振", "Ryu Hyun-Jin": "柳賢振",
-    "Moon Dong-Ju": "文東柱",
-    # KWH 基咖英雄
-    "An Woo-Jin": "安祐真", "Woo-Jin An": "安祐真",
-    "Ha Yeong-Min": "河榮敏",
-    "Kim Seon-Gi": "金善紀",
-}
-
-# ESPN 英文 displayName → 中文名（ESPN NPB jlb scoreboard API）
-_NPB_PITCHER_EN_MAP: dict[str, str] = {
-    # GNT 讀賣巨人
-    "Tomoyuki Sugano": "菅野智之", "Sugano Tomoyuki": "菅野智之",
-    "Shoki Togo": "戶鄉翔征", "Togo Shoki": "戶鄉翔征",
-    "Yuji Akahoshi": "赤星優志", "Akahoshi Yuji": "赤星優志",
-    # HNS 阪神虎
-    "Hiroto Saiki": "才木浩人", "Saiki Hiroto": "才木浩人",
-    "Shoki Murakami": "村上頌樹", "Murakami Shoki": "村上頌樹",
-    "Yuki Nishi": "西勇輝", "Nishi Yuki": "西勇輝",
-    # HRC 廣島鯉魚
-    "Daichi Osera": "大瀨良大地", "Osera Daichi": "大瀨良大地",
-    "Hiroki Tokoda": "床田寬樹", "Tokoda Hiroki": "床田寬樹",
-    "Aren Kuri": "九里亞蓮", "Kuri Aren": "九里亞蓮",
-    # YDB 橫濱DeNA海星
-    "Katsuki Azuma": "東克樹", "Azuma Katsuki": "東克樹",
-    "Yutaro Ishida": "石田裕太郎", "Ishida Yutaro": "石田裕太郎",
-    "Shinichi Onuki": "大貫晉一", "Onuki Shinichi": "大貫晉一",
-    # YKL 養樂多燕子
-    "Yasuhiro Ogawa": "小川泰弘", "Ogawa Yasuhiro": "小川泰弘",
-    "Keiji Takahashi": "高橋奎二", "Takahashi Keiji": "高橋奎二",
-    "Cy Sneed": "賽斯尼德",
-    "Kojiro Yoshimura": "吉村貢司郎", "Yoshimura Kojiro": "吉村貢司郎",
-    # CND 中日龍
-    "Yudai Ohno": "大野雄大", "Ohno Yudai": "大野雄大",
-    "Hiroya Yanagi": "柳裕也", "Yanagi Hiroya": "柳裕也",
-    "Hideaki Wakui": "涌井秀章", "Wakui Hideaki": "涌井秀章",
-    # SBH 福岡軟銀鷹
-    "Livan Moinelo": "莫伊內羅", "Moinelo Livan": "莫伊內羅",
-    "Kohei Arihara": "有原航平", "Arihara Kohei": "有原航平",
-    "Brock Stewart": "史都華特二世",
-    "Masaru Higashihama": "東濱巨", "Higashihama Masaru": "東濱巨",
-    # ORX 歐力士水牛
-    "Shunpeita Yamashita": "山下舜平太", "Yamashita Shunpeita": "山下舜平太",
-    "Daiki Tajima": "田嶋大樹", "Tajima Daiki": "田嶋大樹",
-    "Daiya Miyagi": "宮城大彌", "Miyagi Daiya": "宮城大彌",
-    # RKT 東北樂天金鷹
-    "Takahisa Hayakawa": "早川隆久", "Hayakawa Takahisa": "早川隆久",
-    "Takayuki Kishi": "岸孝之", "Kishi Takayuki": "岸孝之",
-    "Masahiro Tanaka": "田中將大", "Tanaka Masahiro": "田中將大",
-    # LTT 千葉羅德水手
-    "Roki Sasaki": "佐佐木朗希", "Sasaki Roki": "佐佐木朗希",
-    "Kazuya Ojima": "小島和哉", "Ojima Kazuya": "小島和哉",
-    "Atsuki Taneichi": "種市篤暉", "Taneichi Atsuki": "種市篤暉",
-    # SEI 埼玉西武獅
-    "Kosei Takahashi": "高橋光成", "Takahashi Kosei": "高橋光成",
-    "Kaima Taira": "平良海馬", "Taira Kaima": "平良海馬",
-    "Tatsuya Imai": "今井達也", "Imai Tatsuya": "今井達也",
-    "Bo Takahashi": "寶高橋",
-    # HAM 北海道火腿鬥士
-    "Hiromi Ito": "伊藤大海", "Ito Hiromi": "伊藤大海",
-    "Takayuki Kato": "加藤貴之", "Kato Takayuki": "加藤貴之",
-    "Shouma Kanemura": "金村尚真", "Kanemura Shouma": "金村尚真",
-    "Elio Martinez": "馬丁尼斯",
 }
 
 
