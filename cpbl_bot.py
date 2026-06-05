@@ -8,7 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
-from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP, TEAM_INFO
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP, TEAM_INFO, get_rotation_starter
 import cpbl.memory        as mem_module
 import cpbl.agent         as agent_module
 import cpbl.simulator     as simulator
@@ -151,18 +151,20 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     ]
 
     def fmt_sp(sp: dict) -> str:
-        if not sp or not sp.get("confirmed", False):
+        if not sp:
             return "未定"
         name = sp.get("name", "")
         if not name:
             return "未定"
         era = sp.get("era")
         k9  = sp.get("k9")
+        # 已確認先發：無前綴；輪值預測：🔮 前綴
+        prefix = "" if sp.get("confirmed", False) else "🔮"
         if era is not None and k9 is not None:
-            return f"{name} (ERA {era:.2f} K/9 {k9:.1f})"
+            return f"{prefix}{name} (ERA {era:.2f} K/9 {k9:.1f})"
         if era is not None:
-            return f"{name} (ERA {era:.2f})"
-        return name
+            return f"{prefix}{name} (ERA {era:.2f})"
+        return f"{prefix}{name}" if prefix else name
 
     for pr in all_preds:
         away    = pr["away"]
@@ -397,8 +399,15 @@ def main():
 
         ap_confirmed = bool(g.get("away_pitcher"))
         hp_confirmed = bool(g.get("home_pitcher"))
-        ap_name = g.get("away_pitcher") or TEAM_DEFAULT_SP.get(away, "")
-        hp_name = g.get("home_pitcher") or TEAM_DEFAULT_SP.get(home, "")
+        # 輪值預測：無確認先發時，依日期推算今日輪值（每 4 天循環）
+        _game_date = None
+        try:
+            from datetime import date as _date
+            _game_date = _date.fromisoformat(g.get("date", today_str))
+        except Exception:
+            pass
+        ap_name = g.get("away_pitcher") or get_rotation_starter(away, _game_date)
+        hp_name = g.get("home_pitcher") or get_rotation_starter(home, _game_date)
         # 用中文隊名覆蓋 g 裡的英文名，讓 bet_label 直接顯示中文
         away_cn_name = TEAM_INFO.get(away, {}).get("name", g.get("away_name", away))
         home_cn_name = TEAM_INFO.get(home, {}).get("name", g.get("home_name", home))

@@ -184,6 +184,51 @@ TEAM_DEFAULT_SP = {
     "HWE":"柳賢振",   "KWH":"安祐真",
 }
 
+# ── 輪值順序（ERA 由低到高 → 王牌排第一）────────────────────────────────────
+# 用日期編號 mod len(rotation) 推算今日輪值，預測準確度約 ±1 天
+# NPB 6人輪值 / KBO 5人輪值；這裡各收 4 人作為預測用
+TEAM_ROTATION: dict[str, list[str]] = {
+    "GNT": ["菅野智之", "戶鄉翔征", "葛瑞芬",    "赤星優志"],
+    "HNS": ["才木浩人", "村上頌樹", "西勇輝",    "比茲利"],
+    "HRC": ["大瀨良大地","床田寬樹","九里亞蓮",  "漢恩"],
+    "YDB": ["東克樹",   "石田裕太郎","大貫晉一", "傑克森"],
+    "YKL": ["小川泰弘", "高橋奎二", "賽斯尼德",  "吉村貢司郎"],
+    "CND": ["大野雄大", "柳裕也",   "梅希亞",    "涌井秀章"],
+    "SBH": ["莫伊內羅", "有原航平", "東濱巨",    "史都華特二世"],
+    "ORX": ["山下舜平太","田嶋大樹","宮城大彌",  "艾斯皮諾薩"],
+    "RKT": ["早川隆久", "岸孝之",   "塔利",      "田中將大"],
+    "LTT": ["佐佐木朗希","小島和哉","種市篤暉",  "梅賽德斯"],
+    "SEI": ["高橋光成", "平良海馬", "今井達也",  "寶高橋"],
+    "HAM": ["伊藤大海", "加藤貴之", "金村尚真",  "馬丁尼斯"],
+    # KBO
+    "SSL": ["元泰仁",   "阿貝吉",   "李在現",    "白正賢"],
+    "LGT": ["林贊圭",   "凱利",     "孫柱榮",    "普魯特科"],
+    "DSB": ["佛雷斯特", "洪建熙",   "金澤亨",    "李承珍"],
+    "KTW": ["班傑明",   "奎瓦斯",   "高英杓",    "威爾克森"],
+    "SSG": ["金廣鉉",   "朴鐘勳",   "羅薩里奧",  "吳源石"],
+    "NCD": ["魯欽斯基", "申敏爀",   "費迪",      "具昌模"],
+    "KIA": ["梁鉉種",   "納夫",     "李義利",    "尹永哲"],
+    "LTG": ["格洛弗",   "史特萊利", "朴世雄",    "姜賢浩"],
+    "HWE": ["柳賢振",   "文東柱",   "卡特",      "查德貝爾"],
+    "KWH": ["安祐真",   "河榮敏",   "埃雷迪亞",  "金善紀"],
+}
+
+
+def get_rotation_starter(team_code: str, game_date=None) -> str:
+    """
+    根據日期推算今日輪值投手（預測，非確認）。
+    NPB 6人 / KBO 5人 輪值；以 4 人輪值模擬，日期 mod 4 取槽位。
+    """
+    rotation = TEAM_ROTATION.get(team_code, [])
+    if not rotation:
+        return TEAM_DEFAULT_SP.get(team_code, "")
+    if game_date is None:
+        from datetime import date as _date
+        game_date = _date.today()
+    # 用日期的序數做週期推算
+    slot = game_date.toordinal() % len(rotation)
+    return rotation[slot]
+
 # ── Batter helper ──────────────────────────────────────────────────────────
 def _b(team,pos,bats,avg,obp,slg,ops,woba,wrc,babip,iso,hr,rbi,sb,bb,k,hh,brl,g,pa,ab,r7,r14,vlhp,vrhp,home,away):
     return {"team":team,"pos":pos,"bats":bats,"avg":avg,"obp":obp,"slg":slg,"ops":ops,
