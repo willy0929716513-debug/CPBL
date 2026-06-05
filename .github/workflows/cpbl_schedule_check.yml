@@ -1,12 +1,12 @@
-name: CPBL Schedule Check
+name: NPB/KBO Schedule Check
 
 on:
   schedule:
-    # 每天台灣時間 16:00 (UTC 08:00)
-    - cron: "0 8 * * *"
-    # 每天台灣時間 18:00 (UTC 10:00)
-    - cron: "0 10 * * *"
-  workflow_dispatch:   # 手動測試用
+    # 每天 JST 11:00 (02:00 UTC) — 午前賽事提醒
+    - cron: "0 2 * * *"
+    # 每天 JST 17:30 (08:30 UTC) — 晚間賽事提醒（大部分 NPB/KBO 夜間賽）
+    - cron: "30 8 * * *"
+  workflow_dispatch:
 
 jobs:
   check:
@@ -21,12 +21,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install requests beautifulsoup4 lxml
 
-      - name: Install Playwright browser (Chromium)
-        run: playwright install chromium --with-deps
-
-      - name: Check today's schedule
+      - name: Check today's NPB/KBO schedule
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -34,54 +31,63 @@ jobs:
           import os, sys
           from datetime import date, datetime, timezone, timedelta
           sys.path.insert(0, ".")
-          from cpbl.scraper import CPBLScraper
+          from cpbl.scraper import MultiLeagueScraper
           import requests
 
-          TW      = timezone(timedelta(hours=8))
+          JST     = timezone(timedelta(hours=9))
           today   = date.today()
-          now_tw  = datetime.now(TW)
+          now_jst = datetime.now(JST)
           webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
-          scraper = CPBLScraper()
+          scraper = MultiLeagueScraper()
 
-          print(f"偵測時間（台灣）：{now_tw.strftime('%Y-%m-%d %H:%M')}")
+          print(f"偵測時間（JST）：{now_jst.strftime('%Y-%m-%d %H:%M')}")
 
-          # 取得今日一軍賽程（失敗則視為無賽事）
           try:
               games = scraper.fetch_schedule(today)
-              source = "cpbl.com.tw"
-              print(f"取得 {len(games)} 場一軍賽事（來源：{source}）")
+              print(f"取得 {len(games)} 場賽事（ESPN API）")
           except Exception as e:
-              print(f"Scraper failed ({e}) — 今日無法確認賽程")
+              print(f"Scraper failed ({e})")
               games = []
-              source = "failed"
 
-          # 過濾有效賽事（排除輪休）
-          valid = [g for g in games if g.get("away") and g.get("home") and g.get("status") != "輪休"]
+          valid = [g for g in games if g.get("away") and g.get("home")]
+          npb_games = [g for g in valid if g.get("league") == "NPB"]
+          kbo_games = [g for g in valid if g.get("league") == "KBO"]
 
-          print(f"今日賽事：{len(valid)} 場（來源：{source}）")
+          print(f"今日賽事：NPB {len(npb_games)} 場 | KBO {len(kbo_games)} 場")
 
           if not webhook:
               sys.exit(0)
 
           if not valid:
-              # 沒有比賽，不發通知
               print("今日無賽事，不推播")
               sys.exit(0)
 
-          # 有比賽 → 推 Discord
-          time_label = now_tw.strftime("%H:%M")
-          lines = [f"⚾ **CPBL 今日賽事提醒** {today}（{time_label} 偵測）\n"]
-          for g in valid:
-              aname = g.get("away_name", g.get("away", "?"))
-              hname = g.get("home_name", g.get("home", "?"))
-              t     = g.get("time", "")
-              venue = g.get("venue", "")
-              line  = f"• **{aname}** @ **{hname}**"
-              if t:
-                  line += f"  🕐 {t}"
-              if venue:
-                  line += f"  📍 {venue}"
-              lines.append(line)
+          time_label = now_jst.strftime("%H:%M")
+          lines = [f"⚾ **NPB/KBO 今日賽事** {today}（{time_label} JST 偵測）\n"]
+
+          if npb_games:
+              lines.append("🇯🇵 **NPB**")
+              for g in npb_games:
+                  a = g.get("away_name", g.get("away", "?"))
+                  h = g.get("home_name", g.get("home", "?"))
+                  t = g.get("time", "")
+                  v = g.get("venue", "")
+                  line = f"• **{a}** @ **{h}**"
+                  if t: line += f"  🕐 {t[11:16]} JST"
+                  if v: line += f"  📍 {v}"
+                  lines.append(line)
+
+          if kbo_games:
+              lines.append("\n🇰🇷 **KBO**")
+              for g in kbo_games:
+                  a = g.get("away_name", g.get("away", "?"))
+                  h = g.get("home_name", g.get("home", "?"))
+                  t = g.get("time", "")
+                  v = g.get("venue", "")
+                  line = f"• **{a}** @ **{h}**"
+                  if t: line += f"  🕐 {t[11:16]} KST"
+                  if v: line += f"  📍 {v}"
+                  lines.append(line)
 
           msg = "\n".join(lines)
           r = requests.post(webhook, json={"content": msg}, timeout=8)

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚾ CPBL Protector — 中華職棒預測系統</title>
+<title>⚾ NPB/KBO Protector — 日職・韓職預測系統</title>
 <link rel="stylesheet" href="/static/css/tailwind.css">
 <script src="/static/js/chart.min.js"></script>
 <style>
@@ -33,8 +33,8 @@
   <div class="flex items-center gap-3">
     <span class="text-2xl">⚾</span>
     <div>
-      <h1 class="text-lg font-bold text-white leading-none">CPBL Protector</h1>
-      <p class="text-xs text-gray-400">中華職棒賽前勝負預測系統</p>
+      <h1 class="text-lg font-bold text-white leading-none">NPB/KBO Protector</h1>
+      <p class="text-xs text-gray-400">日職・韓職賽前勝負預測系統</p>
     </div>
     {% if demo_mode %}
     <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full">DEMO 模式</span>
@@ -56,7 +56,7 @@
 <div class="px-6 py-2 text-xs text-gray-500 border-b border-gray-800 flex flex-wrap gap-4 items-center">
   <span>📅 {{ game_date }}</span>
   <span>🕒 最後更新：{{ last_update or '-' }}</span>
-  <span>V1.0 模型 | ELO + 10 因子加權</span>
+  <span>V8.0 模型 | ELO + Ensemble + 10 因子加權</span>
   <span id="odds-source" class="text-yellow-600">🎰 賠率載入中…</span>
   <a href="/api/quota" target="_blank" class="text-gray-600 hover:text-gray-400 underline">配額查詢</a>
 </div>
@@ -219,7 +219,7 @@
         {% if of and of.curr_home_odds %}
         <div class="bg-gray-800/40 rounded-lg p-3 mb-3 border border-gray-700/40">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-yellow-400">🎰 台灣運彩盤口</span>
+            <span class="text-xs font-semibold text-yellow-400">🎰 賠率盤口</span>
             {% if of.analysis is defined %}
             <span class="text-xs px-2 py-0.5 rounded-full
               {% if of.analysis.value_gap > 8 %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
@@ -397,9 +397,19 @@
             </tr>
           </thead>
           <tbody>
-            {% for t in standings %}
+            {% for section_label, section_div in [
+              ('🇯🇵 NPB 中央聯盟', 'NPB 中央'),
+              ('🇯🇵 NPB 太平洋聯盟', 'NPB 太平洋'),
+              ('🇰🇷 KBO', 'KBO')
+            ] %}
+            {% set section_teams = standings | selectattr('division', 'equalto', section_div) | sort(attribute='pct', reverse=True) | list %}
+            {% if section_teams %}
+            <tr class="bg-gray-700/50 border-t border-gray-600/40">
+              <td colspan="8" class="px-3 py-1.5 text-xs font-semibold text-gray-300">{{ section_label }}</td>
+            </tr>
+            {% for t in section_teams %}
             <tr class="border-b border-gray-700/30 hover:bg-gray-800/40">
-              <td class="px-3 py-2 text-gray-500">{{ t.rank }}</td>
+              <td class="px-3 py-2 text-gray-500">{{ loop.index }}</td>
               <td class="px-3 py-2 font-medium text-white">{{ t.short }}</td>
               <td class="px-3 py-2 text-right text-emerald-400">{{ t.w }}</td>
               <td class="px-3 py-2 text-right text-red-400">{{ t.l }}</td>
@@ -414,6 +424,8 @@
                 {{ t.streak }}
               </td>
             </tr>
+            {% endfor %}
+            {% endif %}
             {% endfor %}
           </tbody>
         </table>
@@ -432,10 +444,13 @@
               <th class="px-3 py-2 text-left">#</th>
               <th class="px-3 py-2 text-left">投手</th>
               <th class="px-3 py-2 text-left">隊</th>
+              <th class="px-3 py-2 text-left">聯盟</th>
               <th class="px-3 py-2 text-right">ERA</th>
               <th class="px-3 py-2 text-right">FIP</th>
               <th class="px-3 py-2 text-right">WHIP</th>
               <th class="px-3 py-2 text-right">K/9</th>
+              <th class="px-3 py-2 text-right">K%</th>
+              <th class="px-3 py-2 text-right">BB%</th>
               <th class="px-3 py-2 text-right">近5場</th>
               <th class="px-3 py-2 text-right">狀態</th>
             </tr>
@@ -446,16 +461,31 @@
               <td class="px-3 py-2 text-gray-500">{{ loop.index }}</td>
               <td class="px-3 py-2 text-white font-medium">
                 {{ p.name }}
-                {% if p.foreign %}<span class="ml-1 text-xs text-orange-400">洋</span>{% endif %}
+                {% if p.foreign %}<span class="ml-1 text-xs text-orange-400">外</span>{% endif %}
               </td>
               <td class="px-3 py-2 text-gray-400">{{ p.team_name }}</td>
+              <td class="px-3 py-2">
+                {% if p.league == 'NPB' %}
+                <span class="text-xs px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300">NPB</span>
+                {% else %}
+                <span class="text-xs px-1.5 py-0.5 rounded bg-red-900/60 text-red-300">KBO</span>
+                {% endif %}
+              </td>
               <td class="px-3 py-2 text-right font-mono
-                {% if p.era < 3.0 %}text-emerald-400{% elif p.era < 3.5 %}text-yellow-400{% elif p.era > 4.5 %}text-red-400{% else %}text-white{% endif %}">
+                {% if p.era < 2.5 %}text-emerald-400{% elif p.era < 3.5 %}text-yellow-400{% elif p.era > 5.0 %}text-red-400{% else %}text-white{% endif %}">
                 {{ "%.2f"|format(p.era) }}
               </td>
               <td class="px-3 py-2 text-right font-mono text-gray-300">{{ "%.2f"|format(p.fip) }}</td>
               <td class="px-3 py-2 text-right font-mono text-gray-300">{{ "%.2f"|format(p.whip) }}</td>
               <td class="px-3 py-2 text-right font-mono text-gray-300">{{ p.k9 }}</td>
+              <td class="px-3 py-2 text-right font-mono
+                {% if p.k9 > 10 %}text-emerald-400{% elif p.k9 < 7 %}text-red-400{% else %}text-gray-300{% endif %}">
+                {{ "%.1f"|format(p.k9 / (p.k9 + p.bb9) * 100) if p.bb9 and p.k9 else '-' }}%
+              </td>
+              <td class="px-3 py-2 text-right font-mono
+                {% if p.bb9 < 2.5 %}text-emerald-400{% elif p.bb9 > 4.0 %}text-red-400{% else %}text-gray-300{% endif %}">
+                {{ "%.1f"|format(p.bb9 / (p.k9 + p.bb9) * 100) if p.bb9 and p.k9 else '-' }}%
+              </td>
               <td class="px-3 py-2 text-right font-mono
                 {% if p.recent_5_era < 2.5 %}text-emerald-400{% elif p.recent_5_era > 5.0 %}text-red-400{% else %}text-gray-300{% endif %}">
                 {{ "%.2f"|format(p.recent_5_era) }}
@@ -475,7 +505,7 @@
     <!-- Model weights chart -->
     <div class="card rounded-xl overflow-hidden">
       <div class="bg-gray-800/60 px-4 py-3 text-sm font-semibold flex items-center gap-2">
-        <span>⚖️</span> V1.0 模型權重
+        <span>⚖️</span> V8.0 模型權重
       </div>
       <div class="p-4">
         <canvas id="weightChart" height="220"></canvas>
@@ -487,9 +517,9 @@
 
 <!-- ── Footer ──────────────────────────────── -->
 <footer class="text-center py-4 text-xs text-gray-600 border-t border-gray-800 mt-4">
-  CPBL Protector V1.0 &nbsp;|&nbsp;
-  賠率：The Odds API / 台灣運彩 &nbsp;|&nbsp;
-  預測模型：ELO + 10 因子加權 &nbsp;|&nbsp;
+  NPB/KBO Protector V8.0 &nbsp;|&nbsp;
+  賠率：The Odds API / oddsportal &nbsp;|&nbsp;
+  預測模型：ELO + Ensemble V8 加權 &nbsp;|&nbsp;
   僅供參考
 </footer>
 
@@ -503,13 +533,13 @@
     const src  = game?.prediction?.factors?.odds?.detail || '';
     const el   = document.getElementById('odds-source');
     if (!el) return;
-    if (src.includes('the-odds-api')) {
-      el.textContent = '🎰 賠率：The Odds API ✓';
+    if (src.includes('the-odds-api') || src.includes('Odds API')) {
+      el.textContent = '🎰 賠率：The Odds API (KBO) ✓';
       el.className = 'text-emerald-500';
-    } else if (src.includes('sportslottery')) {
-      el.textContent = '🎰 賠率：台灣運彩 ✓';
+    } else if (src.includes('oddsportal')) {
+      el.textContent = '🎰 賠率：oddsportal ✓';
       el.className = 'text-yellow-500';
-    } else if (src.includes('demo')) {
+    } else if (src.includes('demo') || src.includes('mock') || src.includes('Mock')) {
       el.textContent = '🎰 賠率：Demo 模擬資料';
       el.className = 'text-gray-500';
     } else {

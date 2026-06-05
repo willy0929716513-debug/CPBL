@@ -582,15 +582,25 @@ def get_today_games(game_date=None) -> list:
     ]
 
 
+_NPB_CL = {"GNT", "HNS", "HRC", "YDB", "YKL", "CND"}
+_NPB_PL = {"SBH", "ORX", "RKT", "LTT", "SEI", "HAM"}
+
+
 def get_standings() -> list:
     rows = []
     for code, s in TEAM_STATS.items():
         r = s["record"]
+        league = TEAM_INFO[code]["league"]
+        if league == "NPB":
+            division = "NPB 中央" if code in _NPB_CL else "NPB 太平洋"
+        else:
+            division = "KBO"
         rows.append({
             "code": code,
             "name": TEAM_INFO[code]["name"],
             "short": TEAM_INFO[code]["short"],
-            "league": TEAM_INFO[code]["league"],
+            "league": league,
+            "division": division,
             "w": r["w"], "l": r["l"], "pct": r["pct"],
             "run_diff": r["run_diff"],
             "last5": r["last5"],

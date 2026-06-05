@@ -1,6 +1,15 @@
 name: NPB/KBO Bot
 
 on:
+  # data update 完成後自動接著跑（主要觸發）
+  workflow_run:
+    workflows: ["📊 Auto Data Update (NPB/KBO)"]
+    types: [completed]
+    branches: [main]
+  # 備用：每天 06:45 JST 直接跑（data update 若失敗也能跑）
+  schedule:
+    - cron: '45 21 * * *'
+  # 手動觸發
   workflow_dispatch:
 
 permissions:

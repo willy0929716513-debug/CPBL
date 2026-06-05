@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CPBL Protector — 中華職棒賽前勝負預測系統 (Web 版)"""
+"""NPB/KBO Protector — 日職・韓職賽前勝負預測系統 (Web 版)"""
 
 import os
 import logging
@@ -173,7 +173,7 @@ def api_pitcher(name: str):
 def send_discord(games: list):
     if not DISCORD_URL:
         return
-    lines = ["**⚾ CPBL 今日賽前預測**\n"]
+    lines = ["**⚾ NPB/KBO 今日賽前預測**\n"]
     for g in games:
         if not g.get("prediction"):
             continue
