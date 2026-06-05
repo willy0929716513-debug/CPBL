@@ -675,11 +675,21 @@ def _weather_score(weather: dict | None, venue: str) -> float:
     """天氣對主隊的影響 (-15~+15)。正值 = 對主隊有利。"""
     if not weather:
         return 0.0
-    temp     = weather.get("temp_c",  25)
-    wind_kph = weather.get("wind_kph", 10)
-    humidity = weather.get("humidity", 70)
-    cond     = str(weather.get("condition", "")).lower()
-    score    = 0.0
+    try:
+        temp = float(weather.get("temp_c", weather.get("temp_C", 25)) or 25)
+    except (ValueError, TypeError):
+        temp = 25.0
+    try:
+        # scraper 回傳 wind_kmph，也相容 wind_kph
+        wind_kph = float(weather.get("wind_kph", weather.get("wind_kmph", 10)) or 10)
+    except (ValueError, TypeError):
+        wind_kph = 10.0
+    try:
+        humidity = float(weather.get("humidity", 70) or 70)
+    except (ValueError, TypeError):
+        humidity = 70.0
+    cond  = str(weather.get("condition", weather.get("desc", ""))).lower()
+    score = 0.0
 
     # 氣溫：高溫有利打者（全壘打增加）
     if temp > 32:

@@ -167,23 +167,20 @@ class TheOddsAPIClient:
         self._s      = requests.Session()
         self._s.headers.update({"User-Agent": "CPBL-Protector/1.0"})
 
-    # ── 取得今日所有 CPBL 賽事賠率 ───────────
+    # ── 取得今日所有 KBO 賽事賠率 ───────────
     def fetch_all(self) -> dict[str, dict]:
         """
         回傳 {game_key: odds_dict}，game_key = "AWAY_CODE-HOME_CODE"
-        同時抓 h2h / spreads / totals，合併成一筆
+        只抓 h2h（1次 API 請求），省配額。
+        spreads/totals 留空，由 mock 填補。
         """
-        # 先拿 h2h（勝負）
+        # 只拿 h2h（勝負），節省 API 配額
         h2h_data = self._fetch_market("h2h")
         if not h2h_data:
             return {}
 
-        # 再拿 spreads（讓分）和 totals（大小分）
-        spreads_data = self._fetch_market("spreads")
-        totals_data  = self._fetch_market("totals")
-
-        spreads_map = {e["id"]: e for e in spreads_data}
-        totals_map  = {e["id"]: e for e in totals_data}
+        spreads_map = {}
+        totals_map  = {}
 
         result: dict[str, dict] = {}
         for event in h2h_data:
