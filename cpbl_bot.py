@@ -316,24 +316,14 @@ def main():
         except Exception as e:
             log.warning("ESPN schedule failed: %s", e)
 
-        # 1b. CPBL 官網爬蟲
-        if not games:
-            try:
-                games = scraper.fetch_schedule(today)
-                if not games:
-                    raise ValueError("no games parsed from scraper")
-                log.info("Scraped %d 一軍 games from cpbl.com.tw", len(games))
-            except Exception as e:
-                log.warning("Scraper failed (%s)", e)
-
-        # 1c. 備援：schedule.json 手動維護賽程
+        # 1b. 備援：schedule.json（由 update_data workflow 自動維護 NPB/KBO 賽程）
         if not games:
             sched_path = os.path.join(os.path.dirname(__file__), "data", "schedule.json")
             try:
                 with open(sched_path, encoding="utf-8") as f:
                     sched = json.load(f)
                 games = [
-                    {**g, "league": "A"}
+                    g
                     for g in sched.get("games", [])
                     if g.get("date") == today_str
                     and g.get("away") and g.get("home")
