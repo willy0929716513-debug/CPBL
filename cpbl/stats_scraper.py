@@ -9,12 +9,13 @@ V8 Stats Scraper — 多來源投手數據抓取器 (NPB / KBO)
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
   NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
 """
+import os
 import re
 import math
 import logging
 import requests
 from bs4 import BeautifulSoup
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 from typing import Optional
 
 log = logging.getLogger(__name__)
@@ -519,8 +520,103 @@ def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
     return games
 
 
-def fetch_schedule_multi(game_date: date) -> list[dict]:
-    """多來源賽程：ESPN → ESPN Web → MLB Stats API"""
+def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
+    """
+    The Odds API /events 端點（免費，不扣額度）取得 NPB/KBO 賽程。
+    API key 從參數或環境變數 ODDS_API_KEY 讀取。
+    """
+    if not api_key:
+        api_key = os.environ.get("ODDS_API_KEY", "")
+    if not api_key:
+        log.debug("fetch_odds_api_schedule: no ODDS_API_KEY")
+        return []
+
+    date_str = game_date.isoformat()
+    # Taiwan = UTC+8 ; filter events starting on this calendar day in TW time
+    tw_midnight = datetime(game_date.year, game_date.month, game_date.day,
+                           tzinfo=timezone(timedelta(hours=8)))
+    from_utc = tw_midnight.astimezone(timezone.utc)
+    to_utc   = (tw_midnight + timedelta(hours=24)).astimezone(timezone.utc)
+
+    results: list[dict] = []
+    # Try both NPB and KBO sport keys
+    for sport_key, league in [("baseball_npb", "NPB"), ("baseball_kbo", "KBO")]:
+        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/events"
+        params = {
+            "apiKey":          api_key,
+            "dateFormat":      "iso",
+            "commenceTimeFrom": from_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "commenceTimeTo":   to_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+        try:
+            resp = requests.get(url, params=params, headers=_HEADERS, timeout=10)
+            if resp.status_code == 404:
+                log.debug("Odds API: sport key %s not found", sport_key)
+                continue
+            if resp.status_code == 401:
+                log.warning("Odds API: invalid or missing API key")
+                break
+            if resp.status_code != 200:
+                log.debug("Odds API events [%s]: HTTP %s", sport_key, resp.status_code)
+                continue
+            events = resp.json()
+            if not isinstance(events, list):
+                log.debug("Odds API events [%s]: unexpected response", sport_key)
+                continue
+            for ev in events:
+                home_name = ev.get("home_team", "")
+                away_name = ev.get("away_team", "")
+                home_lower = home_name.lower()
+                away_lower = away_name.lower()
+                home_code = _ESPN_TEAM_MAP.get(home_name)
+                away_code = _ESPN_TEAM_MAP.get(away_name)
+                # Also try lower-case lookup against odds team map
+                if not home_code:
+                    for k, v in _ESPN_TEAM_MAP.items():
+                        if k.lower() == home_lower:
+                            home_code = v
+                            break
+                if not away_code:
+                    for k, v in _ESPN_TEAM_MAP.items():
+                        if k.lower() == away_lower:
+                            away_code = v
+                            break
+                home_code = home_code or home_name[:3].upper()
+                away_code = away_code or away_name[:3].upper()
+                # Parse game time to Taiwan local time
+                game_time = ""
+                try:
+                    dt_utc = datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
+                    dt_tw  = dt_utc.astimezone(timezone(timedelta(hours=8)))
+                    game_time = dt_tw.strftime("%H:%M")
+                except Exception:
+                    pass
+                results.append({
+                    "game_id":      f"{date_str}-{away_code}-{home_code}",
+                    "date":         date_str,
+                    "time":         game_time,
+                    "away":         away_code,
+                    "away_name":    away_name,
+                    "home":         home_code,
+                    "home_name":    home_name,
+                    "venue":        "",
+                    "league":       league,
+                    "status":       "預定",
+                    "away_score":   None,
+                    "home_score":   None,
+                    "away_pitcher": "",
+                    "home_pitcher": "",
+                    "_source":      "odds_api_events",
+                })
+            log.info("Odds API events [%s]: %d games", sport_key, len([r for r in results if r["league"] == league]))
+        except Exception as e:
+            log.debug("Odds API events [%s]: %s", sport_key, e)
+
+    return results
+
+
+def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
+    """多來源賽程：ESPN → ESPN Web → MLB Stats API → The Odds API /events"""
     # 1. ESPN (primary)
     games = fetch_espn_schedule(game_date)
     if games:
@@ -539,7 +635,13 @@ def fetch_schedule_multi(game_date: date) -> list[dict]:
         log.info("Schedule from MLB Stats API: %d games", len(games))
         return games
 
-    log.warning("All schedule APIs failed for %s", game_date)
+    # 4. The Odds API /events (free, no quota cost) — works from GH Actions
+    games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
+    if games:
+        log.info("Schedule from Odds API events: %d games", len(games))
+        return games
+
+    log.warning("All schedule sources failed for %s", game_date)
     return []
 
 
