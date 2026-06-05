@@ -141,48 +141,584 @@ def _parse_cpbl_stats(html: str) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────
-# 2. 嘗試 cpblstats.com（若可存取）
+# 2. NPB 官方網站  npb.jp
 # ─────────────────────────────────────────────────────────────
 
-def scrape_cpblstats(year: int, session: requests.Session) -> dict:
-    """從 cpblstats.com 抓進階數據（包含 FIP/K%/BB% 等）。"""
-    urls = [
-        f"https://cpblstats.com/pitchers?year={year}",
-        f"https://cpblstats.com/stats/pitchers/{year}",
-        f"https://cpblstats.com/api/pitchers?year={year}",
+# npb.jp 球隊英文縮寫 → 我們的代碼
+_NPB_ABBR_MAP = {
+    "G": "GNT", "T": "HNS", "C": "HRC", "DB": "YDB",
+    "S": "YKL", "D": "CND",                               # CL
+    "H": "SBH", "B": "ORX", "E": "RKT",
+    "M": "LTT", "L": "SEI", "F": "HAM",                   # PL
+    # 英文全名備用
+    "Giants": "GNT", "Tigers": "HNS", "Carp": "HRC",
+    "BayStars": "YDB", "Swallows": "YKL", "Dragons": "CND",
+    "Hawks": "SBH", "Buffaloes": "ORX", "Eagles": "RKT",
+    "Marines": "LTT", "Lions": "SEI", "Fighters": "HAM",
+}
+
+
+def scrape_npb_pitchers(year: int, session: requests.Session) -> dict:
+    """
+    從 npb.jp 官方網站抓 NPB 投手成績。
+    必須在個人電腦（非雲端）執行。
+
+    資料包含：ERA, W, L, G, GS, IP, H, R, ER, BB, HBP, SO, HR, WHIP
+    衍生：K/9, BB/9, K%, BB%, FIP
+    """
+    # npb.jp 提供英文版和日文版統計頁
+    urls_to_try = [
+        f"https://npb.jp/bis/eng/{year}/stats/idb1_b.html",   # 英文 投手成績
+        f"https://npb.jp/bis/eng/{year}/stats/idb1_p.html",   # 英文 先發
+        f"https://npb.jp/bis/{year}/stats/idb1_b.html",       # 日文版
+        f"https://npb.jp/statistics/{year}/",                  # 新版統計頁
     ]
-    for url in urls:
+
+    for url in urls_to_try:
         try:
-            r = session.get(url, timeout=12)
+            log.info("NPB: 嘗試 %s", url)
+            r = session.get(url, timeout=15)
             if r.status_code == 403:
-                log.warning("cpblstats.com 403 — 可能仍封鎖你的 IP")
+                log.warning("npb.jp 403 — 若在個人電腦仍被擋，請稍後再試")
+                continue
+            if r.status_code != 200:
+                continue
+            r.encoding = r.apparent_encoding or "utf-8"
+            stats = _parse_npb_html(r.text)
+            if stats:
+                log.info("npb.jp: 抓到 %d 名投手 from %s", len(stats), url)
+                return stats
+        except Exception as e:
+            log.debug("npb.jp %s: %s", url, e)
+
+    return {}
+
+
+def _parse_npb_html(html: str) -> dict:
+    """解析 npb.jp 投手成績 HTML 表格。"""
+    from cpbl.stats_scraper import enrich_pitcher, calc_fip as _calc_fip
+    soup  = BeautifulSoup(html, "html.parser")
+    stats = {}
+
+    # npb.jp 欄位對照（英文版）
+    col_map = {
+        # 英文版欄位名
+        "Name":   "name",  "Player": "name",
+        "Team":   "team",  "Club":   "team",
+        "ERA":    "era",
+        "W":      "wins",  "L": "losses",
+        "G":      "g",     "GS": "gs",     "CG": "cg",  "SHO": "sho",
+        "SV":     "sv",    "HLD": "hld",
+        "IP":     "innings",
+        "H":      "_h",    "R": "_r",      "ER": "_er",
+        "BB":     "_bb",   "IBB": "_ibb",  "HBP": "_hbp",
+        "SO":     "_k",    "K":  "_k",
+        "HR":     "_hr",   "HR9": "hr9",
+        "WHIP":   "whip",
+        "K/9":    "k9",    "BB/9": "bb9",
+        "K%":     "k_pct", "BB%": "bb_pct",
+        "FIP":    "fip",   "xFIP": "xfip",
+        "BABIP":  "babip", "LOB%": "lob_pct",
+        # 日文版欄位名
+        "選手名": "name",  "氏名": "name",
+        "チーム": "team",  "球団": "team",
+        "防御率": "era",   "ERA": "era",
+        "勝":     "wins",  "敗": "losses",
+        "試合":   "g",     "先発": "gs",
+        "完投":   "cg",    "完封": "sho",
+        "セーブ": "sv",    "HP":  "hld",
+        "投球回": "innings",
+        "被安打": "_h",    "失点": "_r",   "自責点": "_er",
+        "四球":   "_bb",   "死球": "_hbp",
+        "三振":   "_k",    "被本塁打": "_hr",
+        "WHIP":   "whip",
+    }
+
+    for table in soup.find_all("table"):
+        # 找 header 行
+        header_row = None
+        thead = table.find("thead")
+        if thead:
+            header_row = thead.find("tr")
+        if not header_row:
+            rows = table.find_all("tr")
+            header_row = rows[0] if rows else None
+        if not header_row:
+            continue
+
+        raw_hdrs = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+        hdrs = [col_map.get(h, h.lower()) for h in raw_hdrs]
+
+        if "name" not in hdrs or "era" not in hdrs:
+            continue
+
+        data_rows = table.select("tbody tr") or table.find_all("tr")[1:]
+        for row in data_rows:
+            tds = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if not tds or len(tds) < 3:
+                continue
+            try:
+                name = tds[hdrs.index("name")].strip()
+            except (ValueError, IndexError):
+                continue
+            if not name or name in ("合計", "Total", "平均", "計", ""):
+                continue
+
+            p: dict = {}
+            # 取球隊
+            if "team" in hdrs:
+                try:
+                    raw_team = tds[hdrs.index("team")].strip()
+                    p["team_abbr"] = _NPB_ABBR_MAP.get(raw_team, raw_team)
+                except Exception:
+                    pass
+
+            for field in ("era", "whip", "k9", "bb9", "hr9", "k_pct", "bb_pct",
+                          "fip", "xfip", "babip", "lob_pct",
+                          "wins", "losses", "g", "gs", "sv",
+                          "_k", "_bb", "_hr", "_hbp", "_h", "_er"):
+                if field not in hdrs:
+                    continue
+                raw_val = tds[hdrs.index(field)]
+                raw_val = (raw_val.replace("⅓", ".33").replace("⅔", ".67")
+                           .replace("%", "").replace(",", "").strip())
+                try:
+                    p[field] = float(raw_val)
+                except (ValueError, TypeError):
+                    pass
+
+            if "era" not in p:
+                continue
+
+            # 處理 innings (IP 格式: "120.1" 或 "120⅓")
+            if "innings" in hdrs:
+                raw_ip = tds[hdrs.index("innings")]
+                raw_ip = raw_ip.replace("⅓", ".33").replace("⅔", ".67").strip()
+                try:
+                    p["innings"] = float(raw_ip)
+                except (ValueError, TypeError):
+                    pass
+
+            ip = p.get("innings", 0)
+            if ip > 0:
+                k   = p.pop("_k",   0)
+                bb  = p.pop("_bb",  0)
+                hr  = p.pop("_hr",  0)
+                hbp = p.pop("_hbp", 0)
+                if k  > 0 and "k9"    not in p: p["k9"]    = round(k  / ip * 9, 2)
+                if bb > 0 and "bb9"   not in p: p["bb9"]   = round(bb / ip * 9, 2)
+                if k  > 0 and "k_pct" not in p: p["k_pct"] = round(k  / (ip * 4.3) * 100, 1)
+                if bb > 0 and "bb_pct"not in p: p["bb_pct"]= round(bb / (ip * 4.3) * 100, 1)
+                if hr > 0 and "fip"   not in p:
+                    fip_val = _calc_fip(hr, bb + hbp, k, ip, constant=3.20)
+                    if fip_val: p["fip"] = fip_val
+                # 保留原始數據
+                p["_raw"] = {"k": k, "bb": bb, "hr": hr, "hbp": hbp}
+
+            enrich_pitcher(p)
+            stats[name] = p
+
+    return stats
+
+
+# ─────────────────────────────────────────────────────────────
+# 3. KBO 官方網站  koreabaseball.com
+# ─────────────────────────────────────────────────────────────
+
+# KBO 球隊名稱 → 代碼
+_KBO_NAME_TO_CODE = {
+    "삼성": "SSL", "Samsung": "SSL",
+    "LG":   "LGT",
+    "두산": "DSB", "Doosan": "DSB",
+    "KT":   "KTW",
+    "SSG":  "SSG",
+    "NC":   "NCD",
+    "KIA":  "KIA",
+    "롯데": "LTG", "Lotte": "LTG",
+    "한화": "HWE", "Hanwha": "HWE",
+    "키움": "KWH", "Kiwoom": "KWH",
+}
+
+
+def scrape_kbo_pitchers(year: int, session: requests.Session) -> dict:
+    """
+    從 koreabaseball.com 抓 KBO 投手成績。
+    必須在個人電腦（非雲端）執行。
+
+    同時嘗試 statiz.co.kr 取得進階數據 (FIP/K%/BB%)。
+    """
+    stats = {}
+
+    # ── 3a. koreabaseball.com 基本成績 ──────────
+    kbo_urls = [
+        f"https://www.koreabaseball.com/Record/Player/PitcherBasic/Basic1.aspx?gyear={year}",
+        f"https://www.koreabaseball.com/Record/Player/PitcherBasic/Basic2.aspx?gyear={year}",
+        "https://www.koreabaseball.com/Record/Player/PitcherBasic/Basic1.aspx",
+    ]
+    for url in kbo_urls:
+        try:
+            log.info("KBO: 嘗試 %s", url)
+            r = session.get(url, timeout=15)
+            if r.status_code == 403:
+                log.warning("koreabaseball.com 403 — 若在個人電腦仍被擋，請確認沒用 VPN")
                 break
             if r.status_code != 200:
                 continue
-            # JSON API
-            if "application/json" in r.headers.get("content-type", ""):
-                data  = r.json()
-                stats = _parse_json_pitchers(data)
-                if stats:
-                    log.info("cpblstats.com API: %d 名投手", len(stats))
-                    return stats
-            # HTML
-            stats = _parse_cpblstats_html(r.text)
-            if stats:
-                log.info("cpblstats.com HTML: %d 名投手", len(stats))
-                return stats
+            r.encoding = r.apparent_encoding or "utf-8"
+            parsed = _parse_kbo_html(r.text)
+            if parsed:
+                stats.update(parsed)
+                log.info("koreabaseball.com: 抓到 %d 名投手", len(parsed))
+                break
         except Exception as e:
-            log.debug("cpblstats URL %s: %s", url, e)
+            log.debug("koreabaseball.com %s: %s", url, e)
+
+    # ── 3b. statiz.co.kr 進階成績 (FIP/K%/BB%) ──
+    statiz_urls = [
+        f"https://statiz.co.kr/stat.php?opt=0&sopt=0&year={year}&sy={year}&ey={year}&pos=1&eas=&pa=0",
+        f"https://statiz.co.kr/stat.php?opt=0&sopt=0&year={year}&pos=1&pa=0",
+    ]
+    for url in statiz_urls:
+        try:
+            r = session.get(url, timeout=15, headers={**_HEADERS, "Referer": "https://statiz.co.kr/"})
+            if r.status_code != 200:
+                continue
+            r.encoding = r.apparent_encoding or "utf-8"
+            adv = _parse_statiz_html(r.text)
+            if adv:
+                # 把進階數據 merge 進基本成績
+                for name, p in adv.items():
+                    if name in stats:
+                        stats[name].update({k: v for k, v in p.items() if k not in stats[name]})
+                    else:
+                        stats[name] = p
+                log.info("statiz.co.kr: 補充 %d 名投手進階數據", len(adv))
+            break
+        except Exception as e:
+            log.debug("statiz.co.kr %s: %s", url, e)
+
+    return stats
+
+
+def _parse_kbo_html(html: str) -> dict:
+    """解析 koreabaseball.com 投手成績頁面。"""
+    from cpbl.stats_scraper import enrich_pitcher, calc_fip as _calc_fip
+    soup  = BeautifulSoup(html, "html.parser")
+    stats = {}
+
+    # 欄位對照（韓文 + 英文）
+    col_map = {
+        "선수명": "name",  "이름": "name",   "Name": "name",
+        "팀명":   "team",  "팀":   "team",   "Team": "team",
+        "ERA":    "era",   "평균자책점": "era",
+        "승":     "wins",  "W": "wins",
+        "패":     "losses","L": "losses",
+        "경기":   "g",     "G": "g",
+        "선발":   "gs",    "GS": "gs",
+        "이닝":   "innings","IP": "innings",
+        "삼진":   "_k",    "SO": "_k",   "K": "_k",
+        "사사구": "_bb",   "BB": "_bb",
+        "피홈런": "_hr",   "HR": "_hr",
+        "사구":   "_hbp",  "HBP": "_hbp",
+        "WHIP":   "whip",
+        "K/9":    "k9",    "9이닝삼진": "k9",
+        "BB/9":   "bb9",
+        "FIP":    "fip",
+        "K%":     "k_pct", "BB%": "bb_pct",
+    }
+
+    for table in soup.find_all("table"):
+        header_row = None
+        thead = table.find("thead")
+        if thead:
+            header_row = thead.find("tr")
+        if not header_row:
+            rows = table.find_all("tr")
+            header_row = rows[0] if rows else None
+        if not header_row:
             continue
-    return {}
+
+        raw_hdrs = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+        hdrs = [col_map.get(h, h.lower()) for h in raw_hdrs]
+
+        if "name" not in hdrs or "era" not in hdrs:
+            continue
+
+        data_rows = table.select("tbody tr") or table.find_all("tr")[1:]
+        for row in data_rows:
+            tds = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if not tds or len(tds) < 3:
+                continue
+            try:
+                name = tds[hdrs.index("name")].strip()
+            except (ValueError, IndexError):
+                continue
+            if not name or name in ("합계", "평균", "Total", ""):
+                continue
+
+            p: dict = {}
+            if "team" in hdrs:
+                try:
+                    raw_team = tds[hdrs.index("team")].strip()
+                    p["team_abbr"] = _KBO_NAME_TO_CODE.get(raw_team, raw_team)
+                except Exception:
+                    pass
+
+            for field in ("era", "whip", "k9", "bb9", "k_pct", "bb_pct",
+                          "fip", "wins", "losses", "g", "gs",
+                          "_k", "_bb", "_hr", "_hbp"):
+                if field not in hdrs:
+                    continue
+                raw_val = tds[hdrs.index(field)]
+                raw_val = raw_val.replace("%", "").replace(",", "").strip()
+                try:
+                    p[field] = float(raw_val)
+                except (ValueError, TypeError):
+                    pass
+
+            if "era" not in p:
+                continue
+
+            if "innings" in hdrs:
+                raw_ip = tds[hdrs.index("innings")]
+                raw_ip = raw_ip.replace("⅓", ".33").replace("⅔", ".67").replace("2/3", ".67").replace("1/3", ".33").strip()
+                try:
+                    p["innings"] = float(raw_ip)
+                except (ValueError, TypeError):
+                    pass
+
+            ip = p.get("innings", 0)
+            if ip > 0:
+                k   = p.pop("_k",   0)
+                bb  = p.pop("_bb",  0)
+                hr  = p.pop("_hr",  0)
+                hbp = p.pop("_hbp", 0)
+                if k  > 0 and "k9"    not in p: p["k9"]    = round(k  / ip * 9, 2)
+                if bb > 0 and "bb9"   not in p: p["bb9"]   = round(bb / ip * 9, 2)
+                if k  > 0 and "k_pct" not in p: p["k_pct"] = round(k  / (ip * 4.3) * 100, 1)
+                if bb > 0 and "bb_pct"not in p: p["bb_pct"]= round(bb / (ip * 4.3) * 100, 1)
+                if hr > 0 and "fip"   not in p:
+                    fip_val = _calc_fip(hr, bb + hbp, k, ip, constant=3.60)
+                    if fip_val: p["fip"] = fip_val
+                p["_raw"] = {"k": k, "bb": bb, "hr": hr, "hbp": hbp}
+
+            enrich_pitcher(p)
+            stats[name] = p
+
+    return stats
+
+
+def _parse_statiz_html(html: str) -> dict:
+    """解析 statiz.co.kr 進階投手數據（FIP/xFIP/K%/BB%/BABIP 等）。"""
+    from cpbl.stats_scraper import enrich_pitcher
+    soup  = BeautifulSoup(html, "html.parser")
+    stats = {}
+
+    col_map = {
+        "이름": "name", "선수": "name",
+        "팀":  "team",
+        "ERA": "era",   "FIP": "fip",   "xFIP": "xfip",
+        "K%":  "k_pct", "BB%": "bb_pct","K-BB%": "k_bb_pct",
+        "BABIP": "babip","LOB%": "lob_pct",
+        "K/9": "k9",    "BB/9": "bb9",  "HR/9": "hr9",
+        "WHIP": "whip", "IP": "innings",
+        "W": "wins",    "L": "losses",
+    }
+
+    for table in soup.find_all("table"):
+        thead = table.find("thead")
+        header_row = thead.find("tr") if thead else (table.find_all("tr") or [None])[0]
+        if not header_row:
+            continue
+        raw_hdrs = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+        hdrs = [col_map.get(h, h.lower()) for h in raw_hdrs]
+        if "name" not in hdrs:
+            continue
+
+        for row in table.select("tbody tr") or table.find_all("tr")[1:]:
+            tds = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if not tds:
+                continue
+            try:
+                name = tds[hdrs.index("name")].strip()
+            except (ValueError, IndexError):
+                continue
+            if not name or name in ("합계", "평균", ""):
+                continue
+
+            p: dict = {}
+            for field in ("era", "fip", "xfip", "k_pct", "bb_pct", "k_bb_pct",
+                          "babip", "lob_pct", "k9", "bb9", "hr9", "whip",
+                          "innings", "wins", "losses"):
+                if field not in hdrs:
+                    continue
+                raw_val = tds[hdrs.index(field)].replace("%", "").replace(",", "").strip()
+                try:
+                    p[field] = float(raw_val)
+                except (ValueError, TypeError):
+                    pass
+
+            if p:
+                enrich_pitcher(p)
+                stats[name] = p
+
+    return stats
+
+
+# ─────────────────────────────────────────────────────────────
+# 4. Baseball Reference（備援，兩聯盟都有）
+# ─────────────────────────────────────────────────────────────
+
+def scrape_bbref(year: int, session: requests.Session) -> dict:
+    """
+    從 baseball-reference.com 抓 NPB + KBO 投手成績。
+    資料最完整（ERA/FIP/WHIP/K9/BB9/K%/BB% 全部有）。
+    若 npb.jp 和 koreabaseball.com 都失敗，用這個當備援。
+    """
+    stats = {}
+
+    for league_code, league_name in [("NPB", "NPB"), ("KBO", "KBO")]:
+        urls = [
+            f"https://www.baseball-reference.com/register/league.cgi?code={league_code}&class=Fgn&year={year}&stat=pitch&CSV=Y",
+            f"https://www.baseball-reference.com/register/league.cgi?code={league_code}&class=Fgn&year={year}&stat=pitch",
+        ]
+        for url in urls:
+            try:
+                log.info("BB-Ref [%s]: 嘗試 %s", league_name, url)
+                r = session.get(url, timeout=15)
+                if r.status_code == 403:
+                    log.warning("baseball-reference.com 403 — IP 被封鎖")
+                    break
+                if r.status_code != 200:
+                    continue
+
+                # CSV 直接下載
+                if "CSV=Y" in url and r.text.startswith("Rk,"):
+                    parsed = _parse_bbref_csv(r.text, league_code)
+                else:
+                    parsed = _parse_bbref_html(r.text, league_code)
+
+                if parsed:
+                    stats.update(parsed)
+                    log.info("BB-Ref [%s]: 抓到 %d 名投手", league_name, len(parsed))
+                    break
+            except Exception as e:
+                log.debug("BB-Ref %s: %s", url, e)
+
+    return stats
+
+
+def _parse_bbref_csv(csv_text: str, league: str = "") -> dict:
+    """解析 baseball-reference CSV 格式。"""
+    from cpbl.stats_scraper import enrich_pitcher, calc_fip as _calc_fip
+    import csv, io
+    stats = {}
+    reader = csv.DictReader(io.StringIO(csv_text))
+
+    for row in reader:
+        name = row.get("Name", "").strip()
+        if not name or name in ("", "Name", "Rk"):
+            continue
+        try:
+            era = float(row.get("ERA", "") or 0)
+        except ValueError:
+            continue
+        if era <= 0:
+            continue
+
+        try:
+            ip  = float(str(row.get("IP", "0")).replace("⅓", ".33").replace("⅔", ".67") or 0)
+            k   = float(row.get("SO", 0) or 0)
+            bb  = float(row.get("BB", 0) or 0)
+            hr  = float(row.get("HR", 0) or 0)
+            hbp = float(row.get("HBP", 0) or 0)
+        except (ValueError, TypeError):
+            ip = k = bb = hr = hbp = 0
+
+        p: dict = {"era": era}
+        for field, key in [("W", "wins"), ("L", "losses"), ("G", "g"), ("GS", "gs"),
+                           ("WHIP", "whip"), ("FIP", "fip"), ("K/9", "k9"), ("BB/9", "bb9"),
+                           ("K%", "k_pct"), ("BB%", "bb_pct"), ("BABIP", "babip")]:
+            raw = str(row.get(field, "") or "").replace("%", "").strip()
+            try:
+                p[key] = float(raw)
+            except (ValueError, TypeError):
+                pass
+
+        if ip > 0:
+            p["innings"] = ip
+            if k  > 0 and "k9"    not in p: p["k9"]    = round(k  / ip * 9, 2)
+            if bb > 0 and "bb9"   not in p: p["bb9"]   = round(bb / ip * 9, 2)
+            if k  > 0 and "k_pct" not in p: p["k_pct"] = round(k  / (ip * 4.3) * 100, 1)
+            if bb > 0 and "bb_pct"not in p: p["bb_pct"]= round(bb / (ip * 4.3) * 100, 1)
+            fip_c = 3.20 if league == "NPB" else 3.60
+            if hr > 0 and "fip" not in p:
+                fip_val = _calc_fip(hr, bb + hbp, k, ip, constant=fip_c)
+                if fip_val: p["fip"] = fip_val
+
+        p["league"] = league
+        enrich_pitcher(p)
+        stats[name] = p
+
+    return stats
+
+
+def _parse_bbref_html(html: str, league: str = "") -> dict:
+    """解析 baseball-reference HTML 統計表格。"""
+    from cpbl.stats_scraper import enrich_pitcher
+    soup  = BeautifulSoup(html, "html.parser")
+    stats = {}
+
+    for table in soup.find_all("table", id=lambda x: x and "pitching" in x.lower()):
+        thead = table.find("thead")
+        if not thead:
+            continue
+        header_row = thead.find("tr")
+        if not header_row:
+            continue
+        raw_hdrs = [th.get("data-stat", th.get_text(strip=True))
+                    for th in header_row.find_all(["th", "td"])]
+        for row in table.select("tbody tr:not(.thead)"):
+            name_el = row.find(["td", "th"], {"data-stat": "player"})
+            if not name_el:
+                continue
+            name = name_el.get_text(strip=True)
+            if not name:
+                continue
+
+            p = {}
+            stat_map = {
+                "earned_run_avg": "era", "whip": "whip", "fip": "fip",
+                "strikeouts_per_nine": "k9", "bases_on_balls_per_nine": "bb9",
+                "strikeout_perc": "k_pct", "bases_on_balls_perc": "bb_pct",
+                "IP": "innings", "win": "wins", "loss": "losses",
+                "games": "g", "games_started": "gs",
+            }
+            for td in row.find_all(["td"]):
+                ds = td.get("data-stat", "")
+                key = stat_map.get(ds)
+                if key:
+                    raw = td.get_text(strip=True).replace("%", "")
+                    try:
+                        p[key] = float(raw)
+                    except (ValueError, TypeError):
+                        pass
+
+            if "era" in p:
+                p["league"] = league
+                enrich_pitcher(p)
+                stats[name] = p
+
+    return stats
 
 
 def _parse_json_pitchers(data) -> dict:
     """解析 JSON 格式的投手數據（通用格式）。"""
+    from cpbl.stats_scraper import enrich_pitcher
     stats = {}
     items = data if isinstance(data, list) else data.get("data", data.get("pitchers", []))
     for item in items:
-        name = item.get("name") or item.get("playerName") or item.get("chineseName", "")
+        name = item.get("name") or item.get("playerName") or item.get("displayName", "")
         if not name:
             continue
         p = {k: v for k, v in item.items()
@@ -194,42 +730,6 @@ def _parse_json_pitchers(data) -> dict:
         enrich_pitcher(p)
         stats[name] = p
     return stats
-
-
-def _parse_cpblstats_html(html: str) -> dict:
-    """解析 cpblstats.com 的 HTML 表格。"""
-    # 結構與 CPBL 官網類似，重用解析邏輯
-    return _parse_cpbl_stats(html)
-
-
-# ─────────────────────────────────────────────────────────────
-# 3. myCPBL
-# ─────────────────────────────────────────────────────────────
-
-def scrape_mycpbl(year: int, session: requests.Session) -> dict:
-    """從 myCPBL 抓投手數據。"""
-    urls = [
-        f"https://mycpbl.com/stats/pitcher?year={year}",
-        f"https://www.mycpbl.com/stats/pitcher?year={year}",
-        f"https://mycpbl.com/api/pitcher?year={year}",
-    ]
-    for url in urls:
-        try:
-            r = session.get(url, timeout=12)
-            if r.status_code == 403:
-                break
-            if r.status_code != 200:
-                continue
-            if "json" in r.headers.get("content-type", ""):
-                stats = _parse_json_pitchers(r.json())
-            else:
-                stats = _parse_cpbl_stats(r.text)
-            if stats:
-                log.info("myCPBL: %d 名投手", len(stats))
-                return stats
-        except Exception as e:
-            log.debug("myCPBL %s: %s", url, e)
-    return {}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -643,15 +1143,35 @@ def main():
     today_str = datetime.date.today().isoformat()
     live_stats = {}
 
-    # ── 投手成績：ESPN API ──
+    # ── 投手成績：NPB → KBO → BB-Ref 備援 ──
     if not args.odds_only:
-        print("\n[1/4] 抓取 NPB/KBO 投手成績（ESPN API）...")
-        stats = scrape_espn_pitchers(args.year, session)
-        if stats:
-            live_stats.update(stats)
-            print(f"  ✅ ESPN: {len(stats)} 名投手")
+        print("\n[1/4] 抓取 NPB 投手成績（npb.jp）...")
+        npb_stats = scrape_npb_pitchers(args.year, session)
+        if npb_stats:
+            live_stats.update(npb_stats)
+            print(f"  ✅ npb.jp: {len(npb_stats)} 名投手 "
+                  f"（ERA/WHIP/K9/BB9/K%/BB%/FIP）")
         else:
-            print("  ⚠️ ESPN 失敗，使用 mock 數據（加上衍生指標計算）")
+            print("  ⚠️ npb.jp 失敗（雲端環境限制；請在個人電腦執行）")
+
+        print("\n     抓取 KBO 投手成績（koreabaseball.com）...")
+        kbo_stats = scrape_kbo_pitchers(args.year, session)
+        if kbo_stats:
+            live_stats.update(kbo_stats)
+            print(f"  ✅ koreabaseball.com + statiz.co.kr: {len(kbo_stats)} 名投手 "
+                  f"（ERA/WHIP/K9/BB9/K%/BB%/FIP/xFIP）")
+        else:
+            print("  ⚠️ koreabaseball.com 失敗（雲端環境限制；請在個人電腦執行）")
+
+        # 若以上都失敗，嘗試 baseball-reference 備援
+        if not live_stats:
+            print("\n     備援：抓取 baseball-reference.com（NPB+KBO）...")
+            bbref_stats = scrape_bbref(args.year, session)
+            if bbref_stats:
+                live_stats.update(bbref_stats)
+                print(f"  ✅ BB-Ref: {len(bbref_stats)} 名投手")
+            else:
+                print("  ⚠️ BB-Ref 亦失敗；使用 mock 數據（加上衍生指標計算）")
 
         # ── 合併 mock + live ──
         merged = merge_stats(live_stats)
