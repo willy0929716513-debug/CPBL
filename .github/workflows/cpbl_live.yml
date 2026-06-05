@@ -1,4 +1,4 @@
-name: CPBL Live Monitor
+name: NPB/KBO Live Monitor
 
 on:
   workflow_dispatch:
