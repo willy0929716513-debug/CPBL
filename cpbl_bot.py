@@ -8,7 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
-from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP, TEAM_INFO
 import cpbl.memory        as mem_module
 import cpbl.agent         as agent_module
 import cpbl.simulator     as simulator
@@ -136,8 +136,8 @@ def _discord_post(content: str):
 def send_discord(picks, all_preds, game_date, history=None, memory=None):
     if not DISCORD_URL or not all_preds:
         return
-    now_tw   = datetime.datetime.now(TW)
-    time_str = now_tw.strftime("%m/%d %H:%M")
+    now_tw    = datetime.datetime.now(TW)
+    time_str  = now_tw.strftime("%m/%d %H:%M")
     rec_count = len(picks)
 
     TIER_LABEL = agent_module.TIER_LABEL
@@ -150,6 +150,18 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         "",
     ]
 
+    def fmt_sp(sp: dict) -> str:
+        name = sp.get("name", "")
+        if not name:
+            return "未定"
+        era = sp.get("era")
+        k9  = sp.get("k9")
+        if era is not None and k9 is not None:
+            return f"{name} (ERA {era:.2f} K/9 {k9:.1f})"
+        if era is not None:
+            return f"{name} (ERA {era:.2f})"
+        return name
+
     for pr in all_preds:
         away    = pr["away"]
         home    = pr["home"]
@@ -158,25 +170,35 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         hw      = round(pr.get("home_win_prob", 0.5) * 100, 1)
         aw      = round(pr.get("away_win_prob", 0.5) * 100, 1)
         g_time  = pr.get("game_time", pr.get("time", ""))
-        league  = pr.get("league", "")
+        league  = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
         flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
-        time_tag = f"🗓️{g_time}" if g_time else ""
+        time_tag = f"  🕐 {g_time}" if g_time else ""
+
+        asp = pr.get("away_sp") or {}
+        hsp = pr.get("home_sp") or {}
+        pitcher_line = f"  ⚾ 先發：{fmt_sp(asp)} vs {fmt_sp(hsp)}"
 
         if (away, home) in pick_map:
             p    = pick_map[(away, home)]
             tier = TIER_LABEL.get(p["tier"], "⭐ 穩定")
             be   = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
             lines += [
-                f"{flag} **{away_cn} @ {home_cn}**  {time_tag}",
-                f"    {tier}  💰 `{p['bet_label']}` @ **{p['bp']}**  "
-                f"客{aw}% vs 主{hw}%  Edge {p['edge']*100:+.1f}%  BEP {be}%",
+                f"{flag} **{away_cn} @ {home_cn}**{time_tag}",
+                pitcher_line,
+                f"  客 {aw}% vs 主 {hw}%",
+                f"  {tier}  💰 `{p['bet_label']}` @ **{p['bp']}**  "
+                f"Edge {p['edge']*100:+.1f}%  BEP {be}%",
+                "",
             ]
         else:
-            adv = f"主{home_cn} {hw}% > 客{away_cn} {aw}%" if hw >= aw \
-                  else f"客{away_cn} {aw}% > 主{home_cn} {hw}%"
-            lines.append(
-                f"{flag} {away_cn} @ {home_cn}  {time_tag}  {adv}（不推薦下注）"
-            )
+            adv = f"主 {home_cn} {hw}% > 客 {away_cn} {aw}%" if hw >= aw \
+                  else f"客 {away_cn} {aw}% > 主 {home_cn} {hw}%"
+            lines += [
+                f"{flag} {away_cn} @ {home_cn}{time_tag}",
+                pitcher_line,
+                f"  {adv}（不推薦下注）",
+                "",
+            ]
 
     # 歷史摘要（有才顯示）
     if history:
@@ -184,7 +206,6 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         if settled:
             wins = sum(1 for h in settled if h["result"] == "W")
             lines += [
-                "",
                 f"📊 歷史: {wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)",
             ]
 
@@ -439,8 +460,9 @@ def main():
 
         base = dict(
             away=away, home=home,
-            away_cn=g.get("away_name", away),
-            home_cn=g.get("home_name", home),
+            away_cn=TEAM_INFO.get(away, {}).get("name", g.get("away_name", away)),
+            home_cn=TEAM_INFO.get(home, {}).get("name", g.get("home_name", home)),
+            league=g.get("league", TEAM_INFO.get(home, {}).get("league", "")),
             game_date=today_str,
             game_time=g.get("time", ""),
             time=g.get("time", ""),
