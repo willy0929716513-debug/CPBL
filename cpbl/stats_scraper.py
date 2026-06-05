@@ -161,7 +161,7 @@ def fetch_espn_schedule(game_date: date) -> list[dict]:
     date_str = game_date.strftime("%Y%m%d")
     games: list[dict] = []
     for league, base_url in [("NPB", BASE_ESPN_NPB), ("KBO", BASE_ESPN_KBO)]:
-        url = f"{base_url}/scoreboard?dates={date_str}&limit=20"
+        url = f"{base_url}/scoreboard?dates={date_str}"
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=10)
             resp.raise_for_status()

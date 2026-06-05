@@ -1143,33 +1143,43 @@ def main():
     today_str = datetime.date.today().isoformat()
     live_stats = {}
 
-    # ── 投手成績：NPB → KBO → BB-Ref 備援 ──
+    # ── 投手成績：NPB → KBO → BB-Ref 補漏 ──
     if not args.odds_only:
         print("\n[1/4] 抓取 NPB 投手成績（npb.jp）...")
         npb_stats = scrape_npb_pitchers(args.year, session)
-        if npb_stats:
+        npb_ok = bool(npb_stats)
+        if npb_ok:
             live_stats.update(npb_stats)
             print(f"  ✅ npb.jp: {len(npb_stats)} 名投手 "
                   f"（ERA/WHIP/K9/BB9/K%/BB%/FIP）")
         else:
-            print("  ⚠️ npb.jp 失敗（雲端環境限制；請在個人電腦執行）")
+            print("  ⚠️ npb.jp 失敗 → 將用 baseball-reference 補 NPB 數據")
 
         print("\n     抓取 KBO 投手成績（koreabaseball.com）...")
         kbo_stats = scrape_kbo_pitchers(args.year, session)
-        if kbo_stats:
+        kbo_ok = bool(kbo_stats)
+        if kbo_ok:
             live_stats.update(kbo_stats)
             print(f"  ✅ koreabaseball.com + statiz.co.kr: {len(kbo_stats)} 名投手 "
                   f"（ERA/WHIP/K9/BB9/K%/BB%/FIP/xFIP）")
         else:
-            print("  ⚠️ koreabaseball.com 失敗（雲端環境限制；請在個人電腦執行）")
+            print("  ⚠️ koreabaseball.com 失敗 → 將用 baseball-reference 補 KBO 數據")
 
-        # 若以上都失敗，嘗試 baseball-reference 備援
-        if not live_stats:
-            print("\n     備援：抓取 baseball-reference.com（NPB+KBO）...")
+        # 任一聯盟失敗就用 baseball-reference 補（NPB 在 GH Actions 常被擋）
+        if not npb_ok or not kbo_ok:
+            missing = []
+            if not npb_ok: missing.append("NPB")
+            if not kbo_ok: missing.append("KBO")
+            print(f"\n     baseball-reference 補充 {'+'.join(missing)} 數據...")
             bbref_stats = scrape_bbref(args.year, session)
             if bbref_stats:
-                live_stats.update(bbref_stats)
-                print(f"  ✅ BB-Ref: {len(bbref_stats)} 名投手")
+                # 只補沒有抓到的那個聯盟
+                added = 0
+                for name, p in bbref_stats.items():
+                    if p.get("league") in missing or not live_stats.get(name):
+                        live_stats[name] = p
+                        added += 1
+                print(f"  ✅ BB-Ref: 補充 {added} 名投手")
             else:
                 print("  ⚠️ BB-Ref 亦失敗；使用 mock 數據（加上衍生指標計算）")
 

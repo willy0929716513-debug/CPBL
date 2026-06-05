@@ -105,7 +105,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 加入三個 data 檔（就算不存在也不報錯）
+          BRANCH="${GITHUB_REF_NAME}"
+
+          # 先 pull 最新再 commit，避免衝突
+          git pull --rebase origin "${BRANCH}" || true
+
           git add data/pitcher_stats.json data/schedule.json data/odds_today.json 2>/dev/null || true
 
           if git diff --cached --quiet; then
@@ -113,12 +117,6 @@ jobs:
           else
             TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M UTC')
             git commit -m "data: auto-update ${TIMESTAMP} [skip ci]"
-
-            # pull --rebase 避免衝突，最多重試 3 次
-            for i in 1 2 3; do
-              git pull --rebase origin HEAD && break || sleep 5
-            done
-
-            git push origin HEAD
+            git push origin "HEAD:refs/heads/${BRANCH}"
             echo "✅ 資料已推送"
           fi
