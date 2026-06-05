@@ -581,16 +581,19 @@ def _parse_koreabaseball_html(html: str, date_str: str) -> list[dict]:
     """
     Parse koreabaseball.com schedule page.
     Uses text-scan approach (same as Yahoo Japan parser) for robustness.
+    Pitcher enrichment runs BEFORE script tags are removed (Phase 0).
     """
     soup = BeautifulSoup(html, "html.parser")
-    for tag in soup.find_all(['script', 'style', 'noscript', 'head']):
-        tag.decompose()
 
+    # Phase 0 + team scan must share the same soup (scripts still present)
     sorted_keys = sorted(_KBO_OFFICIAL_TEAM_MAP.keys(), key=len, reverse=True)
     pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
 
+    # Collect team codes from non-script text nodes
     codes_in_order: list[str] = []
     for node in soup.find_all(string=True):
+        if node.parent and node.parent.name in ('script', 'style', 'noscript', 'head'):
+            continue
         text = node.strip()
         if not text or len(text) > 50:
             continue
@@ -600,9 +603,7 @@ def _parse_koreabaseball_html(html: str, date_str: str) -> list[dict]:
                 codes_in_order.append(code)
 
     games = _pair_team_codes(codes_in_order, date_str, "KBO", "koreabaseball")
-
-    # Try to extract pitcher names from the same page
-    # koreabaseball.com typically lists probable pitchers near each game row
+    # Enrich pitchers BEFORE decomposing scripts (Phase 0 needs script content)
     _enrich_kbo_pitchers_from_html(soup, games)
     return games
 
@@ -610,14 +611,14 @@ def _parse_koreabaseball_html(html: str, date_str: str) -> list[dict]:
 def _parse_naver_kbo_html(html: str, date_str: str) -> list[dict]:
     """Parse Naver Sports KBO schedule page using text-scan approach."""
     soup = BeautifulSoup(html, "html.parser")
-    for tag in soup.find_all(['script', 'style', 'noscript', 'head']):
-        tag.decompose()
 
     sorted_keys = sorted(_KBO_OFFICIAL_TEAM_MAP.keys(), key=len, reverse=True)
     pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
 
     codes_in_order: list[str] = []
     for node in soup.find_all(string=True):
+        if node.parent and node.parent.name in ('script', 'style', 'noscript', 'head'):
+            continue
         text = node.strip()
         if not text or len(text) > 50:
             continue
@@ -626,7 +627,9 @@ def _parse_naver_kbo_html(html: str, date_str: str) -> list[dict]:
             if code and (not codes_in_order or codes_in_order[-1] != code):
                 codes_in_order.append(code)
 
-    return _pair_team_codes(codes_in_order, date_str, "KBO", "naver_kbo")
+    games = _pair_team_codes(codes_in_order, date_str, "KBO", "naver_kbo")
+    _enrich_kbo_pitchers_from_html(soup, games)
+    return games
 
 
 def _pair_team_codes(codes: list[str], date_str: str, league: str, source: str) -> list[dict]:
@@ -663,22 +666,101 @@ def _pair_team_codes(codes: list[str], date_str: str, league: str, source: str) 
     return games
 
 
-def _enrich_kbo_pitchers_from_html(soup, games: list[dict]) -> None:
+def _enrich_kbo_pitchers_from_html(soup_before_decompose, games: list[dict]) -> None:
     """
-    Best-effort: look for Korean pitcher names near game rows.
-    Korean pitcher names are 2-4 Korean characters (Hangul).
-    Matches them against each game's away/home team position in the page.
+    Phase 0 + Phase 2 for KBO HTML pages (koreabaseball.com / Naver Sports).
+
+    Phase 0: scan <script> tags before they are removed for Hangul pitcher names
+    embedded in JavaScript data blobs (same pattern as Yahoo Japan).
+    Phase 2: scan regular text nodes for Hangul pitcher names.
+
+    Both phases translate via _KBO_PITCHER_KR_MAP, then assign each pitcher to
+    the game whose team code matches _KBO_PITCHER_TEAM (same approach as NPB).
     """
-    hangul_name = re.compile(r'^[가-힣]{2,4}$')
-    candidates = [
-        node.strip() for node in soup.find_all(string=True)
-        if hangul_name.match(node.strip())
-    ]
-    # If we found exactly 2× number of games worth of names, assign them
-    if len(candidates) == len(games) * 2:
-        for i, g in enumerate(games):
-            g["away_pitcher"] = candidates[i * 2]
-            g["home_pitcher"] = candidates[i * 2 + 1]
+    if not games or not _KBO_PITCHER_KR_MAP:
+        return
+
+    sorted_kr_keys = sorted(_KBO_PITCHER_KR_MAP.keys(), key=len, reverse=True)
+    kr_pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_kr_keys) + ')')
+
+    # Phase 0: scan script tag content before decompose
+    found_zh: set[str] = set()
+    for script in soup_before_decompose.find_all('script'):
+        sc = script.get_text() or ""
+        for m in kr_pattern.finditer(sc):
+            found_zh.add(_KBO_PITCHER_KR_MAP[m.group()])
+
+    # Phase 2: scan regular text nodes (soup may already have scripts removed by caller)
+    for node in soup_before_decompose.find_all(string=True):
+        text = node.strip()
+        if not text or len(text) > 50:
+            continue
+        for m in kr_pattern.finditer(text):
+            found_zh.add(_KBO_PITCHER_KR_MAP[m.group()])
+
+    if found_zh:
+        log.info("KBO HTML Phase-0/2: found pitcher names %s", found_zh)
+    else:
+        log.debug("KBO HTML: no Korean pitcher names found")
+        return
+
+    # Assign by team membership
+    for g in games:
+        for zh in found_zh:
+            team = _KBO_PITCHER_TEAM.get(zh, "")
+            if team == g["away"] and not g["away_pitcher"]:
+                g["away_pitcher"] = zh
+            elif team == g["home"] and not g["home_pitcher"]:
+                g["home_pitcher"] = zh
+
+
+def fetch_espn_kbo_pitchers(game_date: date) -> dict[str, tuple]:
+    """
+    ESPN KBO scoreboard API 取得確認先發投手。
+    無需 API key，不受 WAF 封鎖，GH Actions 可達。
+
+    Returns: dict of game_id → (away_pitcher_zh, home_pitcher_zh)
+    Empty strings if pitcher not announced or not in our name map.
+    """
+    date_str = game_date.strftime("%Y%m%d")
+    url = f"{BASE_ESPN_KBO}/scoreboard?dates={date_str}"
+    result: dict[str, tuple] = {}
+    try:
+        resp = requests.get(url, headers=_HEADERS, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        for ev in data.get("events", []):
+            comps = ev.get("competitions", [{}])[0]
+            competitors = comps.get("competitors", [])
+            if len(competitors) < 2:
+                continue
+            home_c = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+            away_c = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+
+            home_name = home_c.get("team", {}).get("displayName", "")
+            away_name = away_c.get("team", {}).get("displayName", "")
+            home_code = _KBO_TEAM_MAP.get(home_name, "")
+            away_code = _KBO_TEAM_MAP.get(away_name, "")
+            if not home_code or not away_code:
+                continue
+
+            away_en = _espn_starter(away_c)
+            home_en = _espn_starter(home_c)
+
+            # Translate English names → Chinese; fall back to English name if unknown
+            away_zh = _KBO_PITCHER_EN_MAP.get(away_en, away_en) if away_en else ""
+            home_zh = _KBO_PITCHER_EN_MAP.get(home_en, home_en) if home_en else ""
+
+            gid = f"{game_date.isoformat()}-{away_code}-{home_code}"
+            result[gid] = (away_zh, home_zh)
+
+        if result:
+            log.info("ESPN KBO pitchers: enriched %d games", len(result))
+        else:
+            log.debug("ESPN KBO: scoreboard returned no pitcher data for %s", game_date)
+    except Exception as e:
+        log.debug("ESPN KBO pitchers fetch failed: %s", e)
+    return result
 
 
 def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
@@ -830,6 +912,23 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
                         existing_ids.add(g["game_id"])
         except Exception as e:
             log.debug("Odds API events failed: %s", e)
+
+    # 4. ESPN KBO pitcher enrichment — fills in pitchers still missing after all HTML sources
+    #    ESPN scoreboard API is reliably accessible from GH Actions (no auth, no WAF block).
+    kbo_missing = [g for g in games_kbo if not g.get("away_pitcher") or not g.get("home_pitcher")]
+    if kbo_missing:
+        try:
+            espn_pitchers = fetch_espn_kbo_pitchers(game_date)
+            for g in games_kbo:
+                info = espn_pitchers.get(g["game_id"])
+                if info:
+                    away_p, home_p = info
+                    if away_p and not g.get("away_pitcher"):
+                        g["away_pitcher"] = away_p
+                    if home_p and not g.get("home_pitcher"):
+                        g["home_pitcher"] = home_p
+        except Exception as e:
+            log.debug("ESPN KBO pitcher enrichment failed: %s", e)
 
     result = games_kbo + games_npb
     if not result:
@@ -1098,6 +1197,101 @@ _NPB_PITCHER_TEAM: dict[str, str] = {
     "高橋光成": "SEI", "平良海馬": "SEI", "今井達也": "SEI", "寶高橋": "SEI",
     # HAM 北海道火腿鬥士
     "伊藤大海": "HAM", "加藤貴之": "HAM", "金村尚真": "HAM", "馬丁尼斯": "HAM",
+}
+
+# 中文投手名 → KBO 球隊代碼
+_KBO_PITCHER_TEAM: dict[str, str] = {
+    # SSL 三星雄獅
+    "元泰仁": "SSL", "阿貝吉": "SSL", "李在現": "SSL", "白正賢": "SSL",
+    # LGT LG雙子星
+    "林贊圭": "LGT", "凱利": "LGT", "孫柱榮": "LGT", "普魯特科": "LGT",
+    # DSB 斗山熊
+    "佛雷斯特": "DSB", "洪建熙": "DSB", "金澤亨": "DSB", "李承珍": "DSB",
+    # KTW KT巫師
+    "班傑明": "KTW", "奎瓦斯": "KTW", "高英杓": "KTW", "威爾克森": "KTW",
+    # SSG SSG藍德
+    "金廣鉉": "SSG", "朴鐘勳": "SSG", "羅薩里奧": "SSG", "吳源石": "SSG",
+    # NCD NC恐龍
+    "魯欽斯基": "NCD", "申敏爀": "NCD", "費迪": "NCD", "具昌模": "NCD",
+    # KIA KIA老虎
+    "梁鉉種": "KIA", "納夫": "KIA", "李義利": "KIA", "尹永哲": "KIA",
+    # LTG 釜山樂天
+    "格洛弗": "LTG", "史特萊利": "LTG", "朴世雄": "LTG", "姜賢浩": "LTG",
+    # HWE 韓華老鷹
+    "柳賢振": "HWE", "文東柱": "HWE", "卡特": "HWE", "查德貝爾": "HWE",
+    # KWH 基咖英雄
+    "安祐真": "KWH", "河榮敏": "KWH", "埃雷迪亞": "KWH", "金善紀": "KWH",
+}
+
+# 韓文 Hangul 投手名 → 中文名（koreabaseball.com / Naver Sports 頁面）
+_KBO_PITCHER_KR_MAP: dict[str, str] = {
+    # SSL 三星雄獅
+    "원태인": "元泰仁", "이재현": "李在現", "백정현": "白正賢",
+    # LGT LG雙子星
+    "임찬규": "林贊圭", "손주영": "孫柱榮",
+    "켈리": "凱利", "프루트코": "普魯特科",
+    # DSB 斗山熊
+    "홍건희": "洪建熙", "김택형": "金澤亨", "이승진": "李承珍",
+    "포레스트": "佛雷斯特",
+    # KTW KT巫師
+    "고영표": "高英杓",
+    "벤자민": "班傑明", "쿠에바스": "奎瓦斯", "윌커슨": "威爾克森",
+    # SSG SSG藍德
+    "김광현": "金廣鉉", "박종훈": "朴鐘勳", "오원석": "吳源石",
+    "로사리오": "羅薩里奧",
+    # NCD NC恐龍
+    "신민혁": "申敏爀", "구창모": "具昌模",
+    "루친스키": "魯欽斯基", "피디": "費迪",
+    # KIA KIA老虎
+    "양현종": "梁鉉種", "이의리": "李義利", "윤영철": "尹永哲",
+    "네이브": "納夫",
+    # LTG 釜山樂天
+    "박세웅": "朴世雄", "강현호": "姜賢浩",
+    "글로버": "格洛弗", "스트레일리": "史特萊利",
+    # HWE 韓華老鷹
+    "류현진": "柳賢振", "문동주": "文東柱",
+    "카터": "卡特", "채드웰": "查德貝爾",
+    # KWH 基咖英雄
+    "안우진": "安祐真", "하영민": "河榮敏", "김선기": "金善紀",
+    "에레디아": "埃雷迪亞",
+}
+
+# ESPN 英文 displayName → 中文名（ESPN KBO scoreboard API）
+_KBO_PITCHER_EN_MAP: dict[str, str] = {
+    # SSL 三星雄獅 — Korean nationals (ESPN uses romanized format)
+    "Won Tae-In": "元泰仁", "Tae-In Won": "元泰仁",
+    "Lee Jae-Hyeon": "李在現", "Jae-Hyeon Lee": "李在現",
+    "Baek Jeong-Hyeon": "白正賢",
+    # LGT LG雙子星
+    "Im Chan-Gyu": "林贊圭", "Chan-Gyu Im": "林贊圭",
+    "Son Ju-Yeong": "孫柱榮",
+    # DSB 斗山熊
+    "Hong Geon-Hui": "洪建熙",
+    "Kim Taek-Hyeong": "金澤亨",
+    "Lee Seung-Jin": "李承珍",
+    # KTW KT巫師
+    "Go Yeong-Pyo": "高英杓", "Yeong-Pyo Go": "高英杓",
+    # SSG SSG藍德
+    "Kim Kwang-Hyun": "金廣鉉", "Kwang-Hyun Kim": "金廣鉉",
+    "Park Jong-Hun": "朴鐘勳",
+    "Oh Won-Seok": "吳源石",
+    # NCD NC恐龍
+    "Shin Min-Hyeok": "申敏爀",
+    "Gu Chang-Mo": "具昌模", "Koo Chang-Mo": "具昌模",
+    # KIA KIA老虎
+    "Yang Hyeon-Jong": "梁鉉種", "Hyeon-Jong Yang": "梁鉉種",
+    "Lee Eui-Ri": "李義利",
+    "Yun Yeong-Cheol": "尹永哲",
+    # LTG 釜山樂天
+    "Park Se-Ung": "朴世雄",
+    "Gang Hyeon-Ho": "姜賢浩", "Kang Hyeon-Ho": "姜賢浩",
+    # HWE 韓華老鷹
+    "Hyun-Jin Ryu": "柳賢振", "Ryu Hyun-Jin": "柳賢振",
+    "Moon Dong-Ju": "文東柱",
+    # KWH 基咖英雄
+    "An Woo-Jin": "安祐真", "Woo-Jin An": "安祐真",
+    "Ha Yeong-Min": "河榮敏",
+    "Kim Seon-Gi": "金善紀",
 }
 
 
