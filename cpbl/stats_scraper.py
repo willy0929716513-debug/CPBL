@@ -2,10 +2,11 @@
 V8 Stats Scraper — 多來源投手數據抓取器 (NPB / KBO)
 
 先發投手抓取優先順序：
-  1. MyKBO Stats (mykbostats.com)   — KBO 先發，英文，最準確
-  2. Yahoo Japan Baseball           — NPB 先發，日文名自動轉中文
-  3. ESPN jlb/kor                   — 補漏，probables 不穩定
-  4. The Odds API /events           — 保底（有賽程，無先發）
+  NPB: Yahoo Japan Baseball (baseball.yahoo.co.jp) — 日文名自動轉中文
+  KBO: MLB Stats API sportId=5 (hydrate=probablePitcher) — 英文名
+  補漏: The Odds API /events — 有賽程，無先發
+
+ESPN 已移除：不提供 NPB/KBO 的先發投手資料。
 
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
   NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
@@ -642,79 +643,55 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
 def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
     """
     多來源賽程（含先發投手），優先順序：
-      1. MyKBO Stats  → KBO 先發（英文，GitHub Actions 可達）
-      2. Yahoo Japan  → NPB 先發（日文，GitHub Actions 可達）
-      3. ESPN jlb/kor → 作為補漏（有時含 probables）
-      4. ESPN Web API → 備援
-      5. MLB Stats API（通常被擋）
-      6. The Odds API /events → 最終保底（有賽程，無先發）
-    合併 KBO + NPB 結果後回傳。
+      NPB: Yahoo Japan Baseball → MLB Stats API (sportId=6)
+      KBO: MLB Stats API (sportId=5, hydrate=probablePitcher) → Odds API /events
+      最終保底: The Odds API /events（有賽程，無先發）
+    ESPN 完全移除（對 NPB/KBO 無用）。
     """
     games_kbo: list[dict] = []
     games_npb: list[dict] = []
 
-    # 1. MyKBO Stats — KBO 先發最準確的英文來源
-    try:
-        games_kbo = fetch_mykbo_schedule(game_date)
-        if games_kbo:
-            log.info("Schedule KBO from MyKBO Stats: %d games", len(games_kbo))
-    except Exception as e:
-        log.debug("MyKBO schedule failed: %s", e)
-
-    # 2. Yahoo Japan Baseball — NPB 先發
+    # 1. Yahoo Japan Baseball — NPB 先發（已確認 GH Actions 可達）
     try:
         games_npb = fetch_yahoo_npb_schedule(game_date)
         if games_npb:
             log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
     except Exception as e:
-        log.debug("Yahoo Japan NPB schedule failed: %s", e)
+        log.debug("Yahoo Japan NPB failed: %s", e)
 
-    # 如果兩個專業來源都成功，直接合併回傳
+    # 2. MLB Stats API — KBO (sportId=5) + NPB 補漏 (sportId=6)
+    #    含 hydrate=probablePitcher，先發資料最完整
+    try:
+        mlb_games = fetch_mlbstats_schedule(game_date)
+        if mlb_games:
+            log.info("Schedule from MLB Stats API: %d games", len(mlb_games))
+            if not games_kbo:
+                games_kbo = [g for g in mlb_games if g.get("league") == "KBO"]
+            if not games_npb:
+                games_npb = [g for g in mlb_games if g.get("league") == "NPB"]
+    except Exception as e:
+        log.debug("MLB Stats API failed: %s", e)
+
+    # 如果 KBO + NPB 都有了，直接回傳
     if games_kbo and games_npb:
         return games_kbo + games_npb
 
-    # 3. ESPN jlb/kor（有時含 probables，可補充缺失聯盟）
-    espn_games = fetch_espn_schedule(game_date)
-    if espn_games:
-        log.info("Schedule from ESPN: %d games", len(espn_games))
-        # 用 ESPN 補充缺失的聯盟
-        if not games_kbo:
-            games_kbo = [g for g in espn_games if g.get("league") == "KBO"]
-        if not games_npb:
-            games_npb = [g for g in espn_games if g.get("league") == "NPB"]
-
-    if games_kbo or games_npb:
-        if games_kbo and games_npb:
-            return games_kbo + games_npb
-
-    # 4. ESPN Web API
-    web_games = fetch_espn_web_schedule(game_date)
-    if web_games:
-        log.info("Schedule from ESPN web: %d games", len(web_games))
-        if not games_kbo:
-            games_kbo = [g for g in web_games if g.get("league") == "KBO"]
-        if not games_npb:
-            games_npb = [g for g in web_games if g.get("league") == "NPB"]
-
-    if games_kbo or games_npb:
-        if games_kbo and games_npb:
-            return games_kbo + games_npb
-
-    # 5. MLB Stats API（通常從 GH Actions 被擋，但試試無妨）
-    mlb_games = fetch_mlbstats_schedule(game_date)
-    if mlb_games:
-        log.info("Schedule from MLB Stats API: %d games", len(mlb_games))
-        all_games = (games_kbo or []) + (games_npb or []) + mlb_games
-        return all_games
-
-    # 6. The Odds API /events — 保底（有賽程但無先發）
-    odds_games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
-    if odds_games:
-        log.info("Schedule from Odds API events: %d games", len(odds_games))
-        # 合併已取得的聯盟資料 + Odds API 補漏
-        existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
-        extras = [g for g in odds_games if g["game_id"] not in existing_ids]
-        return games_kbo + games_npb + extras
+    # 3. The Odds API /events — 保底（有賽程但無先發）
+    try:
+        odds_games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
+        if odds_games:
+            log.info("Schedule from Odds API events: %d games", len(odds_games))
+            existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
+            for g in odds_games:
+                if g["game_id"] not in existing_ids:
+                    league = g.get("league", "")
+                    if league == "KBO" and not games_kbo:
+                        games_kbo.append(g)
+                    elif league == "NPB" and not games_npb:
+                        games_npb.append(g)
+                    existing_ids.add(g["game_id"])
+    except Exception as e:
+        log.debug("Odds API events failed: %s", e)
 
     result = games_kbo + games_npb
     if not result:
