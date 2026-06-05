@@ -29,20 +29,28 @@ TW = datetime.timezone(datetime.timedelta(hours=8))
 def _game_ended(game: dict, now_tw: datetime.datetime) -> bool:
     """Returns True if this game has very likely ended (start + 3h30m elapsed)."""
     date_str = (game.get("date") or "").strip()
-    time_str = (game.get("time") or "").strip()
     if not date_str:
         return False
     try:
-        y, mo, d = map(int, date_str.split("-"))
+        game_date = datetime.date.fromisoformat(date_str)
+        # 日期比今天早 → 一定結束了
+        if game_date < now_tw.date():
+            return True
+        # 今天的比賽：依開始時間判斷（NPB 18:00 JST = 17:00 TW，KBO 약 16:00 TW）
+        time_str = (game.get("time") or "").strip()
         if time_str and ":" in time_str:
             parts = time_str.split(":")
             h, m = int(parts[0]), int(parts[1])
         else:
-            h, m = 18, 0  # 假設下午六點開打
-        start = datetime.datetime(y, mo, d, h, m, tzinfo=TW)
+            # 無時間資料：用最保守估計（17:00 TW = 18:00 JST/KST）
+            # 讓比賽在 20:30 TW 之後自動過濾
+            h, m = 17, 0
+        start = datetime.datetime(
+            game_date.year, game_date.month, game_date.day, h, m, tzinfo=TW
+        )
         return now_tw >= start + datetime.timedelta(hours=3, minutes=30)
     except (ValueError, TypeError):
-        return now_tw.hour >= 23
+        return now_tw.hour >= 22
 
 
 # ── Config ─────────────────────────────────────────────────────────────────
