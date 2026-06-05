@@ -191,8 +191,14 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
                 "",
             ]
         else:
-            adv = f"主 {home_cn} {hw}% > 客 {away_cn} {aw}%" if hw >= aw \
-                  else f"客 {away_cn} {aw}% > 主 {home_cn} {hw}%"
+            h_odds = pr.get("curr_home_odds", 0)
+            a_odds = pr.get("curr_away_odds", 0)
+            def odds_tag(o):
+                return f" [{o:.2f}]" if o and o > 1 else ""
+            if hw >= aw:
+                adv = f"主 {home_cn} {hw}%{odds_tag(h_odds)} > 客 {away_cn} {aw}%{odds_tag(a_odds)}"
+            else:
+                adv = f"客 {away_cn} {aw}%{odds_tag(a_odds)} > 主 {home_cn} {hw}%{odds_tag(h_odds)}"
             lines += [
                 f"{flag} {away_cn} @ {home_cn}{time_tag}",
                 pitcher_line,
