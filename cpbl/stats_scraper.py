@@ -767,22 +767,28 @@ def fetch_npb_official_schedule(game_date: date) -> list[dict]:
         for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
             tag.decompose()
 
-        # ── team Phase 1: text nodes ──────────────────────────────────────
-        # npb.jp is server-rendered (not SPA); team names appear in static HTML.
-        # Narrow the scan to the target date's section using a kanji date anchor.
+        # ── team Phase 1: text nodes（日期過濾）─────────────────────────────
+        # npb.jp 月賽程頁面按日期分段。只收集目標日期段落內的隊名，
+        # 避免把整個月的比賽全部歸入同一天。
+        # 重要：codes_in_order 不從 script 掃描結果初始化（script 無日期上下文）
         target_day_jp = f"{game_date.month}月{game_date.day}日"
         in_target_section = False
-        codes_in_order: list[str] = list(team_codes_scripts)
+        codes_in_order: list[str] = []
+        date_re_jp = re.compile(r'\d+月\d+日')
         for node in soup.find_all(string=True):
             text = node.strip()
             if not text:
                 continue
-            # Detect date section header (e.g. "6月5日" or "6月5日（木）")
+            # 偵測目標日期的段落標題
             if target_day_jp in text:
                 in_target_section = True
-            # Stop when we hit the NEXT date section
-            elif in_target_section and re.search(r'\d+月\d+日', text) and target_day_jp not in text:
+                continue  # 日期文字本身不含隊名，跳過
+            # 遇到下一個不同日期就停止
+            if in_target_section and date_re_jp.search(text) and target_day_jp not in text:
                 break
+            # 只處理目標日期段落內的節點
+            if not in_target_section:
+                continue
             if len(text) > 50:
                 continue
             for m in team_pat.finditer(text):
