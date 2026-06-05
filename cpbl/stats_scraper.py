@@ -18,6 +18,8 @@ FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
 import os
 import re
 import math
+import time
+import random
 import logging
 import requests
 from bs4 import BeautifulSoup
@@ -575,6 +577,16 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
         except Exception as e:
             log.debug("Naver KBO %s: %s", url, e)
 
+    # 3. MyKBO Stats — 英文愛好者站點，靜態 HTML，附帶 Probable Pitchers
+    try:
+        time.sleep(random.uniform(0.5, 1.5))
+        mykbo_games = fetch_mykbo_schedule(game_date)
+        if mykbo_games:
+            log.info("KBO schedule from MyKBO Stats: %d games (with pitchers)", len(mykbo_games))
+            return mykbo_games
+    except Exception as e:
+        log.debug("MyKBO Stats failed: %s", e)
+
     return []
 
 
@@ -1031,7 +1043,19 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
         except Exception as e:
             log.debug("npb.jp official failed: %s", e)
 
-    # 2. KBO — 韓國本地來源（koreabaseball.com → Naver Sports）
+    # 1c. NPB fallback — 日刊體育 nikkansports.com（靜態 HTML，予告先発含む）
+    if not games_npb:
+        try:
+            nk_games = fetch_nikkansports_npb(game_date)
+            if nk_games:
+                games_npb = nk_games
+                log.info("Schedule NPB from Nikkansports: %d games", len(games_npb))
+            else:
+                log.warning("Nikkansports NPB also returned 0 games for %s", game_date)
+        except Exception as e:
+            log.debug("Nikkansports NPB failed: %s", e)
+
+    # 2. KBO — 韓國本地來源（koreabaseball.com → Naver Sports → MyKBO Stats）
     try:
         kbo_games = fetch_kbo_schedule(game_date)
         if kbo_games:
@@ -1098,6 +1122,133 @@ _MYKBO_HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
     "Referer": "https://mykbostats.com/",
 }
+
+# ── Nikkansports (日刊體育) — NPB 賽程 / 予告先発 ─────────────────────────────
+
+_NIKKANSPORTS_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+    "Referer": "https://www.nikkansports.com/",
+}
+
+
+def fetch_nikkansports_npb(game_date: date) -> list[dict]:
+    """
+    日刊體育 nikkansports.com — NPB 月賽程頁面 + 予告先発抓取。
+    靜態 HTML（非 Next.js），日文隊名直接寫在文字節點，解析穩定。
+    """
+    date_str = game_date.isoformat()
+    y, m = game_date.year, game_date.month
+    urls = [
+        f"https://www.nikkansports.com/baseball/professional/schedule/{y}/{m:02d}/",
+        f"https://www.nikkansports.com/baseball/professional/schedule/{y}/",
+        "https://www.nikkansports.com/baseball/professional/schedule/",
+    ]
+    for url in urls:
+        try:
+            time.sleep(random.uniform(1.0, 2.5))
+            resp = requests.get(url, headers=_NIKKANSPORTS_HEADERS, timeout=15)
+            if resp.status_code != 200:
+                log.debug("Nikkansports HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            games = _parse_nikkansports_npb_html(resp.text, date_str)
+            if games:
+                log.info("Nikkansports NPB: %d games for %s", len(games), date_str)
+                return games
+        except Exception as e:
+            log.debug("Nikkansports %s: %s", url, e)
+    return []
+
+
+def _parse_nikkansports_npb_html(html: str, date_str: str) -> list[dict]:
+    """
+    日刊體育 NPB 賽程 HTML 解析。
+    同 Yahoo Japan 解析器：文字節點走查日文隊名，與日期段配對。
+    """
+    game_date = date.fromisoformat(date_str)
+    target_day_jp = f"{game_date.month}月{game_date.day}日"
+
+    # Phase 0.1: decode \\uXXXX escapes (handles any JSON blobs on page)
+    decoded = re.sub(r'\\u([0-9a-fA-F]{4})',
+                     lambda m_: chr(int(m_.group(1), 16)), html)
+    sorted_team_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_team_keys) + ')')
+
+    # If target date not mentioned at all, skip early
+    if target_day_jp not in decoded and target_day_jp not in html:
+        alt = f"{game_date.month}/{game_date.day}"
+        if alt not in html:
+            log.debug("Nikkansports: %s not found in HTML", date_str)
+            return []
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Pitcher scan from script tags (before decompose)
+    sorted_pitcher_keys = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
+    pitcher_pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_pitcher_keys) + ')')
+    found_pitchers: set[str] = set()
+    for script in soup.find_all('script'):
+        sc = script.get_text() or ""
+        for pm in pitcher_pat.finditer(sc):
+            found_pitchers.add(_JP_PITCHER_NAME_MAP[pm.group()])
+
+    for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
+        tag.decompose()
+
+    # Walk text nodes, collecting codes only within the target-date section
+    in_section = False
+    codes_in_order: list[str] = []
+    date_re = re.compile(r'(\d{1,2})月(\d{1,2})日')
+
+    for node in soup.find_all(string=True):
+        text = node.strip()
+        if not text:
+            continue
+        # Detect date header
+        dm = date_re.search(text)
+        if dm:
+            nm, nd = int(dm.group(1)), int(dm.group(2))
+            in_section = (nm == game_date.month and nd == game_date.day)
+        if not in_section:
+            continue
+        if len(text) > 50:
+            continue
+        for m_ in team_pattern.finditer(text):
+            code = _YAHOO_NPB_TEAM_MAP[m_.group()]
+            if not codes_in_order or codes_in_order[-1] != code:
+                codes_in_order.append(code)
+
+    # Fallback: scan whole page if date section not identified
+    if not codes_in_order:
+        for node in soup.find_all(string=True):
+            text = node.strip()
+            if not text or len(text) > 50:
+                continue
+            for m_ in team_pattern.finditer(text):
+                code = _YAHOO_NPB_TEAM_MAP[m_.group()]
+                if not codes_in_order or codes_in_order[-1] != code:
+                    codes_in_order.append(code)
+
+    if not codes_in_order:
+        return []
+
+    games = _pair_team_codes(codes_in_order, date_str, "NPB", "nikkansports")
+
+    # Assign pitchers by team membership
+    for g in games:
+        for zh in found_pitchers:
+            team = _NPB_PITCHER_TEAM.get(zh, "")
+            if team == g["away"] and not g.get("away_pitcher"):
+                g["away_pitcher"] = zh
+            elif team == g["home"] and not g.get("home_pitcher"):
+                g["home_pitcher"] = zh
+
+    return games
 
 
 def _mykbo_team_code(name: str) -> str:
@@ -1423,6 +1574,7 @@ def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
     ]
     for url in urls:
         try:
+            time.sleep(random.uniform(1.0, 3.0))
             resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
             if resp.status_code == 403:
                 log.warning("Yahoo Japan NPB 403 (WAF blocked) for %s", url)
