@@ -1,758 +1,44 @@
 {
-  "generated_at": "2026-06-05 17:28 (台灣時間)",
+  "generated_at": "2026-06-05 18:13 (台灣時間)",
   "game_date": "2026-06-05",
-  "picks": [
-    {
-      "away": "KTW",
-      "home": "SSG",
-      "away_cn": "KT巫師",
-      "home_cn": "SSG藍德",
-      "league": "KBO",
-      "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
-      "venue": "",
-      "home_win_prob": 0.656,
-      "away_win_prob": 0.344,
-      "away_sp": {
-        "team": "KTW",
-        "foreign": true,
-        "era": 2.95,
-        "whip": 1.14,
-        "fip": 3.08,
-        "xfip": 3.2,
-        "k9": 9.2,
-        "bb9": 2.5,
-        "h9": 7.8,
-        "hr9": 0.7,
-        "babip": 0.288,
-        "lob_pct": 76.5,
-        "k_bb_pct": 19.5,
-        "recent_3_era": 2.72,
-        "recent_5_era": 2.85,
-        "recent_10_era": 2.95,
-        "gs": 14,
-        "innings": 87.0,
-        "wpa": 2.0,
-        "re24": 14.5,
-        "k_pct": 33.8,
-        "bb_pct": 12.2,
-        "name": "班傑明",
-        "confirmed": false
-      },
-      "home_sp": {
-        "team": "SSG",
-        "foreign": false,
-        "era": 2.48,
-        "whip": 1.06,
-        "fip": 2.62,
-        "xfip": 2.75,
-        "k9": 10.2,
-        "bb9": 2.1,
-        "h9": 7.0,
-        "hr9": 0.6,
-        "babip": 0.28,
-        "lob_pct": 80.2,
-        "k_bb_pct": 24.2,
-        "recent_3_era": 2.25,
-        "recent_5_era": 2.38,
-        "recent_10_era": 2.48,
-        "gs": 14,
-        "innings": 89.0,
-        "wpa": 3.0,
-        "re24": 21.0,
-        "k_pct": 36.2,
-        "bb_pct": 10.4,
-        "name": "金廣鉉",
-        "confirmed": false
-      },
-      "market_home_prob": 57.4,
-      "value_gap": 12.5,
-      "curr_home_odds": 1.66,
-      "curr_away_odds": 2.24,
-      "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 13% (Value)"
-      ],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 88.18749999999999,
-          "away_score": 75.84750000000001,
-          "advantage": 12.339999999999975,
-          "detail": "主隊 ERA 2.48 FIP 2.62 xFIP 2.75 WHIP 1.06 K/9 10.2 K-BB% 24.2 | 近3ERA 2.25 ➡️ 穩定 | 客隊🌏 ERA 2.95 FIP 3.08 xFIP 3.2 WHIP 1.14 K/9 9.2 K-BB% 19.5 | 近3ERA 2.72 ➡️ 穩定"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 64.797,
-          "away_score": 62.641499999999986,
-          "advantage": 2.1555000000000106,
-          "detail": "主隊 OPS 0.817 wOBA 0.348 wRC+ 112 近7OPS 0.835 | 客隊 OPS 0.81 wOBA 0.345 wRC+ 110 近7OPS 0.828"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 65.04999999999998,
-          "away_score": 67.362,
-          "advantage": -2.312000000000012,
-          "detail": "主隊牛棚 ERA 2.88 WHIP 1.12 疲勞 25 終結者連出 1天 | 客隊牛棚 ERA 2.95 WHIP 1.14 疲勞 22 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 58.0,
-          "away_score": 42.0,
-          "advantage": 16.0,
-          "detail": "主隊主場 26勝14敗 | 客隊客場 20勝20敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 72.8,
-          "away_score": 59.3,
-          "advantage": 13.5,
-          "detail": "主隊近5場 ●●○●● 近10場 ○●●●○●●○●● 得失分差 +58 出賽密度 2/7天 | 客隊近5場 ●○●●○ 近10場 ●●○●○●●○●○ 得失分差 +28 出賽密度 3/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 65.6,
-          "away_score": 60.5,
-          "advantage": 5.099999999999994,
-          "detail": "主隊 守備率 0.983 DRS +10 UZR +7.2 失誤 26 | 客隊 守備率 0.982 DRS +7 UZR +5.0 失誤 28"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 70.0,
-          "away_score": 30.0,
-          "advantage": 20.0,
-          "detail": "主隊賠率 1.66 (開 1.66) | 客隊賠率 2.24 (開 2.24) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 57.4,
-            "value_gap": 12.5,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 13% (Value)"
-            ],
-            "advantage": 20.0,
-            "detail": "主隊賠率 1.66 (開 1.66) | 客隊賠率 2.24 (開 2.24) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.66,
-          "curr_away_odds": 2.24,
-          "open_home_odds": 1.66,
-          "open_away_odds": 2.24,
-          "run_line": -1.5,
-          "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 57.4,
-          "signals": [
-            "📈 模型比市場高估主隊 13% (Value)"
-          ]
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.6994,
-        "std_dev": 0.016,
-        "ci_90": [
-          0.6731,
-          0.7264
-        ],
-        "home_win_pct": 1.0,
-        "uncertain": false,
-        "conf_boost": 0.0416
-      },
-      "ensemble": {
-        "prob": 0.6557,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.6658,
-          "ml": 0.6867,
-          "market": 0.574,
-          "mc": 0.6994
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 1.05,
-        "away_bat_adv": -0.44,
-        "net_advantage": 1.49,
-        "home_pitcher_type": "power",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 班傑明(R/balanced) vs SSG: 打線佔優 +1.1 | 客隊打線 vs 主隊先發: 金廣鉉(R/power) vs KTW: 均勢 -0.4"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "side": "home",
-      "bet_label": "SSG藍德 獨贏",
-      "btype": "ML",
-      "bp": 1.66,
-      "stake": 50.0,
-      "edge": 0.0533,
-      "p_win": 0.6557,
-      "ev": 0.0885,
-      "ra_ev": 0.0876,
-      "conf": 0.302,
-      "tier": 3,
-      "mc_boost": 0.042,
-      "cs_factor": 0.75,
-      "mc_std": 0.016,
-      "recommended": true,
-      "ensemble_used": true,
-      "sharp_signal": null,
-      "reasoning": [
-        "📊 先發主優12 | 盤口主優20 | 近況主優14",
-        "💹 EV=+8.8% → 風險調整後 EV=+8.8%  cold-start×1.00",
-        "🎲 MC 2000次: 90%CI [67%,73%] σ=0.016",
-        "🧩 Ensemble: ELO=0.6658 ML=0.6867 市場=0.574 MC=0.6994 → 0.656"
-      ]
-    },
-    {
-      "away": "SSL",
-      "home": "KIA",
-      "away_cn": "三星雄獅",
-      "home_cn": "KIA老虎",
-      "league": "KBO",
-      "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
-      "venue": "",
-      "home_win_prob": 0.638,
-      "away_win_prob": 0.362,
-      "away_sp": {
-        "team": "SSL",
-        "foreign": false,
-        "era": 2.58,
-        "whip": 1.08,
-        "fip": 2.72,
-        "xfip": 2.85,
-        "k9": 9.8,
-        "bb9": 2.2,
-        "h9": 7.2,
-        "hr9": 0.6,
-        "babip": 0.284,
-        "lob_pct": 79.2,
-        "k_bb_pct": 22.8,
-        "recent_3_era": 2.35,
-        "recent_5_era": 2.48,
-        "recent_10_era": 2.58,
-        "gs": 14,
-        "innings": 88.0,
-        "wpa": 2.8,
-        "re24": 19.5,
-        "k_pct": 35.3,
-        "bb_pct": 10.9,
-        "name": "元泰仁",
-        "confirmed": false
-      },
-      "home_sp": {
-        "team": "KIA",
-        "foreign": false,
-        "era": 2.78,
-        "whip": 1.1,
-        "fip": 2.92,
-        "xfip": 3.05,
-        "k9": 9.5,
-        "bb9": 2.3,
-        "h9": 7.5,
-        "hr9": 0.6,
-        "babip": 0.285,
-        "lob_pct": 77.8,
-        "k_bb_pct": 21.5,
-        "recent_3_era": 2.55,
-        "recent_5_era": 2.68,
-        "recent_10_era": 2.78,
-        "gs": 14,
-        "innings": 88.0,
-        "wpa": 2.2,
-        "re24": 15.5,
-        "k_pct": 34.5,
-        "bb_pct": 11.3,
-        "name": "梁鉉種",
-        "confirmed": false
-      },
-      "market_home_prob": 56.1,
-      "value_gap": 12.2,
-      "curr_home_odds": 1.7,
-      "curr_away_odds": 2.17,
-      "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 12% (Value)"
-      ],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 79.4475,
-          "away_score": 84.69749999999998,
-          "advantage": -5.249999999999972,
-          "detail": "主隊 ERA 2.78 FIP 2.92 xFIP 3.05 WHIP 1.1 K/9 9.5 K-BB% 21.5 | 近3ERA 2.55 ➡️ 穩定 | 客隊 ERA 2.58 FIP 2.72 xFIP 2.85 WHIP 1.08 K/9 9.8 K-BB% 22.8 | 近3ERA 2.35 ➡️ 穩定"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 68.797,
-          "away_score": 61.8575,
-          "advantage": 6.939499999999995,
-          "detail": "主隊 OPS 0.835 wOBA 0.356 wRC+ 118 近7OPS 0.852 | 客隊 OPS 0.803 wOBA 0.342 wRC+ 108 近7OPS 0.818"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 72.755,
-          "away_score": 64.887,
-          "advantage": 7.867999999999995,
-          "detail": "主隊牛棚 ERA 2.68 WHIP 1.05 疲勞 16 終結者連出 0天 | 客隊牛棚 ERA 3.05 WHIP 1.16 疲勞 28 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 58.625,
-          "away_score": 41.375,
-          "advantage": 17.249999999999996,
-          "detail": "主隊主場 28勝12敗 | 客隊客場 21勝19敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 79.0,
-          "away_score": 60.7,
-          "advantage": 18.299999999999997,
-          "detail": "主隊近5場 ●●●●○ 近10場 ●●●○●●●○●● 得失分差 +95 出賽密度 2/7天 | 客隊近5場 ●●○●○ 近10場 ●○●●○●○●●○ 得失分差 +42 出賽密度 3/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 72.10000000000001,
-          "away_score": 56.699999999999996,
-          "advantage": 15.400000000000013,
-          "detail": "主隊 守備率 0.984 DRS +14 UZR +9.8 失誤 23 | 客隊 守備率 0.981 DRS +5 UZR +3.8 失誤 30"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 69.7,
-          "away_score": 30.3,
-          "advantage": 19.7,
-          "detail": "主隊賠率 1.7 (開 1.7) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 56.1,
-            "value_gap": 12.2,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 12% (Value)"
-            ],
-            "advantage": 19.7,
-            "detail": "主隊賠率 1.7 (開 1.7) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.7,
-          "curr_away_odds": 2.17,
-          "open_home_odds": 1.7,
-          "open_away_odds": 2.17,
-          "run_line": -1.5,
-          "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 56.1,
-          "signals": [
-            "📈 模型比市場高估主隊 12% (Value)"
-          ]
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.6825,
-        "std_dev": 0.0166,
-        "ci_90": [
-          0.6551,
-          0.7095
-        ],
-        "home_win_pct": 1.0,
-        "uncertain": false,
-        "conf_boost": 0.0414
-      },
-      "ensemble": {
-        "prob": 0.6383,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.6636,
-          "ml": 0.6635,
-          "market": 0.561,
-          "mc": 0.6825
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": -0.09,
-        "away_bat_adv": 0.09,
-        "net_advantage": -0.18,
-        "home_pitcher_type": "power",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 元泰仁(R/power) vs KIA: 均勢 -0.1 | 客隊打線 vs 主隊先發: 梁鉉種(R/power) vs SSL: 均勢 +0.1"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "side": "home",
-      "bet_label": "KIA老虎 獨贏",
-      "btype": "ML",
-      "bp": 1.7,
-      "stake": 50.0,
-      "edge": 0.0501,
-      "p_win": 0.6383,
-      "ev": 0.0851,
-      "ra_ev": 0.0841,
-      "conf": 0.277,
-      "tier": 3,
-      "mc_boost": 0.041,
-      "cs_factor": 0.75,
-      "mc_std": 0.0166,
-      "recommended": true,
-      "ensemble_used": true,
-      "sharp_signal": null,
-      "reasoning": [
-        "📊 牛棚主優8 | 盤口主優20 | 近況主優18",
-        "💹 EV=+8.5% → 風險調整後 EV=+8.4%  cold-start×1.00",
-        "🎲 MC 2000次: 90%CI [66%,71%] σ=0.017",
-        "🧩 Ensemble: ELO=0.6636 ML=0.6635 市場=0.561 MC=0.6825 → 0.638"
-      ]
-    }
-  ],
+  "picks": [],
   "predictions": [
     {
-      "away": "KTW",
-      "home": "SSG",
-      "away_cn": "KT巫師",
-      "home_cn": "SSG藍德",
-      "league": "KBO",
-      "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
-      "venue": "",
-      "home_win_prob": 0.656,
-      "away_win_prob": 0.344,
-      "away_sp": {
-        "team": "KTW",
-        "foreign": true,
-        "era": 2.95,
-        "whip": 1.14,
-        "fip": 3.08,
-        "xfip": 3.2,
-        "k9": 9.2,
-        "bb9": 2.5,
-        "h9": 7.8,
-        "hr9": 0.7,
-        "babip": 0.288,
-        "lob_pct": 76.5,
-        "k_bb_pct": 19.5,
-        "recent_3_era": 2.72,
-        "recent_5_era": 2.85,
-        "recent_10_era": 2.95,
-        "gs": 14,
-        "innings": 87.0,
-        "wpa": 2.0,
-        "re24": 14.5,
-        "k_pct": 33.8,
-        "bb_pct": 12.2,
-        "name": "班傑明",
-        "confirmed": false
-      },
-      "home_sp": {
-        "team": "SSG",
-        "foreign": false,
-        "era": 2.48,
-        "whip": 1.06,
-        "fip": 2.62,
-        "xfip": 2.75,
-        "k9": 10.2,
-        "bb9": 2.1,
-        "h9": 7.0,
-        "hr9": 0.6,
-        "babip": 0.28,
-        "lob_pct": 80.2,
-        "k_bb_pct": 24.2,
-        "recent_3_era": 2.25,
-        "recent_5_era": 2.38,
-        "recent_10_era": 2.48,
-        "gs": 14,
-        "innings": 89.0,
-        "wpa": 3.0,
-        "re24": 21.0,
-        "k_pct": 36.2,
-        "bb_pct": 10.4,
-        "name": "金廣鉉",
-        "confirmed": false
-      },
-      "market_home_prob": 57.4,
-      "value_gap": 12.5,
-      "curr_home_odds": 1.66,
-      "curr_away_odds": 2.24,
-      "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 13% (Value)"
-      ],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 88.18749999999999,
-          "away_score": 75.84750000000001,
-          "advantage": 12.339999999999975,
-          "detail": "主隊 ERA 2.48 FIP 2.62 xFIP 2.75 WHIP 1.06 K/9 10.2 K-BB% 24.2 | 近3ERA 2.25 ➡️ 穩定 | 客隊🌏 ERA 2.95 FIP 3.08 xFIP 3.2 WHIP 1.14 K/9 9.2 K-BB% 19.5 | 近3ERA 2.72 ➡️ 穩定"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 64.797,
-          "away_score": 62.641499999999986,
-          "advantage": 2.1555000000000106,
-          "detail": "主隊 OPS 0.817 wOBA 0.348 wRC+ 112 近7OPS 0.835 | 客隊 OPS 0.81 wOBA 0.345 wRC+ 110 近7OPS 0.828"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 65.04999999999998,
-          "away_score": 67.362,
-          "advantage": -2.312000000000012,
-          "detail": "主隊牛棚 ERA 2.88 WHIP 1.12 疲勞 25 終結者連出 1天 | 客隊牛棚 ERA 2.95 WHIP 1.14 疲勞 22 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 58.0,
-          "away_score": 42.0,
-          "advantage": 16.0,
-          "detail": "主隊主場 26勝14敗 | 客隊客場 20勝20敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 72.8,
-          "away_score": 59.3,
-          "advantage": 13.5,
-          "detail": "主隊近5場 ●●○●● 近10場 ○●●●○●●○●● 得失分差 +58 出賽密度 2/7天 | 客隊近5場 ●○●●○ 近10場 ●●○●○●●○●○ 得失分差 +28 出賽密度 3/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 65.6,
-          "away_score": 60.5,
-          "advantage": 5.099999999999994,
-          "detail": "主隊 守備率 0.983 DRS +10 UZR +7.2 失誤 26 | 客隊 守備率 0.982 DRS +7 UZR +5.0 失誤 28"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 70.0,
-          "away_score": 30.0,
-          "advantage": 20.0,
-          "detail": "主隊賠率 1.66 (開 1.66) | 客隊賠率 2.24 (開 2.24) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 57.4,
-            "value_gap": 12.5,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 13% (Value)"
-            ],
-            "advantage": 20.0,
-            "detail": "主隊賠率 1.66 (開 1.66) | 客隊賠率 2.24 (開 2.24) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.66,
-          "curr_away_odds": 2.24,
-          "open_home_odds": 1.66,
-          "open_away_odds": 2.24,
-          "run_line": -1.5,
-          "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 57.4,
-          "signals": [
-            "📈 模型比市場高估主隊 13% (Value)"
-          ]
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.6994,
-        "std_dev": 0.016,
-        "ci_90": [
-          0.6731,
-          0.7264
-        ],
-        "home_win_pct": 1.0,
-        "uncertain": false,
-        "conf_boost": 0.0416
-      },
-      "ensemble": {
-        "prob": 0.6557,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.6658,
-          "ml": 0.6867,
-          "market": 0.574,
-          "mc": 0.6994
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 1.05,
-        "away_bat_adv": -0.44,
-        "net_advantage": 1.49,
-        "home_pitcher_type": "power",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 班傑明(R/balanced) vs SSG: 打線佔優 +1.1 | 客隊打線 vs 主隊先發: 金廣鉉(R/power) vs KTW: 均勢 -0.4"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "ref_label": "SSG藍德 勝算較高",
-      "ref_prob": 65.6,
-      "ref_odds": 1.66,
-      "ref_edge": 0.0533,
-      "conf": 0.403,
-      "tier": 3,
-      "recommended": true
-    },
-    {
-      "away": "SSL",
+      "away": "LTG",
       "home": "KIA",
-      "away_cn": "三星雄獅",
+      "away_cn": "釜山樂天",
       "home_cn": "KIA老虎",
       "league": "KBO",
       "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
+      "game_time": "",
+      "time": "",
       "venue": "",
-      "home_win_prob": 0.638,
-      "away_win_prob": 0.362,
+      "home_win_prob": 0.892,
+      "away_win_prob": 0.108,
       "away_sp": {
-        "team": "SSL",
-        "foreign": false,
-        "era": 2.58,
-        "whip": 1.08,
-        "fip": 2.72,
-        "xfip": 2.85,
-        "k9": 9.8,
-        "bb9": 2.2,
-        "h9": 7.2,
-        "hr9": 0.6,
-        "babip": 0.284,
-        "lob_pct": 79.2,
-        "k_bb_pct": 22.8,
-        "recent_3_era": 2.35,
-        "recent_5_era": 2.48,
-        "recent_10_era": 2.58,
+        "team": "LTG",
+        "foreign": true,
+        "era": 3.25,
+        "whip": 1.24,
+        "fip": 3.38,
+        "xfip": 3.48,
+        "k9": 8.5,
+        "bb9": 2.9,
+        "h9": 8.3,
+        "hr9": 0.8,
+        "babip": 0.298,
+        "lob_pct": 73.8,
+        "k_bb_pct": 15.8,
+        "recent_3_era": 3.02,
+        "recent_5_era": 3.15,
+        "recent_10_era": 3.25,
         "gs": 14,
-        "innings": 88.0,
-        "wpa": 2.8,
-        "re24": 19.5,
-        "k_pct": 35.3,
-        "bb_pct": 10.9,
-        "name": "元泰仁",
+        "innings": 84.0,
+        "wpa": 1.2,
+        "re24": 8.2,
+        "k_pct": 32.1,
+        "bb_pct": 13.9,
+        "name": "格洛弗",
         "confirmed": false
       },
       "home_sp": {
@@ -781,56 +67,54 @@
         "name": "梁鉉種",
         "confirmed": false
       },
-      "market_home_prob": 56.1,
-      "value_gap": 12.2,
-      "curr_home_odds": 1.7,
-      "curr_away_odds": 2.17,
+      "market_home_prob": 89.6,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.185,
+      "curr_away_odds": 4.849,
       "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 12% (Value)"
-      ],
+      "signals": [],
       "factors": {
         "starter": {
           "label": "先發投手",
           "home_score": 79.4475,
-          "away_score": 84.69749999999998,
-          "advantage": -5.249999999999972,
-          "detail": "主隊 ERA 2.78 FIP 2.92 xFIP 3.05 WHIP 1.1 K/9 9.5 K-BB% 21.5 | 近3ERA 2.55 ➡️ 穩定 | 客隊 ERA 2.58 FIP 2.72 xFIP 2.85 WHIP 1.08 K/9 9.8 K-BB% 22.8 | 近3ERA 2.35 ➡️ 穩定"
+          "away_score": 64.3445,
+          "advantage": 15.103000000000009,
+          "detail": "主隊 ERA 2.78 FIP 2.92 xFIP 3.05 WHIP 1.1 K/9 9.5 K-BB% 21.5 | 近3ERA 2.55 ➡️ 穩定 | 客隊🌏 ERA 3.25 FIP 3.38 xFIP 3.48 WHIP 1.24 K/9 8.5 K-BB% 15.8 | 近3ERA 3.02 ➡️ 穩定"
         },
         "lineup": {
           "label": "打線強度",
           "home_score": 68.797,
-          "away_score": 61.8575,
-          "advantage": 6.939499999999995,
-          "detail": "主隊 OPS 0.835 wOBA 0.356 wRC+ 118 近7OPS 0.852 | 客隊 OPS 0.803 wOBA 0.342 wRC+ 108 近7OPS 0.818"
+          "away_score": 52.9745,
+          "advantage": 15.822499999999998,
+          "detail": "主隊 OPS 0.835 wOBA 0.356 wRC+ 118 近7OPS 0.852 | 客隊 OPS 0.763 wOBA 0.325 wRC+ 101 近7OPS 0.778"
         },
         "bullpen": {
           "label": "牛棚戰力",
           "home_score": 72.755,
-          "away_score": 64.887,
-          "advantage": 7.867999999999995,
-          "detail": "主隊牛棚 ERA 2.68 WHIP 1.05 疲勞 16 終結者連出 0天 | 客隊牛棚 ERA 3.05 WHIP 1.16 疲勞 28 終結者連出 0天"
+          "away_score": 41.26499999999999,
+          "advantage": 31.490000000000002,
+          "detail": "主隊牛棚 ERA 2.68 WHIP 1.05 疲勞 16 終結者連出 0天 | 客隊牛棚 ERA 3.52 WHIP 1.3 疲勞 58 終結者連出 1天"
         },
         "home_away": {
           "label": "主客場",
-          "home_score": 58.625,
-          "away_score": 41.375,
-          "advantage": 17.249999999999996,
-          "detail": "主隊主場 28勝12敗 | 客隊客場 21勝19敗 |  run_factor=1.0 "
+          "home_score": 60.875,
+          "away_score": 39.125,
+          "advantage": 21.75,
+          "detail": "主隊主場 28勝12敗 | 客隊客場 15勝25敗 |  run_factor=1.0 "
         },
         "recent_form": {
           "label": "近期狀態",
           "home_score": 79.0,
-          "away_score": 60.7,
-          "advantage": 18.299999999999997,
-          "detail": "主隊近5場 ●●●●○ 近10場 ●●●○●●●○●● 得失分差 +95 出賽密度 2/7天 | 客隊近5場 ●●○●○ 近10場 ●○●●○●○●●○ 得失分差 +42 出賽密度 3/7天"
+          "away_score": 36.2,
+          "advantage": 42.8,
+          "detail": "主隊近5場 ●●●●○ 近10場 ●●●○●●●○●● 得失分差 +95 出賽密度 2/7天 | 客隊近5場 ○○●○● 近10場 ○○●○○●○○●○ 得失分差 -48 出賽密度 4/7天"
         },
         "h2h": {
           "label": "對戰紀錄",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -5.999999999999998,
+          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
         },
         "injuries": {
           "label": "傷兵狀況",
@@ -841,67 +125,45 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
         },
         "defense": {
           "label": "守備能力",
           "home_score": 72.10000000000001,
-          "away_score": 56.699999999999996,
-          "advantage": 15.400000000000013,
-          "detail": "主隊 守備率 0.984 DRS +14 UZR +9.8 失誤 23 | 客隊 守備率 0.981 DRS +5 UZR +3.8 失誤 30"
+          "away_score": 42.5,
+          "advantage": 29.60000000000001,
+          "detail": "主隊 守備率 0.984 DRS +14 UZR +9.8 失誤 23 | 客隊 守備率 0.978 DRS -3 UZR -2.2 失誤 36"
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 69.7,
-          "away_score": 30.3,
-          "advantage": 19.7,
-          "detail": "主隊賠率 1.7 (開 1.7) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 56.1,
-            "value_gap": 12.2,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 12% (Value)"
-            ],
-            "advantage": 19.7,
-            "detail": "主隊賠率 1.7 (開 1.7) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.7,
-          "curr_away_odds": 2.17,
-          "open_home_odds": 1.7,
-          "open_away_odds": 2.17,
-          "run_line": -1.5,
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
           "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 56.1,
-          "signals": [
-            "📈 模型比市場高估主隊 12% (Value)"
-          ]
+          "signals": [],
+          "market_home_prob": 89.6
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.6825,
-        "std_dev": 0.0166,
+        "mean_prob": 0.8959,
+        "std_dev": 0.0159,
         "ci_90": [
-          0.6551,
-          0.7095
+          0.87,
+          0.9218
         ],
         "home_win_pct": 1.0,
         "uncertain": false,
-        "conf_boost": 0.0414
+        "conf_boost": 0.0416
       },
       "ensemble": {
-        "prob": 0.6383,
+        "prob": 0.8918,
         "weights": {
           "elo": 0.12,
           "ml": 0.48,
@@ -909,21 +171,21 @@
           "mc": 0.12
         },
         "model_probs": {
-          "elo": 0.6636,
-          "ml": 0.6635,
-          "market": 0.561,
-          "mc": 0.6825
+          "elo": 0.8036,
+          "ml": 0.9044,
+          "market": 0.896,
+          "mc": 0.8959
         },
         "bayesian_adj": 1.0
       },
       "matchup": {
         "label": "投打匹配",
-        "home_bat_adv": -0.09,
-        "away_bat_adv": 0.09,
-        "net_advantage": -0.18,
+        "home_bat_adv": 1.34,
+        "away_bat_adv": -0.81,
+        "net_advantage": 2.15,
         "home_pitcher_type": "power",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 元泰仁(R/power) vs KIA: 均勢 -0.1 | 客隊打線 vs 主隊先發: 梁鉉種(R/power) vs SSL: 均勢 +0.1"
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 格洛弗(R/balanced) vs KIA: 打線佔優 +1.3 | 客隊打線 vs 主隊先發: 梁鉉種(R/power) vs LTG: 均勢 -0.8"
       },
       "market_signal": {
         "sharp_signal": null,
@@ -937,26 +199,52 @@
         "away": 0.0
       },
       "ref_label": "KIA老虎 勝算較高",
-      "ref_prob": 63.8,
-      "ref_odds": 1.7,
-      "ref_edge": 0.0501,
-      "conf": 0.369,
-      "tier": 3,
-      "recommended": true
+      "ref_prob": 89.2,
+      "ref_odds": 1.19,
+      "ref_edge": 0.0479,
+      "conf": 0.834,
+      "tier": 1,
+      "recommended": false
     },
     {
-      "away": "GNT",
-      "home": "YKL",
-      "away_cn": "讀賣巨人",
-      "home_cn": "養樂多燕子",
+      "away": "LTT",
+      "home": "GNT",
+      "away_cn": "千葉羅德水手",
+      "home_cn": "讀賣巨人",
       "league": "NPB",
       "game_date": "2026-06-05",
-      "game_time": "",
-      "time": "",
+      "game_time": "17:00",
+      "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.317,
-      "away_win_prob": 0.683,
+      "home_win_prob": 0.68,
+      "away_win_prob": 0.32,
       "away_sp": {
+        "team": "LTT",
+        "foreign": false,
+        "era": 2.02,
+        "whip": 0.98,
+        "fip": 2.15,
+        "xfip": 2.28,
+        "k9": 11.5,
+        "bb9": 1.8,
+        "h9": 6.2,
+        "hr9": 0.5,
+        "babip": 0.27,
+        "lob_pct": 82.5,
+        "k_bb_pct": 28.2,
+        "recent_3_era": 1.78,
+        "recent_5_era": 1.92,
+        "recent_10_era": 2.02,
+        "gs": 15,
+        "innings": 96.0,
+        "wpa": 4.0,
+        "re24": 28.5,
+        "k_pct": 39.0,
+        "bb_pct": 9.1,
+        "name": "佐佐木朗希",
+        "confirmed": false
+      },
+      "home_sp": {
         "team": "GNT",
         "foreign": false,
         "era": 2.45,
@@ -980,6 +268,1401 @@
         "k_pct": 36.2,
         "bb_pct": 10.9,
         "name": "菅野智之",
+        "confirmed": false
+      },
+      "market_home_prob": 68.1,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.432,
+      "curr_away_odds": 2.845,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 87.98250000000002,
+          "away_score": 90.0,
+          "advantage": -2.017499999999984,
+          "detail": "主隊 ERA 2.45 FIP 2.62 xFIP 2.75 WHIP 1.05 K/9 10.2 K-BB% 23.8 | 近3ERA 2.2 ➡️ 穩定 | 客隊 ERA 2.02 FIP 2.15 xFIP 2.28 WHIP 0.98 K/9 11.5 K-BB% 28.2 | 近3ERA 1.78 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 54.448499999999996,
+          "away_score": 50.636500000000005,
+          "advantage": 3.8119999999999905,
+          "detail": "主隊 OPS 0.767 wOBA 0.328 wRC+ 103 近7OPS 0.788 | 客隊 OPS 0.754 wOBA 0.322 wRC+ 99 近7OPS 0.768"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 61.6,
+          "away_score": 58.28199999999999,
+          "advantage": 3.318000000000012,
+          "detail": "主隊牛棚 ERA 3.12 WHIP 1.18 疲勞 35 終結者連出 0天 | 客隊牛棚 ERA 3.25 WHIP 1.22 疲勞 38 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 57.39473684210526,
+          "away_score": 42.60526315789474,
+          "advantage": 14.789473684210527,
+          "detail": "主隊主場 24勝16敗 | 客隊客場 18勝20敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 70.8,
+          "away_score": 53.2,
+          "advantage": 17.599999999999994,
+          "detail": "主隊近5場 ●●○●● 近10場 ●●○●●○●○●● 得失分差 +38 出賽密度 2/7天 | 客隊近5場 ○●○●● 近10場 ○○●○●○●●○● 得失分差 -8 出賽密度 3/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 61.4,
+          "away_score": 52.7,
+          "advantage": 8.699999999999996,
+          "detail": "主隊 守備率 0.982 DRS +8 UZR +5.2 失誤 28 | 客隊 守備率 0.98 DRS +3 UZR +2.2 失誤 32"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 68.1
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.6816,
+        "std_dev": 0.0159,
+        "ci_90": [
+          0.6548,
+          0.7078
+        ],
+        "home_win_pct": 1.0,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.6802,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6652,
+          "ml": 0.683,
+          "market": 0.681,
+          "mc": 0.6816
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": -0.2,
+        "away_bat_adv": -0.72,
+        "net_advantage": 0.52,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 佐佐木朗希(R/power) vs GNT: 均勢 -0.2 | 客隊打線 vs 主隊先發: 菅野智之(R/power) vs LTT: 均勢 -0.7"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "讀賣巨人 勝算較高",
+      "ref_prob": 68.0,
+      "ref_odds": 1.43,
+      "ref_edge": -0.0181,
+      "conf": 0.404,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "RKT",
+      "home": "HNS",
+      "away_cn": "東北樂天金鷹",
+      "home_cn": "阪神虎",
+      "league": "NPB",
+      "game_date": "2026-06-05",
+      "game_time": "17:01",
+      "time": "17:01",
+      "venue": "",
+      "home_win_prob": 0.661,
+      "away_win_prob": 0.339,
+      "away_sp": {
+        "team": "RKT",
+        "foreign": false,
+        "era": 2.28,
+        "whip": 1.05,
+        "fip": 2.42,
+        "xfip": 2.55,
+        "k9": 10.2,
+        "bb9": 2.0,
+        "h9": 7.0,
+        "hr9": 0.6,
+        "babip": 0.28,
+        "lob_pct": 80.2,
+        "k_bb_pct": 24.5,
+        "recent_3_era": 2.05,
+        "recent_5_era": 2.18,
+        "recent_10_era": 2.28,
+        "gs": 15,
+        "innings": 93.0,
+        "wpa": 3.2,
+        "re24": 22.5,
+        "k_pct": 36.2,
+        "bb_pct": 10.0,
+        "name": "早川隆久",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "HNS",
+        "foreign": false,
+        "era": 2.08,
+        "whip": 1.02,
+        "fip": 2.22,
+        "xfip": 2.35,
+        "k9": 10.5,
+        "bb9": 2.0,
+        "h9": 6.8,
+        "hr9": 0.5,
+        "babip": 0.278,
+        "lob_pct": 81.2,
+        "k_bb_pct": 25.2,
+        "recent_3_era": 1.85,
+        "recent_5_era": 1.98,
+        "recent_10_era": 2.08,
+        "gs": 15,
+        "innings": 95.2,
+        "wpa": 3.8,
+        "re24": 27.5,
+        "k_pct": 36.8,
+        "bb_pct": 10.0,
+        "name": "才木浩人",
+        "confirmed": false
+      },
+      "market_home_prob": 66.2,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.494,
+      "curr_away_odds": 2.627,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 90.0,
+          "away_score": 90.0,
+          "advantage": 0.0,
+          "detail": "主隊 ERA 2.08 FIP 2.22 xFIP 2.35 WHIP 1.02 K/9 10.5 K-BB% 25.2 | 近3ERA 1.85 ➡️ 穩定 | 客隊 ERA 2.28 FIP 2.42 xFIP 2.55 WHIP 1.05 K/9 10.2 K-BB% 24.5 | 近3ERA 2.05 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 57.88200000000001,
+          "away_score": 52.205,
+          "advantage": 5.677000000000014,
+          "detail": "主隊 OPS 0.778 wOBA 0.332 wRC+ 106 近7OPS 0.795 | 客隊 OPS 0.763 wOBA 0.325 wRC+ 101 近7OPS 0.778"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 67.645,
+          "away_score": 61.89,
+          "advantage": 5.7549999999999955,
+          "detail": "主隊牛棚 ERA 2.92 WHIP 1.12 疲勞 22 終結者連出 0天 | 客隊牛棚 ERA 3.15 WHIP 1.18 疲勞 32 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 58.39473684210526,
+          "away_score": 41.60526315789474,
+          "advantage": 16.789473684210527,
+          "detail": "主隊主場 26勝14敗 | 客隊客場 18勝20敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 72.2,
+          "away_score": 57.7,
+          "advantage": 14.5,
+          "detail": "主隊近5場 ●○●●● 近10場 ○●●○●●●○●● 得失分差 +52 出賽密度 2/7天 | 客隊近5場 ●○●●○ 近10場 ●●○●○●○●●○ 得失分差 +12 出賽密度 3/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 53.0,
+          "away_score": 47.0,
+          "advantage": 5.999999999999998,
+          "detail": "本季對戰：客隊 4 勝 主隊 6 勝（主隊勝率 60%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 65.4,
+          "away_score": 55.4,
+          "advantage": 10.000000000000007,
+          "detail": "主隊 守備率 0.983 DRS +10 UZR +6.8 失誤 26 | 客隊 守備率 0.981 DRS +4 UZR +2.8 失誤 30"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 66.2
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.6616,
+        "std_dev": 0.0157,
+        "ci_90": [
+          0.6361,
+          0.6875
+        ],
+        "home_win_pct": 1.0,
+        "uncertain": false,
+        "conf_boost": 0.0417
+      },
+      "ensemble": {
+        "prob": 0.6608,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6374,
+          "ml": 0.6656,
+          "market": 0.662,
+          "mc": 0.6616
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.27,
+        "away_bat_adv": -0.76,
+        "net_advantage": 1.03,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 早川隆久(R/power) vs HNS: 均勢 +0.3 | 客隊打線 vs 主隊先發: 才木浩人(R/power) vs RKT: 均勢 -0.8"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "阪神虎 勝算較高",
+      "ref_prob": 66.1,
+      "ref_odds": 1.49,
+      "ref_edge": -0.0085,
+      "conf": 0.365,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "NCD",
+      "home": "KTW",
+      "away_cn": "NC恐龍",
+      "home_cn": "KT巫師",
+      "league": "KBO",
+      "game_date": "2026-06-05",
+      "game_time": "",
+      "time": "",
+      "venue": "",
+      "home_win_prob": 0.645,
+      "away_win_prob": 0.355,
+      "away_sp": {
+        "team": "NCD",
+        "foreign": true,
+        "era": 3.12,
+        "whip": 1.2,
+        "fip": 3.25,
+        "xfip": 3.35,
+        "k9": 8.8,
+        "bb9": 2.7,
+        "h9": 8.0,
+        "hr9": 0.8,
+        "babip": 0.292,
+        "lob_pct": 75.0,
+        "k_bb_pct": 16.8,
+        "recent_3_era": 2.88,
+        "recent_5_era": 3.02,
+        "recent_10_era": 3.12,
+        "gs": 14,
+        "innings": 85.0,
+        "wpa": 1.5,
+        "re24": 10.5,
+        "k_pct": 32.8,
+        "bb_pct": 13.0,
+        "name": "魯欽斯基",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "KTW",
+        "foreign": true,
+        "era": 2.95,
+        "whip": 1.14,
+        "fip": 3.08,
+        "xfip": 3.2,
+        "k9": 9.2,
+        "bb9": 2.5,
+        "h9": 7.8,
+        "hr9": 0.7,
+        "babip": 0.288,
+        "lob_pct": 76.5,
+        "k_bb_pct": 19.5,
+        "recent_3_era": 2.72,
+        "recent_5_era": 2.85,
+        "recent_10_era": 2.95,
+        "gs": 14,
+        "innings": 87.0,
+        "wpa": 2.0,
+        "re24": 14.5,
+        "k_pct": 33.8,
+        "bb_pct": 12.2,
+        "name": "班傑明",
+        "confirmed": false
+      },
+      "market_home_prob": 64.8,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.573,
+      "curr_away_odds": 2.413,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 75.84750000000001,
+          "away_score": 69.405,
+          "advantage": 6.44250000000001,
+          "detail": "主隊🌏 ERA 2.95 FIP 3.08 xFIP 3.2 WHIP 1.14 K/9 9.2 K-BB% 19.5 | 近3ERA 2.72 ➡️ 穩定 | 客隊🌏 ERA 3.12 FIP 3.25 xFIP 3.35 WHIP 1.2 K/9 8.8 K-BB% 16.8 | 近3ERA 2.88 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 62.641499999999986,
+          "away_score": 54.818999999999996,
+          "advantage": 7.822499999999991,
+          "detail": "主隊 OPS 0.81 wOBA 0.345 wRC+ 110 近7OPS 0.828 | 客隊 OPS 0.775 wOBA 0.33 wRC+ 103 近7OPS 0.792"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 67.362,
+          "away_score": 47.206999999999994,
+          "advantage": 20.155,
+          "detail": "主隊牛棚 ERA 2.95 WHIP 1.14 疲勞 22 終結者連出 0天 | 客隊牛棚 ERA 3.22 WHIP 1.2 疲勞 42 終結者連出 2天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 57.375,
+          "away_score": 42.625,
+          "advantage": 14.75,
+          "detail": "主隊主場 24勝16敗 | 客隊客場 19勝21敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 59.3,
+          "away_score": 55.0,
+          "advantage": 4.299999999999997,
+          "detail": "主隊近5場 ●○●●○ 近10場 ●●○●○●●○●○ 得失分差 +28 出賽密度 3/7天 | 客隊近5場 ●○○●● 近10場 ○●○●○●●○○● 得失分差 +10 出賽密度 3/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 53.0,
+          "away_score": 47.0,
+          "advantage": 5.999999999999998,
+          "detail": "本季對戰：客隊 4 勝 主隊 6 勝（主隊勝率 60%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 60.5,
+          "away_score": 53.1,
+          "advantage": 7.399999999999999,
+          "detail": "主隊 守備率 0.982 DRS +7 UZR +5.0 失誤 28 | 客隊 守備率 0.98 DRS +3 UZR +2.2 失誤 31"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 64.8
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.6487,
+        "std_dev": 0.0156,
+        "ci_90": [
+          0.6235,
+          0.6744
+        ],
+        "home_win_pct": 1.0,
+        "uncertain": false,
+        "conf_boost": 0.0418
+      },
+      "ensemble": {
+        "prob": 0.6446,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6053,
+          "ml": 0.6512,
+          "market": 0.648,
+          "mc": 0.6487
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 1.04,
+        "away_bat_adv": 0.35,
+        "net_advantage": 0.69,
+        "home_pitcher_type": "balanced",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 魯欽斯基(R/balanced) vs KTW: 打線佔優 +1.0 | 客隊打線 vs 主隊先發: 班傑明(R/balanced) vs NCD: 均勢 +0.3"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "KT巫師 勝算較高",
+      "ref_prob": 64.5,
+      "ref_odds": 1.57,
+      "ref_edge": 0.0089,
+      "conf": 0.339,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "LGT",
+      "home": "HWE",
+      "away_cn": "LG雙子星",
+      "home_cn": "韓華老鷹",
+      "league": "KBO",
+      "game_date": "2026-06-05",
+      "game_time": "",
+      "time": "",
+      "venue": "",
+      "home_win_prob": 0.357,
+      "away_win_prob": 0.643,
+      "away_sp": {
+        "team": "LGT",
+        "foreign": false,
+        "era": 3.05,
+        "whip": 1.18,
+        "fip": 3.18,
+        "xfip": 3.28,
+        "k9": 8.8,
+        "bb9": 2.6,
+        "h9": 8.0,
+        "hr9": 0.8,
+        "babip": 0.292,
+        "lob_pct": 75.5,
+        "k_bb_pct": 17.8,
+        "recent_3_era": 2.82,
+        "recent_5_era": 2.95,
+        "recent_10_era": 3.05,
+        "gs": 14,
+        "innings": 85.0,
+        "wpa": 1.5,
+        "re24": 10.5,
+        "k_pct": 32.8,
+        "bb_pct": 12.6,
+        "name": "林贊圭",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "HWE",
+        "foreign": false,
+        "era": 3.12,
+        "whip": 1.18,
+        "fip": 3.25,
+        "xfip": 3.35,
+        "k9": 8.8,
+        "bb9": 2.6,
+        "h9": 8.0,
+        "hr9": 0.8,
+        "babip": 0.292,
+        "lob_pct": 75.5,
+        "k_bb_pct": 17.5,
+        "recent_3_era": 2.88,
+        "recent_5_era": 3.02,
+        "recent_10_era": 3.12,
+        "gs": 14,
+        "innings": 85.0,
+        "wpa": 1.5,
+        "re24": 10.5,
+        "k_pct": 32.8,
+        "bb_pct": 12.6,
+        "name": "柳賢振",
+        "confirmed": false
+      },
+      "market_home_prob": 35.4,
+      "value_gap": 0.0,
+      "curr_home_odds": 2.359,
+      "curr_away_odds": 1.597,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 69.67,
+          "away_score": 70.52749999999999,
+          "advantage": -0.8574999999999875,
+          "detail": "主隊 ERA 3.12 FIP 3.25 xFIP 3.35 WHIP 1.18 K/9 8.8 K-BB% 17.5 | 近3ERA 2.88 ➡️ 穩定 | 客隊 ERA 3.05 FIP 3.18 xFIP 3.28 WHIP 1.18 K/9 8.8 K-BB% 17.8 | 近3ERA 2.82 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 57.346500000000006,
+          "away_score": 66.8505,
+          "advantage": -9.50399999999999,
+          "detail": "主隊 OPS 0.787 wOBA 0.335 wRC+ 106 近7OPS 0.802 | 客隊 OPS 0.826 wOBA 0.352 wRC+ 114 近7OPS 0.845"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 42.062000000000005,
+          "away_score": 71.10000000000001,
+          "advantage": -29.038000000000004,
+          "detail": "主隊牛棚 ERA 3.35 WHIP 1.24 疲勞 48 終結者連出 2天 | 客隊牛棚 ERA 2.75 WHIP 1.08 疲勞 18 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 52.875,
+          "away_score": 47.125,
+          "advantage": 5.750000000000002,
+          "detail": "主隊主場 18勝22敗 | 客隊客場 23勝17敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 40.3,
+          "away_score": 74.2,
+          "advantage": -33.900000000000006,
+          "detail": "主隊近5場 ○●○●○ 近10場 ○○●○●○○●○● 得失分差 -32 出賽密度 4/7天 | 客隊近5場 ●●●○● 近10場 ●●○●●●○●○● 得失分差 +72 出賽密度 2/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 44.0,
+          "away_score": 56.0,
+          "advantage": -12.0,
+          "detail": "本季對戰：客隊 7 勝 主隊 3 勝（主隊勝率 30%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 47.85,
+          "away_score": 69.45000000000002,
+          "advantage": -21.600000000000016,
+          "detail": "主隊 守備率 0.979 DRS +0 UZR +0.5 失誤 34 | 客隊 守備率 0.984 DRS +12 UZR +8.5 失誤 24"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 35.4
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.3538,
+        "std_dev": 0.0159,
+        "ci_90": [
+          0.3278,
+          0.3801
+        ],
+        "home_win_pct": 0.0,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.3574,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.4037,
+          "ml": 0.3491,
+          "market": 0.354,
+          "mc": 0.3538
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.53,
+        "away_bat_adv": 1.65,
+        "net_advantage": -1.12,
+        "home_pitcher_type": "balanced",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 林贊圭(R/balanced) vs HWE: 均勢 +0.5 | 客隊打線 vs 主隊先發: 柳賢振(R/balanced) vs LGT: 打線佔優 +1.6"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "LG雙子星 勝算較高",
+      "ref_prob": 64.3,
+      "ref_odds": 1.6,
+      "ref_edge": 0.0164,
+      "conf": 0.335,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "DSB",
+      "home": "KWH",
+      "away_cn": "斗山熊",
+      "home_cn": "基咖英雄",
+      "league": "KBO",
+      "game_date": "2026-06-05",
+      "game_time": "",
+      "time": "",
+      "venue": "",
+      "home_win_prob": 0.605,
+      "away_win_prob": 0.395,
+      "away_sp": {
+        "team": "DSB",
+        "foreign": true,
+        "era": 3.28,
+        "whip": 1.24,
+        "fip": 3.42,
+        "xfip": 3.52,
+        "k9": 8.5,
+        "bb9": 2.9,
+        "h9": 8.4,
+        "hr9": 0.8,
+        "babip": 0.298,
+        "lob_pct": 73.8,
+        "k_bb_pct": 15.8,
+        "recent_3_era": 3.05,
+        "recent_5_era": 3.18,
+        "recent_10_era": 3.28,
+        "gs": 14,
+        "innings": 85.0,
+        "wpa": 1.2,
+        "re24": 8.5,
+        "k_pct": 32.1,
+        "bb_pct": 13.9,
+        "name": "佛雷斯特",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "KWH",
+        "foreign": false,
+        "era": 2.85,
+        "whip": 1.12,
+        "fip": 3.0,
+        "xfip": 3.12,
+        "k9": 9.5,
+        "bb9": 2.4,
+        "h9": 7.7,
+        "hr9": 0.7,
+        "babip": 0.288,
+        "lob_pct": 77.2,
+        "k_bb_pct": 21.2,
+        "recent_3_era": 2.62,
+        "recent_5_era": 2.75,
+        "recent_10_era": 2.85,
+        "gs": 14,
+        "innings": 87.0,
+        "wpa": 2.2,
+        "re24": 15.5,
+        "k_pct": 34.5,
+        "bb_pct": 11.8,
+        "name": "安祐真",
+        "confirmed": false
+      },
+      "market_home_prob": 60.7,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.664,
+      "curr_away_odds": 2.228,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 77.56249999999999,
+          "away_score": 63.84749999999999,
+          "advantage": 13.714999999999996,
+          "detail": "主隊 ERA 2.85 FIP 3.0 xFIP 3.12 WHIP 1.12 K/9 9.5 K-BB% 21.2 | 近3ERA 2.62 ➡️ 穩定 | 客隊🌏 ERA 3.28 FIP 3.42 xFIP 3.52 WHIP 1.24 K/9 8.5 K-BB% 15.8 | 近3ERA 3.05 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 60.833499999999994,
+          "away_score": 58.107,
+          "advantage": 2.7264999999999944,
+          "detail": "主隊 OPS 0.807 wOBA 0.342 wRC+ 108 近7OPS 0.822 | 客隊 OPS 0.787 wOBA 0.335 wRC+ 106 近7OPS 0.802"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 66.29299999999999,
+          "away_score": 60.155,
+          "advantage": 6.137999999999991,
+          "detail": "主隊牛棚 ERA 2.98 WHIP 1.14 疲勞 28 終結者連出 0天 | 客隊牛棚 ERA 3.18 WHIP 1.2 疲勞 35 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 56.875,
+          "away_score": 43.125,
+          "advantage": 13.75,
+          "detail": "主隊主場 23勝17敗 | 客隊客場 19勝21敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 58.7,
+          "away_score": 57.0,
+          "advantage": 1.7000000000000028,
+          "detail": "主隊近5場 ●○●○● 近10場 ○●●○●○●●○● 得失分差 +22 出賽密度 3/7天 | 客隊近5場 ○●●○● 近10場 ●○○●●○●○●● 得失分差 +5 出賽密度 3/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 44.0,
+          "away_score": 56.0,
+          "advantage": -12.0,
+          "detail": "本季對戰：客隊 7 勝 主隊 3 勝（主隊勝率 30%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 56.699999999999996,
+          "away_score": 52.85,
+          "advantage": 3.8499999999999943,
+          "detail": "主隊 守備率 0.981 DRS +5 UZR +3.8 失誤 30 | 客隊 守備率 0.98 DRS +3 UZR +2.5 失誤 32"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 60.7
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.6069,
+        "std_dev": 0.016,
+        "ci_90": [
+          0.5812,
+          0.6345
+        ],
+        "home_win_pct": 1.0,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.6047,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5725,
+          "ml": 0.6107,
+          "market": 0.607,
+          "mc": 0.6069
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 1.0,
+        "away_bat_adv": -0.06,
+        "net_advantage": 1.06,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 佛雷斯特(R/balanced) vs KWH: 均勢 +1.0 | 客隊打線 vs 主隊先發: 安祐真(R/power) vs DSB: 均勢 -0.1"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "基咖英雄 勝算較高",
+      "ref_prob": 60.5,
+      "ref_odds": 1.66,
+      "ref_edge": 0.0037,
+      "conf": 0.255,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "SEI",
+      "home": "CND",
+      "away_cn": "埼玉西武獅",
+      "home_cn": "中日龍",
+      "league": "NPB",
+      "game_date": "2026-06-05",
+      "game_time": "17:01",
+      "time": "17:01",
+      "venue": "",
+      "home_win_prob": 0.584,
+      "away_win_prob": 0.416,
+      "away_sp": {
+        "team": "SEI",
+        "foreign": false,
+        "era": 2.42,
+        "whip": 1.06,
+        "fip": 2.58,
+        "xfip": 2.7,
+        "k9": 10.0,
+        "bb9": 2.1,
+        "h9": 7.2,
+        "hr9": 0.6,
+        "babip": 0.282,
+        "lob_pct": 79.8,
+        "k_bb_pct": 23.5,
+        "recent_3_era": 2.18,
+        "recent_5_era": 2.32,
+        "recent_10_era": 2.42,
+        "gs": 14,
+        "innings": 89.0,
+        "wpa": 3.0,
+        "re24": 21.0,
+        "k_pct": 35.7,
+        "bb_pct": 10.4,
+        "name": "高橋光成",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "CND",
+        "foreign": false,
+        "era": 2.75,
+        "whip": 1.1,
+        "fip": 2.9,
+        "xfip": 3.02,
+        "k9": 9.5,
+        "bb9": 2.3,
+        "h9": 7.5,
+        "hr9": 0.6,
+        "babip": 0.285,
+        "lob_pct": 77.8,
+        "k_bb_pct": 21.2,
+        "recent_3_era": 2.52,
+        "recent_5_era": 2.65,
+        "recent_10_era": 2.75,
+        "gs": 14,
+        "innings": 87.0,
+        "wpa": 2.2,
+        "re24": 15.5,
+        "k_pct": 34.5,
+        "bb_pct": 11.3,
+        "name": "大野雄大",
+        "confirmed": false
+      },
+      "market_home_prob": 58.4,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.643,
+      "curr_away_odds": 2.265,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 79.78250000000003,
+          "away_score": 88.295,
+          "advantage": -8.512499999999974,
+          "detail": "主隊 ERA 2.75 FIP 2.9 xFIP 3.02 WHIP 1.1 K/9 9.5 K-BB% 21.2 | 近3ERA 2.52 ➡️ 穩定 | 客隊 ERA 2.42 FIP 2.58 xFIP 2.7 WHIP 1.06 K/9 10.0 K-BB% 23.5 | 近3ERA 2.18 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 48.785999999999994,
+          "away_score": 48.959999999999994,
+          "advantage": -0.1739999999999995,
+          "detail": "主隊 OPS 0.743 wOBA 0.318 wRC+ 97 近7OPS 0.758 | 客隊 OPS 0.743 wOBA 0.318 wRC+ 96 近7OPS 0.758"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 60.401999999999994,
+          "away_score": 47.083,
+          "advantage": 13.318999999999996,
+          "detail": "主隊牛棚 ERA 3.22 WHIP 1.2 疲勞 32 終結者連出 0天 | 客隊牛棚 ERA 3.42 WHIP 1.26 疲勞 48 終結者連出 1天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 56.078947368421055,
+          "away_score": 43.921052631578945,
+          "advantage": 12.157894736842104,
+          "detail": "主隊主場 19勝21敗 | 客隊客場 15勝23敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 42.0,
+          "away_score": 36.8,
+          "advantage": 5.200000000000003,
+          "detail": "主隊近5場 ○●○●○ 近10場 ○●○○●○●○○● 得失分差 -15 出賽密度 3/7天 | 客隊近5場 ○○●○● 近10場 ○○●○○●○○●○ 得失分差 -42 出賽密度 4/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 56.0,
+          "away_score": 44.0,
+          "advantage": 11.999999999999996,
+          "detail": "本季對戰：客隊 3 勝 主隊 7 勝（主隊勝率 70%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 51.550000000000004,
+          "away_score": 48.1,
+          "advantage": 3.450000000000003,
+          "detail": "主隊 守備率 0.98 DRS +2 UZR +1.5 失誤 32 | 客隊 守備率 0.979 DRS +0 UZR +0.2 失誤 33"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 58.4
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.5837,
+        "std_dev": 0.0161,
+        "ci_90": [
+          0.5569,
+          0.6097
+        ],
+        "home_win_pct": 1.0,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.5835,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5795,
+          "ml": 0.5843,
+          "market": 0.584,
+          "mc": 0.5837
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": -0.33,
+        "away_bat_adv": -0.42,
+        "net_advantage": 0.09,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 高橋光成(R/power) vs CND: 均勢 -0.3 | 客隊打線 vs 主隊先發: 大野雄大(R/power) vs SEI: 均勢 -0.4"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "中日龍 勝算較高",
+      "ref_prob": 58.4,
+      "ref_odds": 1.64,
+      "ref_edge": -0.0251,
+      "conf": 0.21,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "ORX",
+      "home": "HRC",
+      "away_cn": "歐力士水牛",
+      "home_cn": "廣島鯉魚",
+      "league": "NPB",
+      "game_date": "2026-06-05",
+      "game_time": "17:01",
+      "time": "17:01",
+      "venue": "",
+      "home_win_prob": 0.439,
+      "away_win_prob": 0.561,
+      "away_sp": {
+        "team": "ORX",
+        "foreign": false,
+        "era": 1.88,
+        "whip": 0.98,
+        "fip": 2.02,
+        "xfip": 2.15,
+        "k9": 10.8,
+        "bb9": 1.8,
+        "h9": 6.2,
+        "hr9": 0.5,
+        "babip": 0.272,
+        "lob_pct": 82.5,
+        "k_bb_pct": 26.8,
+        "recent_3_era": 1.65,
+        "recent_5_era": 1.78,
+        "recent_10_era": 1.88,
+        "gs": 15,
+        "innings": 95.0,
+        "wpa": 4.0,
+        "re24": 28.5,
+        "k_pct": 37.5,
+        "bb_pct": 9.1,
+        "name": "山下舜平太",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "HRC",
+        "foreign": false,
+        "era": 2.62,
+        "whip": 1.08,
+        "fip": 2.78,
+        "xfip": 2.9,
+        "k9": 9.5,
+        "bb9": 2.2,
+        "h9": 7.5,
+        "hr9": 0.6,
+        "babip": 0.285,
+        "lob_pct": 78.5,
+        "k_bb_pct": 21.8,
+        "recent_3_era": 2.4,
+        "recent_5_era": 2.52,
+        "recent_10_era": 2.62,
+        "gs": 14,
+        "innings": 88.2,
+        "wpa": 2.5,
+        "re24": 17.5,
+        "k_pct": 34.5,
+        "bb_pct": 10.9,
+        "name": "大瀨良大地",
+        "confirmed": false
+      },
+      "market_home_prob": 43.5,
+      "value_gap": 0.0,
+      "curr_home_odds": 2.074,
+      "curr_away_odds": 1.761,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 82.675,
+          "away_score": 90.0,
+          "advantage": -7.325000000000003,
+          "detail": "主隊 ERA 2.62 FIP 2.78 xFIP 2.9 WHIP 1.08 K/9 9.5 K-BB% 21.8 | 近3ERA 2.4 ➡️ 穩定 | 客隊 ERA 1.88 FIP 2.02 xFIP 2.15 WHIP 0.98 K/9 10.8 K-BB% 26.8 | 近3ERA 1.65 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 53.44949999999999,
+          "away_score": 58.722500000000004,
+          "advantage": -5.27300000000001,
+          "detail": "主隊 OPS 0.768 wOBA 0.328 wRC+ 102 近7OPS 0.782 | 客隊 OPS 0.793 wOBA 0.338 wRC+ 108 近7OPS 0.812"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 61.41,
+          "away_score": 68.892,
+          "advantage": -7.481999999999999,
+          "detail": "主隊牛棚 ERA 3.05 WHIP 1.16 疲勞 30 終結者連出 1天 | 客隊牛棚 ERA 2.85 WHIP 1.1 疲勞 22 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 55.315789473684205,
+          "away_score": 44.684210526315795,
+          "advantage": 10.631578947368418,
+          "detail": "主隊主場 23勝17敗 | 客隊客場 22勝16敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 58.3,
+          "away_score": 73.2,
+          "advantage": -14.900000000000006,
+          "detail": "主隊近5場 ●○●○● 近10場 ●○●●○●○●○● 得失分差 +18 出賽密度 3/7天 | 客隊近5場 ●●○●● 近10場 ●○●●○●●○●● 得失分差 +62 出賽密度 2/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 56.0,
+          "away_score": 44.0,
+          "advantage": 11.999999999999996,
+          "detail": "本季對戰：客隊 3 勝 主隊 7 勝（主隊勝率 70%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 56.55,
+          "away_score": 68.10000000000001,
+          "advantage": -11.550000000000011,
+          "detail": "主隊 守備率 0.981 DRS +5 UZR +3.5 失誤 30 | 客隊 守備率 0.983 DRS +12 UZR +8.2 失誤 25"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 43.5
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.4349,
+        "std_dev": 0.0159,
+        "ci_90": [
+          0.4084,
+          0.4611
+        ],
+        "home_win_pct": 0.0,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.4393,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.4591,
+          "ml": 0.438,
+          "market": 0.435,
+          "mc": 0.4349
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.07,
+        "away_bat_adv": -0.77,
+        "net_advantage": 0.84,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 山下舜平太(R/power) vs HRC: 均勢 +0.1 | 客隊打線 vs 主隊先發: 大瀨良大地(R/power) vs ORX: 均勢 -0.8"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "歐力士水牛 勝算較高",
+      "ref_prob": 56.1,
+      "ref_odds": 1.76,
+      "ref_edge": -0.0072,
+      "conf": 0.173,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "HAM",
+      "home": "YKL",
+      "away_cn": "北海道火腿鬥士",
+      "home_cn": "養樂多燕子",
+      "league": "NPB",
+      "game_date": "2026-06-05",
+      "game_time": "17:01",
+      "time": "17:01",
+      "venue": "",
+      "home_win_prob": 0.441,
+      "away_win_prob": 0.559,
+      "away_sp": {
+        "team": "HAM",
+        "foreign": false,
+        "era": 2.72,
+        "whip": 1.1,
+        "fip": 2.88,
+        "xfip": 3.0,
+        "k9": 9.5,
+        "bb9": 2.3,
+        "h9": 7.5,
+        "hr9": 0.6,
+        "babip": 0.285,
+        "lob_pct": 78.2,
+        "k_bb_pct": 21.5,
+        "recent_3_era": 2.48,
+        "recent_5_era": 2.62,
+        "recent_10_era": 2.72,
+        "gs": 14,
+        "innings": 87.0,
+        "wpa": 2.2,
+        "re24": 15.5,
+        "k_pct": 34.5,
+        "bb_pct": 11.3,
+        "name": "伊藤大海",
         "confirmed": false
       },
       "home_sp": {
@@ -1008,250 +1691,47 @@
         "name": "小川泰弘",
         "confirmed": false
       },
-      "market_home_prob": 31.4,
+      "market_home_prob": 43.9,
       "value_gap": 0.0,
-      "curr_home_odds": 2.614,
-      "curr_away_odds": 1.498,
+      "curr_home_odds": 2.021,
+      "curr_away_odds": 1.801,
       "market_total": 8.5,
       "signals": [],
       "factors": {
         "starter": {
           "label": "先發投手",
           "home_score": 76.46749999999999,
-          "away_score": 87.98250000000002,
-          "advantage": -11.515000000000029,
-          "detail": "主隊 ERA 2.88 FIP 3.02 xFIP 3.15 WHIP 1.12 K/9 9.2 K-BB% 19.8 | 近3ERA 2.65 ➡️ 穩定 | 客隊 ERA 2.45 FIP 2.62 xFIP 2.75 WHIP 1.05 K/9 10.2 K-BB% 23.8 | 近3ERA 2.2 ➡️ 穩定"
+          "away_score": 80.13500000000003,
+          "advantage": -3.6675000000000466,
+          "detail": "主隊 ERA 2.88 FIP 3.02 xFIP 3.15 WHIP 1.12 K/9 9.2 K-BB% 19.8 | 近3ERA 2.65 ➡️ 穩定 | 客隊 ERA 2.72 FIP 2.88 xFIP 3.0 WHIP 1.1 K/9 9.5 K-BB% 21.5 | 近3ERA 2.48 ➡️ 穩定"
         },
         "lineup": {
           "label": "打線強度",
           "home_score": 54.833999999999996,
-          "away_score": 54.448499999999996,
-          "advantage": 0.3855000000000004,
-          "detail": "主隊 OPS 0.767 wOBA 0.328 wRC+ 102 近7OPS 0.782 | 客隊 OPS 0.767 wOBA 0.328 wRC+ 103 近7OPS 0.788"
+          "away_score": 56.31699999999999,
+          "advantage": -1.482999999999997,
+          "detail": "主隊 OPS 0.767 wOBA 0.328 wRC+ 102 近7OPS 0.782 | 客隊 OPS 0.78 wOBA 0.332 wRC+ 105 近7OPS 0.795"
         },
         "bullpen": {
           "label": "牛棚戰力",
           "home_score": 38.592000000000006,
-          "away_score": 61.6,
-          "advantage": -23.007999999999996,
-          "detail": "主隊牛棚 ERA 3.45 WHIP 1.28 疲勞 52 終結者連出 2天 | 客隊牛棚 ERA 3.12 WHIP 1.18 疲勞 35 終結者連出 0天"
+          "away_score": 64.88000000000001,
+          "advantage": -26.288000000000004,
+          "detail": "主隊牛棚 ERA 3.45 WHIP 1.28 疲勞 52 終結者連出 2天 | 客隊牛棚 ERA 3.05 WHIP 1.15 疲勞 28 終結者連出 0天"
         },
         "home_away": {
           "label": "主客場",
-          "home_score": 53.60526315789474,
-          "away_score": 46.39473684210526,
-          "advantage": 7.210526315789475,
-          "detail": "主隊主場 18勝22敗 | 客隊客場 20勝18敗 |  run_factor=1.0 "
+          "home_score": 54.0,
+          "away_score": 46.0,
+          "advantage": 8.0,
+          "detail": "主隊主場 18勝22敗 | 客隊客場 19勝19敗 |  run_factor=1.0 "
         },
         "recent_form": {
           "label": "近期狀態",
           "home_score": 40.7,
-          "away_score": 70.8,
-          "advantage": -30.099999999999994,
-          "detail": "主隊近5場 ○●○○● 近10場 ●○○●○○●○○● 得失分差 -28 出賽密度 4/7天 | 客隊近5場 ●●○●● 近10場 ●●○●●○●○●● 得失分差 +38 出賽密度 2/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
-          "home_score": 47.0,
-          "away_score": 53.0,
-          "advantage": -5.999999999999998,
-          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 44.05,
-          "away_score": 61.4,
-          "advantage": -17.35,
-          "detail": "主隊 守備率 0.978 DRS -2 UZR -1.5 失誤 35 | 客隊 守備率 0.982 DRS +8 UZR +5.2 失誤 28"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 50,
-          "away_score": 50,
-          "advantage": 0,
-          "detail": "無賠率資料",
-          "curr_home_odds": 0,
-          "curr_away_odds": 0,
-          "total_line": 8.5,
-          "signals": [],
-          "market_home_prob": 31.4
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.3149,
-        "std_dev": 0.0159,
-        "ci_90": [
-          0.2886,
-          0.3406
-        ],
-        "home_win_pct": 0.0,
-        "uncertain": false,
-        "conf_boost": 0.0416
-      },
-      "ensemble": {
-        "prob": 0.3171,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.3643,
-          "ml": 0.3082,
-          "market": 0.314,
-          "mc": 0.3149
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": -0.35,
-        "away_bat_adv": 1.14,
-        "net_advantage": -1.49,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 菅野智之(R/power) vs YKL: 均勢 -0.3 | 客隊打線 vs 主隊先發: 小川泰弘(R/balanced) vs GNT: 打線佔優 +1.1"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "ref_label": "讀賣巨人 勝算較高",
-      "ref_prob": 68.3,
-      "ref_odds": 1.5,
-      "ref_edge": 0.0153,
-      "conf": 0.414,
-      "tier": 3,
-      "recommended": false
-    },
-    {
-      "away": "KWH",
-      "home": "DSB",
-      "away_cn": "基咖英雄",
-      "home_cn": "斗山熊",
-      "league": "KBO",
-      "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
-      "venue": "",
-      "home_win_prob": 0.57,
-      "away_win_prob": 0.43,
-      "away_sp": {
-        "team": "KWH",
-        "foreign": false,
-        "era": 2.85,
-        "whip": 1.12,
-        "fip": 3.0,
-        "xfip": 3.12,
-        "k9": 9.5,
-        "bb9": 2.4,
-        "h9": 7.7,
-        "hr9": 0.7,
-        "babip": 0.288,
-        "lob_pct": 77.2,
-        "k_bb_pct": 21.2,
-        "recent_3_era": 2.62,
-        "recent_5_era": 2.75,
-        "recent_10_era": 2.85,
-        "gs": 14,
-        "innings": 87.0,
-        "wpa": 2.2,
-        "re24": 15.5,
-        "k_pct": 34.5,
-        "bb_pct": 11.8,
-        "name": "安祐真",
-        "confirmed": false
-      },
-      "home_sp": {
-        "team": "DSB",
-        "foreign": true,
-        "era": 3.28,
-        "whip": 1.24,
-        "fip": 3.42,
-        "xfip": 3.52,
-        "k9": 8.5,
-        "bb9": 2.9,
-        "h9": 8.4,
-        "hr9": 0.8,
-        "babip": 0.298,
-        "lob_pct": 73.8,
-        "k_bb_pct": 15.8,
-        "recent_3_era": 3.05,
-        "recent_5_era": 3.18,
-        "recent_10_era": 3.28,
-        "gs": 14,
-        "innings": 85.0,
-        "wpa": 1.2,
-        "re24": 8.5,
-        "k_pct": 32.1,
-        "bb_pct": 13.9,
-        "name": "佛雷斯特",
-        "confirmed": false
-      },
-      "market_home_prob": 61.4,
-      "value_gap": -7.1,
-      "curr_home_odds": 1.55,
-      "curr_away_odds": 2.47,
-      "market_total": 8.5,
-      "signals": [],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 63.84749999999999,
-          "away_score": 77.56249999999999,
-          "advantage": -13.714999999999996,
-          "detail": "主隊🌏 ERA 3.28 FIP 3.42 xFIP 3.52 WHIP 1.24 K/9 8.5 K-BB% 15.8 | 近3ERA 3.05 ➡️ 穩定 | 客隊 ERA 2.85 FIP 3.0 xFIP 3.12 WHIP 1.12 K/9 9.5 K-BB% 21.2 | 近3ERA 2.62 ➡️ 穩定"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 58.107,
-          "away_score": 60.833499999999994,
-          "advantage": -2.7264999999999944,
-          "detail": "主隊 OPS 0.787 wOBA 0.335 wRC+ 106 近7OPS 0.802 | 客隊 OPS 0.807 wOBA 0.342 wRC+ 108 近7OPS 0.822"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 60.155,
-          "away_score": 66.29299999999999,
-          "advantage": -6.137999999999991,
-          "detail": "主隊牛棚 ERA 3.18 WHIP 1.2 疲勞 35 終結者連出 0天 | 客隊牛棚 ERA 2.98 WHIP 1.14 疲勞 28 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 55.5,
-          "away_score": 44.5,
-          "advantage": 11.0,
-          "detail": "主隊主場 21勝19敗 | 客隊客場 20勝20敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 57.0,
-          "away_score": 58.7,
-          "advantage": -1.7000000000000028,
-          "detail": "主隊近5場 ○●●○● 近10場 ●○○●●○●○●● 得失分差 +5 出賽密度 3/7天 | 客隊近5場 ●○●○● 近10場 ○●●○●○●●○● 得失分差 +22 出賽密度 3/7天"
+          "away_score": 58.0,
+          "advantage": -17.299999999999997,
+          "detail": "主隊近5場 ○●○○● 近10場 ●○○●○○●○○● 得失分差 -28 出賽密度 4/7天 | 客隊近5場 ●○●○● 近10場 ○●○●●○●○●● 得失分差 +15 出賽密度 3/7天"
         },
         "h2h": {
           "label": "對戰紀錄",
@@ -1269,290 +1749,45 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 52.85,
-          "away_score": 56.699999999999996,
-          "advantage": -3.8499999999999943,
-          "detail": "主隊 守備率 0.98 DRS +3 UZR +2.5 失誤 32 | 客隊 守備率 0.981 DRS +5 UZR +3.8 失誤 30"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 50.4,
-          "away_score": 49.6,
-          "advantage": 0.4,
-          "detail": "主隊賠率 1.55 (開 1.55) | 客隊賠率 2.47 (開 2.47) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 61.4,
-            "value_gap": -7.1,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [],
-            "advantage": 0.4,
-            "detail": "主隊賠率 1.55 (開 1.55) | 客隊賠率 2.47 (開 2.47) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.55,
-          "curr_away_odds": 2.47,
-          "open_home_odds": 1.55,
-          "open_away_odds": 2.47,
-          "run_line": -1.5,
-          "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 61.4,
-          "signals": []
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.5435,
-        "std_dev": 0.0157,
-        "ci_90": [
-          0.518,
-          0.5691
-        ],
-        "home_win_pct": 0.9965,
-        "uncertain": false,
-        "conf_boost": 0.0417
-      },
-      "ensemble": {
-        "prob": 0.5697,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.5704,
-          "ml": 0.5497,
-          "market": 0.614,
-          "mc": 0.5435
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": -0.06,
-        "away_bat_adv": 1.0,
-        "net_advantage": -1.06,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 安祐真(R/power) vs DSB: 均勢 -0.1 | 客隊打線 vs 主隊先發: 佛雷斯特(R/balanced) vs KWH: 均勢 +1.0"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "ref_label": "斗山熊 勝算較高",
-      "ref_prob": 57.0,
-      "ref_odds": 1.55,
-      "ref_edge": -0.0755,
-      "conf": 0.15,
-      "tier": 3,
-      "recommended": false
-    },
-    {
-      "away": "LGT",
-      "home": "NCD",
-      "away_cn": "LG雙子星",
-      "home_cn": "NC恐龍",
-      "league": "KBO",
-      "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
-      "venue": "",
-      "home_win_prob": 0.466,
-      "away_win_prob": 0.534,
-      "away_sp": {
-        "team": "LGT",
-        "foreign": false,
-        "era": 3.05,
-        "whip": 1.18,
-        "fip": 3.18,
-        "xfip": 3.28,
-        "k9": 8.8,
-        "bb9": 2.6,
-        "h9": 8.0,
-        "hr9": 0.8,
-        "babip": 0.292,
-        "lob_pct": 75.5,
-        "k_bb_pct": 17.8,
-        "recent_3_era": 2.82,
-        "recent_5_era": 2.95,
-        "recent_10_era": 3.05,
-        "gs": 14,
-        "innings": 85.0,
-        "wpa": 1.5,
-        "re24": 10.5,
-        "k_pct": 32.8,
-        "bb_pct": 12.6,
-        "name": "林贊圭",
-        "confirmed": false
-      },
-      "home_sp": {
-        "team": "NCD",
-        "foreign": true,
-        "era": 3.12,
-        "whip": 1.2,
-        "fip": 3.25,
-        "xfip": 3.35,
-        "k9": 8.8,
-        "bb9": 2.7,
-        "h9": 8.0,
-        "hr9": 0.8,
-        "babip": 0.292,
-        "lob_pct": 75.0,
-        "k_bb_pct": 16.8,
-        "recent_3_era": 2.88,
-        "recent_5_era": 3.02,
-        "recent_10_era": 3.12,
-        "gs": 14,
-        "innings": 85.0,
-        "wpa": 1.5,
-        "re24": 10.5,
-        "k_pct": 32.8,
-        "bb_pct": 13.0,
-        "name": "魯欽斯基",
-        "confirmed": false
-      },
-      "market_home_prob": 51.8,
-      "value_gap": -8.3,
-      "curr_home_odds": 1.84,
-      "curr_away_odds": 1.98,
-      "market_total": 8.5,
-      "signals": [
-        "📉 市場比模型更看好主隊 8%"
-      ],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 69.405,
-          "away_score": 70.52749999999999,
-          "advantage": -1.122499999999988,
-          "detail": "主隊🌏 ERA 3.12 FIP 3.25 xFIP 3.35 WHIP 1.2 K/9 8.8 K-BB% 16.8 | 近3ERA 2.88 ➡️ 穩定 | 客隊 ERA 3.05 FIP 3.18 xFIP 3.28 WHIP 1.18 K/9 8.8 K-BB% 17.8 | 近3ERA 2.82 ➡️ 穩定"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 54.818999999999996,
-          "away_score": 66.8505,
-          "advantage": -12.031500000000001,
-          "detail": "主隊 OPS 0.775 wOBA 0.33 wRC+ 103 近7OPS 0.792 | 客隊 OPS 0.826 wOBA 0.352 wRC+ 114 近7OPS 0.845"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 47.206999999999994,
-          "away_score": 71.10000000000001,
-          "advantage": -23.893000000000015,
-          "detail": "主隊牛棚 ERA 3.22 WHIP 1.2 疲勞 42 終結者連出 2天 | 客隊牛棚 ERA 2.75 WHIP 1.08 疲勞 18 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 54.875,
-          "away_score": 45.125,
-          "advantage": 9.750000000000004,
-          "detail": "主隊主場 22勝18敗 | 客隊客場 23勝17敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 55.0,
-          "away_score": 74.2,
-          "advantage": -19.200000000000003,
-          "detail": "主隊近5場 ●○○●● 近10場 ○●○●○●●○○● 得失分差 +10 出賽密度 3/7天 | 客隊近5場 ●●●○● 近10場 ●●○●●●○●○● 得失分差 +72 出賽密度 2/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
           "home_score": 47.0,
           "away_score": 53.0,
-          "advantage": -5.999999999999998,
-          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
         },
         "defense": {
           "label": "守備能力",
-          "home_score": 53.1,
-          "away_score": 69.45000000000002,
-          "advantage": -16.350000000000016,
-          "detail": "主隊 守備率 0.98 DRS +3 UZR +2.2 失誤 31 | 客隊 守備率 0.984 DRS +12 UZR +8.5 失誤 24"
+          "home_score": 44.05,
+          "away_score": 58.099999999999994,
+          "advantage": -14.049999999999997,
+          "detail": "主隊 守備率 0.978 DRS -2 UZR -1.5 失誤 35 | 客隊 守備率 0.981 DRS +6 UZR +4.2 失誤 29"
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 49.2,
-          "away_score": 50.8,
-          "advantage": -0.8,
-          "detail": "主隊賠率 1.84 (開 1.84) | 客隊賠率 1.98 (開 1.98) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 51.8,
-            "value_gap": -8.3,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📉 市場比模型更看好主隊 8%"
-            ],
-            "advantage": -0.8,
-            "detail": "主隊賠率 1.84 (開 1.84) | 客隊賠率 1.98 (開 1.98) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 1.84,
-          "curr_away_odds": 1.98,
-          "open_home_odds": 1.84,
-          "open_away_odds": 1.98,
-          "run_line": -1.5,
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
           "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 51.8,
-          "signals": [
-            "📉 市場比模型更看好主隊 8%"
-          ]
+          "signals": [],
+          "market_home_prob": 43.9
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.4347,
-        "std_dev": 0.0164,
+        "mean_prob": 0.4397,
+        "std_dev": 0.016,
         "ci_90": [
-          0.4078,
-          0.4607
+          0.4127,
+          0.4664
         ],
         "home_win_pct": 0.0,
         "uncertain": false,
-        "conf_boost": 0.0414
+        "conf_boost": 0.0416
       },
       "ensemble": {
-        "prob": 0.4663,
+        "prob": 0.4407,
         "weights": {
           "elo": 0.12,
           "ml": 0.48,
@@ -1560,21 +1795,21 @@
           "mc": 0.12
         },
         "model_probs": {
-          "elo": 0.4745,
-          "ml": 0.4423,
-          "market": 0.518,
-          "mc": 0.4347
+          "elo": 0.4712,
+          "ml": 0.4345,
+          "market": 0.439,
+          "mc": 0.4397
         },
         "bayesian_adj": 1.0
       },
       "matchup": {
         "label": "投打匹配",
-        "home_bat_adv": 0.35,
-        "away_bat_adv": 1.65,
-        "net_advantage": -1.3,
+        "home_bat_adv": -0.35,
+        "away_bat_adv": 0.81,
+        "net_advantage": -1.16,
         "home_pitcher_type": "balanced",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 林贊圭(R/balanced) vs NCD: 均勢 +0.3 | 客隊打線 vs 主隊先發: 魯欽斯基(R/balanced) vs LGT: 打線佔優 +1.6"
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 伊藤大海(R/power) vs YKL: 均勢 -0.3 | 客隊打線 vs 主隊先發: 小川泰弘(R/balanced) vs HAM: 均勢 +0.8"
       },
       "market_signal": {
         "sharp_signal": null,
@@ -1587,128 +1822,126 @@
         "home": 0.0,
         "away": 0.0
       },
-      "ref_label": "LG雙子星 勝算較高",
-      "ref_prob": 53.4,
-      "ref_odds": 1.98,
-      "ref_edge": 0.0286,
-      "conf": 0.146,
+      "ref_label": "北海道火腿鬥士 勝算較高",
+      "ref_prob": 55.9,
+      "ref_odds": 1.8,
+      "ref_edge": 0.0041,
+      "conf": 0.164,
       "tier": 3,
       "recommended": false
     },
     {
-      "away": "HWE",
-      "home": "LTG",
-      "away_cn": "韓華老鷹",
-      "home_cn": "釜山樂天",
-      "league": "KBO",
+      "away": "SBH",
+      "home": "YDB",
+      "away_cn": "福岡軟銀鷹",
+      "home_cn": "橫濱DeNA海星",
+      "league": "NPB",
       "game_date": "2026-06-05",
-      "game_time": "17:30",
-      "time": "17:30",
+      "game_time": "17:00",
+      "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.481,
-      "away_win_prob": 0.519,
+      "home_win_prob": 0.443,
+      "away_win_prob": 0.557,
       "away_sp": {
-        "team": "HWE",
-        "foreign": false,
-        "era": 3.12,
-        "whip": 1.18,
-        "fip": 3.25,
-        "xfip": 3.35,
-        "k9": 8.8,
-        "bb9": 2.6,
-        "h9": 8.0,
-        "hr9": 0.8,
-        "babip": 0.292,
-        "lob_pct": 75.5,
-        "k_bb_pct": 17.5,
-        "recent_3_era": 2.88,
-        "recent_5_era": 3.02,
-        "recent_10_era": 3.12,
-        "gs": 14,
-        "innings": 85.0,
-        "wpa": 1.5,
-        "re24": 10.5,
-        "k_pct": 32.8,
-        "bb_pct": 12.6,
-        "name": "柳賢振",
+        "team": "SBH",
+        "foreign": true,
+        "era": 1.85,
+        "whip": 0.98,
+        "fip": 2.0,
+        "xfip": 2.12,
+        "k9": 10.8,
+        "bb9": 1.8,
+        "h9": 6.5,
+        "hr9": 0.5,
+        "babip": 0.272,
+        "lob_pct": 82.5,
+        "k_bb_pct": 26.5,
+        "recent_3_era": 1.62,
+        "recent_5_era": 1.75,
+        "recent_10_era": 1.85,
+        "gs": 15,
+        "innings": 96.2,
+        "wpa": 4.0,
+        "re24": 29.5,
+        "k_pct": 37.5,
+        "bb_pct": 9.1,
+        "name": "莫伊內羅",
         "confirmed": false
       },
       "home_sp": {
-        "team": "LTG",
-        "foreign": true,
-        "era": 3.25,
-        "whip": 1.24,
-        "fip": 3.38,
-        "xfip": 3.48,
-        "k9": 8.5,
-        "bb9": 2.9,
-        "h9": 8.3,
-        "hr9": 0.8,
-        "babip": 0.298,
-        "lob_pct": 73.8,
-        "k_bb_pct": 15.8,
-        "recent_3_era": 3.02,
-        "recent_5_era": 3.15,
-        "recent_10_era": 3.25,
-        "gs": 14,
-        "innings": 84.0,
-        "wpa": 1.2,
-        "re24": 8.2,
-        "k_pct": 32.1,
-        "bb_pct": 13.9,
-        "name": "格洛弗",
+        "team": "YDB",
+        "foreign": false,
+        "era": 1.98,
+        "whip": 1.0,
+        "fip": 2.12,
+        "xfip": 2.25,
+        "k9": 10.5,
+        "bb9": 2.0,
+        "h9": 6.5,
+        "hr9": 0.5,
+        "babip": 0.275,
+        "lob_pct": 82.0,
+        "k_bb_pct": 25.8,
+        "recent_3_era": 1.75,
+        "recent_5_era": 1.88,
+        "recent_10_era": 1.98,
+        "gs": 15,
+        "innings": 96.0,
+        "wpa": 4.0,
+        "re24": 28.5,
+        "k_pct": 36.8,
+        "bb_pct": 10.0,
+        "name": "東克樹",
         "confirmed": false
       },
-      "market_home_prob": 40.1,
-      "value_gap": 12.3,
-      "curr_home_odds": 2.38,
-      "curr_away_odds": 1.59,
+      "market_home_prob": 44.1,
+      "value_gap": 0.0,
+      "curr_home_odds": 2.086,
+      "curr_away_odds": 1.753,
       "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 12% (Value)"
-      ],
+      "signals": [],
       "factors": {
         "starter": {
           "label": "先發投手",
-          "home_score": 64.3445,
-          "away_score": 69.67,
-          "advantage": -5.325500000000005,
-          "detail": "主隊🌏 ERA 3.25 FIP 3.38 xFIP 3.48 WHIP 1.24 K/9 8.5 K-BB% 15.8 | 近3ERA 3.02 ➡️ 穩定 | 客隊 ERA 3.12 FIP 3.25 xFIP 3.35 WHIP 1.18 K/9 8.8 K-BB% 17.5 | 近3ERA 2.88 ➡️ 穩定"
+          "home_score": 90.0,
+          "away_score": 90.0,
+          "advantage": 0.0,
+          "detail": "主隊 ERA 1.98 FIP 2.12 xFIP 2.25 WHIP 1.0 K/9 10.5 K-BB% 25.8 | 近3ERA 1.75 ➡️ 穩定 | 客隊🌏 ERA 1.85 FIP 2.0 xFIP 2.12 WHIP 0.98 K/9 10.8 K-BB% 26.5 | 近3ERA 1.62 ➡️ 穩定"
         },
         "lineup": {
           "label": "打線強度",
-          "home_score": 52.9745,
-          "away_score": 57.346500000000006,
-          "advantage": -4.372000000000007,
-          "detail": "主隊 OPS 0.763 wOBA 0.325 wRC+ 101 近7OPS 0.778 | 客隊 OPS 0.787 wOBA 0.335 wRC+ 106 近7OPS 0.802"
+          "home_score": 60.5065,
+          "away_score": 67.583,
+          "advantage": -7.076499999999996,
+          "detail": "主隊 OPS 0.793 wOBA 0.338 wRC+ 108 近7OPS 0.812 | 客隊 OPS 0.828 wOBA 0.352 wRC+ 116 近7OPS 0.848"
         },
         "bullpen": {
           "label": "牛棚戰力",
-          "home_score": 41.26499999999999,
-          "away_score": 42.062000000000005,
-          "advantage": -0.7970000000000113,
-          "detail": "主隊牛棚 ERA 3.52 WHIP 1.3 疲勞 58 終結者連出 1天 | 客隊牛棚 ERA 3.35 WHIP 1.24 疲勞 48 終結者連出 2天"
+          "home_score": 66.18,
+          "away_score": 72.9,
+          "advantage": -6.719999999999999,
+          "detail": "主隊牛棚 ERA 2.98 WHIP 1.14 疲勞 25 終結者連出 0天 | 客隊牛棚 ERA 2.65 WHIP 1.05 疲勞 18 終結者連出 0天"
         },
         "home_away": {
           "label": "主客場",
-          "home_score": 54.625,
-          "away_score": 45.375,
-          "advantage": 9.25,
-          "detail": "主隊主場 17勝23敗 | 客隊客場 17勝23敗 |  run_factor=1.0 "
+          "home_score": 55.526315789473685,
+          "away_score": 44.473684210526315,
+          "advantage": 11.05263157894737,
+          "detail": "主隊主場 25勝15敗 | 客隊客場 24勝14敗 |  run_factor=1.0 "
         },
         "recent_form": {
           "label": "近期狀態",
-          "home_score": 36.2,
-          "away_score": 40.3,
-          "advantage": -4.099999999999994,
-          "detail": "主隊近5場 ○○●○● 近10場 ○○●○○●○○●○ 得失分差 -48 出賽密度 4/7天 | 客隊近5場 ○●○●○ 近10場 ○○●○●○○●○● 得失分差 -32 出賽密度 4/7天"
+          "home_score": 71.5,
+          "away_score": 78.3,
+          "advantage": -6.799999999999997,
+          "detail": "主隊近5場 ●●●○● 近10場 ●○●●●○●●○● 得失分差 +45 出賽密度 2/7天 | 客隊近5場 ●●●○● 近10場 ●●○●●●○●●● 得失分差 +88 出賽密度 2/7天"
         },
         "h2h": {
           "label": "對戰紀錄",
-          "home_score": 47.0,
-          "away_score": 53.0,
-          "advantage": -5.999999999999998,
-          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
+          "home_score": 44.0,
+          "away_score": 56.0,
+          "advantage": -12.0,
+          "detail": "本季對戰：客隊 7 勝 主隊 3 勝（主隊勝率 30%）"
         },
         "injuries": {
           "label": "傷兵狀況",
@@ -1719,67 +1952,45 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 48.0,
-          "away_score": 52.0,
-          "advantage": -4.0,
-          "detail": "未知 氣溫 14°C 風速 - km/h 濕度 78%"
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
         },
         "defense": {
           "label": "守備能力",
-          "home_score": 42.5,
-          "away_score": 47.85,
-          "advantage": -5.350000000000001,
-          "detail": "主隊 守備率 0.978 DRS -3 UZR -2.2 失誤 36 | 客隊 守備率 0.979 DRS +0 UZR +0.5 失誤 34"
+          "home_score": 63.10000000000001,
+          "away_score": 74.45,
+          "advantage": -11.349999999999994,
+          "detail": "主隊 守備率 0.982 DRS +9 UZR +6.2 失誤 27 | 客隊 守備率 0.985 DRS +15 UZR +10.5 失誤 22"
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 69.8,
-          "away_score": 30.2,
-          "advantage": 19.8,
-          "detail": "主隊賠率 2.38 (開 2.38) | 客隊賠率 1.59 (開 1.59) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)",
-          "analysis": {
-            "market_home_prob": 40.1,
-            "value_gap": 12.3,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 12% (Value)"
-            ],
-            "advantage": 19.8,
-            "detail": "主隊賠率 2.38 (開 2.38) | 客隊賠率 1.59 (開 1.59) | 讓分 -1.5 | 大小 8.5 | 公眾 主50% 客50% | The Odds API baseball_kbo | 來源：The Odds API (KBO)  莊家：The Odds API (KBO)"
-          },
-          "curr_home_odds": 2.38,
-          "curr_away_odds": 1.59,
-          "open_home_odds": 2.38,
-          "open_away_odds": 1.59,
-          "run_line": -1.5,
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
           "total_line": 8.5,
-          "over_odds": 1.9,
-          "under_odds": 1.9,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 40.1,
-          "signals": [
-            "📈 模型比市場高估主隊 12% (Value)"
-          ]
+          "signals": [],
+          "market_home_prob": 44.1
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.5231,
-        "std_dev": 0.0157,
+        "mean_prob": 0.4413,
+        "std_dev": 0.0161,
         "ci_90": [
-          0.4976,
-          0.5486
+          0.4151,
+          0.4678
         ],
-        "home_win_pct": 0.925,
+        "home_win_pct": 0.0,
         "uncertain": false,
-        "conf_boost": 0.0417
+        "conf_boost": 0.0416
       },
       "ensemble": {
-        "prob": 0.4814,
+        "prob": 0.4432,
         "weights": {
           "elo": 0.12,
           "ml": 0.48,
@@ -1787,21 +1998,21 @@
           "mc": 0.12
         },
         "model_probs": {
-          "elo": 0.5384,
-          "ml": 0.5044,
-          "market": 0.401,
-          "mc": 0.5231
+          "elo": 0.4566,
+          "ml": 0.4417,
+          "market": 0.441,
+          "mc": 0.4413
         },
         "bayesian_adj": 1.0
       },
       "matchup": {
         "label": "投打匹配",
-        "home_bat_adv": 0.34,
-        "away_bat_adv": 0.53,
-        "net_advantage": -0.19,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 柳賢振(R/balanced) vs LTG: 均勢 +0.3 | 客隊打線 vs 主隊先發: 格洛弗(R/balanced) vs HWE: 均勢 +0.5"
+        "home_bat_adv": 0.16,
+        "away_bat_adv": 0.02,
+        "net_advantage": 0.14,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 莫伊內羅(R/power) vs YDB: 均勢 +0.2 | 客隊打線 vs 主隊先發: 東克樹(R/power) vs SBH: 均勢 +0.0"
       },
       "market_signal": {
         "sharp_signal": null,
@@ -1814,11 +2025,214 @@
         "home": 0.0,
         "away": 0.0
       },
-      "ref_label": "韓華老鷹 勝算較高",
-      "ref_prob": 51.9,
-      "ref_odds": 1.59,
-      "ref_edge": -0.1103,
-      "conf": 0.052,
+      "ref_label": "福岡軟銀鷹 勝算較高",
+      "ref_prob": 55.7,
+      "ref_odds": 1.75,
+      "ref_edge": -0.0137,
+      "conf": 0.16,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "SSG",
+      "home": "SSL",
+      "away_cn": "SSG藍德",
+      "home_cn": "三星雄獅",
+      "league": "KBO",
+      "game_date": "2026-06-05",
+      "game_time": "",
+      "time": "",
+      "venue": "",
+      "home_win_prob": 0.506,
+      "away_win_prob": 0.494,
+      "away_sp": {
+        "team": "SSG",
+        "foreign": false,
+        "era": 2.48,
+        "whip": 1.06,
+        "fip": 2.62,
+        "xfip": 2.75,
+        "k9": 10.2,
+        "bb9": 2.1,
+        "h9": 7.0,
+        "hr9": 0.6,
+        "babip": 0.28,
+        "lob_pct": 80.2,
+        "k_bb_pct": 24.2,
+        "recent_3_era": 2.25,
+        "recent_5_era": 2.38,
+        "recent_10_era": 2.48,
+        "gs": 14,
+        "innings": 89.0,
+        "wpa": 3.0,
+        "re24": 21.0,
+        "k_pct": 36.2,
+        "bb_pct": 10.4,
+        "name": "金廣鉉",
+        "confirmed": false
+      },
+      "home_sp": {
+        "team": "SSL",
+        "foreign": false,
+        "era": 2.58,
+        "whip": 1.08,
+        "fip": 2.72,
+        "xfip": 2.85,
+        "k9": 9.8,
+        "bb9": 2.2,
+        "h9": 7.2,
+        "hr9": 0.6,
+        "babip": 0.284,
+        "lob_pct": 79.2,
+        "k_bb_pct": 22.8,
+        "recent_3_era": 2.35,
+        "recent_5_era": 2.48,
+        "recent_10_era": 2.58,
+        "gs": 14,
+        "innings": 88.0,
+        "wpa": 2.8,
+        "re24": 19.5,
+        "k_pct": 35.3,
+        "bb_pct": 10.9,
+        "name": "元泰仁",
+        "confirmed": false
+      },
+      "market_home_prob": 50.3,
+      "value_gap": 0.0,
+      "curr_home_odds": 1.854,
+      "curr_away_odds": 1.958,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 84.69749999999998,
+          "away_score": 88.18749999999999,
+          "advantage": -3.490000000000009,
+          "detail": "主隊 ERA 2.58 FIP 2.72 xFIP 2.85 WHIP 1.08 K/9 9.8 K-BB% 22.8 | 近3ERA 2.35 ➡️ 穩定 | 客隊 ERA 2.48 FIP 2.62 xFIP 2.75 WHIP 1.06 K/9 10.2 K-BB% 24.2 | 近3ERA 2.25 ➡️ 穩定"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 61.8575,
+          "away_score": 64.797,
+          "advantage": -2.9394999999999953,
+          "detail": "主隊 OPS 0.803 wOBA 0.342 wRC+ 108 近7OPS 0.818 | 客隊 OPS 0.817 wOBA 0.348 wRC+ 112 近7OPS 0.835"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 64.887,
+          "away_score": 65.04999999999998,
+          "advantage": -0.1629999999999825,
+          "detail": "主隊牛棚 ERA 3.05 WHIP 1.16 疲勞 28 終結者連出 0天 | 客隊牛棚 ERA 2.88 WHIP 1.12 疲勞 25 終結者連出 1天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 56.75,
+          "away_score": 43.25,
+          "advantage": 13.499999999999998,
+          "detail": "主隊主場 25勝15敗 | 客隊客場 22勝18敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 60.7,
+          "away_score": 72.8,
+          "advantage": -12.099999999999994,
+          "detail": "主隊近5場 ●●○●○ 近10場 ●○●●○●○●●○ 得失分差 +42 出賽密度 3/7天 | 客隊近5場 ●●○●● 近10場 ○●●●○●●○●● 得失分差 +58 出賽密度 2/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "本季對戰：客隊 5 勝 主隊 5 勝（主隊勝率 50%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -6.0,
+          "detail": "未知 氣溫 12°C 風速 - km/h 濕度 100%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 56.699999999999996,
+          "away_score": 65.6,
+          "advantage": -8.899999999999999,
+          "detail": "主隊 守備率 0.981 DRS +5 UZR +3.8 失誤 30 | 客隊 守備率 0.983 DRS +10 UZR +7.2 失誤 26"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 50.3
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.5034,
+        "std_dev": 0.0161,
+        "ci_90": [
+          0.4768,
+          0.5292
+        ],
+        "home_win_pct": 0.5885,
+        "uncertain": false,
+        "conf_boost": 0.0416
+      },
+      "ensemble": {
+        "prob": 0.5056,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5137,
+          "ml": 0.5055,
+          "market": 0.503,
+          "mc": 0.5034
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.09,
+        "away_bat_adv": -0.47,
+        "net_advantage": 0.56,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 金廣鉉(R/power) vs SSL: 均勢 +0.1 | 客隊打線 vs 主隊先發: 元泰仁(R/power) vs SSG: 均勢 -0.5"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "三星雄獅 勝算較高",
+      "ref_prob": 50.6,
+      "ref_odds": 1.85,
+      "ref_edge": -0.0338,
+      "conf": 0.049,
       "tier": 3,
       "recommended": false
     }
@@ -1828,168 +2242,13 @@
   "live_updated_ts": 0,
   "recent_history": [],
   "game_preds": {
-    "DSB|KWH": {
-      "home_win_prob": 0.57,
+    "HWE|LGT": {
+      "home_win_prob": 0.357,
       "market_total": 8.5,
-      "mc_mean": 0.5435,
-      "mc_std": 0.0157,
-      "ensemble": {
-        "prob": 0.5697,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.5704,
-          "ml": 0.5497,
-          "market": 0.614,
-          "mc": 0.5435
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": -0.06,
-        "away_bat_adv": 1.0,
-        "net_advantage": -1.06,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 安祐真(R/power) vs DSB: 均勢 -0.1 | 客隊打線 vs 主隊先發: 佛雷斯特(R/balanced) vs KWH: 均勢 +1.0"
-      }
-    },
-    "LTG|HWE": {
-      "home_win_prob": 0.481,
-      "market_total": 8.5,
-      "mc_mean": 0.5231,
-      "mc_std": 0.0157,
-      "ensemble": {
-        "prob": 0.4814,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.5384,
-          "ml": 0.5044,
-          "market": 0.401,
-          "mc": 0.5231
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 0.34,
-        "away_bat_adv": 0.53,
-        "net_advantage": -0.19,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 柳賢振(R/balanced) vs LTG: 均勢 +0.3 | 客隊打線 vs 主隊先發: 格洛弗(R/balanced) vs HWE: 均勢 +0.5"
-      }
-    },
-    "SSG|KTW": {
-      "home_win_prob": 0.656,
-      "market_total": 8.5,
-      "mc_mean": 0.6994,
-      "mc_std": 0.016,
-      "ensemble": {
-        "prob": 0.6557,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.6658,
-          "ml": 0.6867,
-          "market": 0.574,
-          "mc": 0.6994
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 1.05,
-        "away_bat_adv": -0.44,
-        "net_advantage": 1.49,
-        "home_pitcher_type": "power",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 班傑明(R/balanced) vs SSG: 打線佔優 +1.1 | 客隊打線 vs 主隊先發: 金廣鉉(R/power) vs KTW: 均勢 -0.4"
-      }
-    },
-    "KIA|SSL": {
-      "home_win_prob": 0.638,
-      "market_total": 8.5,
-      "mc_mean": 0.6825,
-      "mc_std": 0.0166,
-      "ensemble": {
-        "prob": 0.6383,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.6636,
-          "ml": 0.6635,
-          "market": 0.561,
-          "mc": 0.6825
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": -0.09,
-        "away_bat_adv": 0.09,
-        "net_advantage": -0.18,
-        "home_pitcher_type": "power",
-        "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 元泰仁(R/power) vs KIA: 均勢 -0.1 | 客隊打線 vs 主隊先發: 梁鉉種(R/power) vs SSL: 均勢 +0.1"
-      }
-    },
-    "NCD|LGT": {
-      "home_win_prob": 0.466,
-      "market_total": 8.5,
-      "mc_mean": 0.4347,
-      "mc_std": 0.0164,
-      "ensemble": {
-        "prob": 0.4663,
-        "weights": {
-          "elo": 0.12,
-          "ml": 0.48,
-          "market": 0.28,
-          "mc": 0.12
-        },
-        "model_probs": {
-          "elo": 0.4745,
-          "ml": 0.4423,
-          "market": 0.518,
-          "mc": 0.4347
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 0.35,
-        "away_bat_adv": 1.65,
-        "net_advantage": -1.3,
-        "home_pitcher_type": "balanced",
-        "away_pitcher_type": "balanced",
-        "detail": "主隊打線 vs 客隊先發: 林贊圭(R/balanced) vs NCD: 均勢 +0.3 | 客隊打線 vs 主隊先發: 魯欽斯基(R/balanced) vs LGT: 打線佔優 +1.6"
-      }
-    },
-    "YKL|GNT": {
-      "home_win_prob": 0.317,
-      "market_total": 8.5,
-      "mc_mean": 0.3149,
+      "mc_mean": 0.3538,
       "mc_std": 0.0159,
       "ensemble": {
-        "prob": 0.3171,
+        "prob": 0.3574,
         "weights": {
           "elo": 0.12,
           "ml": 0.48,
@@ -1997,21 +2256,331 @@
           "mc": 0.12
         },
         "model_probs": {
-          "elo": 0.3643,
-          "ml": 0.3082,
-          "market": 0.314,
-          "mc": 0.3149
+          "elo": 0.4037,
+          "ml": 0.3491,
+          "market": 0.354,
+          "mc": 0.3538
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.53,
+        "away_bat_adv": 1.65,
+        "net_advantage": -1.12,
+        "home_pitcher_type": "balanced",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 林贊圭(R/balanced) vs HWE: 均勢 +0.5 | 客隊打線 vs 主隊先發: 柳賢振(R/balanced) vs LGT: 打線佔優 +1.6"
+      }
+    },
+    "SSL|SSG": {
+      "home_win_prob": 0.506,
+      "market_total": 8.5,
+      "mc_mean": 0.5034,
+      "mc_std": 0.0161,
+      "ensemble": {
+        "prob": 0.5056,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5137,
+          "ml": 0.5055,
+          "market": 0.503,
+          "mc": 0.5034
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.09,
+        "away_bat_adv": -0.47,
+        "net_advantage": 0.56,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 金廣鉉(R/power) vs SSL: 均勢 +0.1 | 客隊打線 vs 主隊先發: 元泰仁(R/power) vs SSG: 均勢 -0.5"
+      }
+    },
+    "KTW|NCD": {
+      "home_win_prob": 0.645,
+      "market_total": 8.5,
+      "mc_mean": 0.6487,
+      "mc_std": 0.0156,
+      "ensemble": {
+        "prob": 0.6446,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6053,
+          "ml": 0.6512,
+          "market": 0.648,
+          "mc": 0.6487
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 1.04,
+        "away_bat_adv": 0.35,
+        "net_advantage": 0.69,
+        "home_pitcher_type": "balanced",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 魯欽斯基(R/balanced) vs KTW: 打線佔優 +1.0 | 客隊打線 vs 主隊先發: 班傑明(R/balanced) vs NCD: 均勢 +0.3"
+      }
+    },
+    "KIA|LTG": {
+      "home_win_prob": 0.892,
+      "market_total": 8.5,
+      "mc_mean": 0.8959,
+      "mc_std": 0.0159,
+      "ensemble": {
+        "prob": 0.8918,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.8036,
+          "ml": 0.9044,
+          "market": 0.896,
+          "mc": 0.8959
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 1.34,
+        "away_bat_adv": -0.81,
+        "net_advantage": 2.15,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 格洛弗(R/balanced) vs KIA: 打線佔優 +1.3 | 客隊打線 vs 主隊先發: 梁鉉種(R/power) vs LTG: 均勢 -0.8"
+      }
+    },
+    "KWH|DSB": {
+      "home_win_prob": 0.605,
+      "market_total": 8.5,
+      "mc_mean": 0.6069,
+      "mc_std": 0.016,
+      "ensemble": {
+        "prob": 0.6047,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5725,
+          "ml": 0.6107,
+          "market": 0.607,
+          "mc": 0.6069
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 1.0,
+        "away_bat_adv": -0.06,
+        "net_advantage": 1.06,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "balanced",
+        "detail": "主隊打線 vs 客隊先發: 佛雷斯特(R/balanced) vs KWH: 均勢 +1.0 | 客隊打線 vs 主隊先發: 安祐真(R/power) vs DSB: 均勢 -0.1"
+      }
+    },
+    "GNT|LTT": {
+      "home_win_prob": 0.68,
+      "market_total": 8.5,
+      "mc_mean": 0.6816,
+      "mc_std": 0.0159,
+      "ensemble": {
+        "prob": 0.6802,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6652,
+          "ml": 0.683,
+          "market": 0.681,
+          "mc": 0.6816
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": -0.2,
+        "away_bat_adv": -0.72,
+        "net_advantage": 0.52,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 佐佐木朗希(R/power) vs GNT: 均勢 -0.2 | 客隊打線 vs 主隊先發: 菅野智之(R/power) vs LTT: 均勢 -0.7"
+      }
+    },
+    "YDB|SBH": {
+      "home_win_prob": 0.443,
+      "market_total": 8.5,
+      "mc_mean": 0.4413,
+      "mc_std": 0.0161,
+      "ensemble": {
+        "prob": 0.4432,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.4566,
+          "ml": 0.4417,
+          "market": 0.441,
+          "mc": 0.4413
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.16,
+        "away_bat_adv": 0.02,
+        "net_advantage": 0.14,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 莫伊內羅(R/power) vs YDB: 均勢 +0.2 | 客隊打線 vs 主隊先發: 東克樹(R/power) vs SBH: 均勢 +0.0"
+      }
+    },
+    "CND|SEI": {
+      "home_win_prob": 0.584,
+      "market_total": 8.5,
+      "mc_mean": 0.5837,
+      "mc_std": 0.0161,
+      "ensemble": {
+        "prob": 0.5835,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.5795,
+          "ml": 0.5843,
+          "market": 0.584,
+          "mc": 0.5837
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": -0.33,
+        "away_bat_adv": -0.42,
+        "net_advantage": 0.09,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 高橋光成(R/power) vs CND: 均勢 -0.3 | 客隊打線 vs 主隊先發: 大野雄大(R/power) vs SEI: 均勢 -0.4"
+      }
+    },
+    "HNS|RKT": {
+      "home_win_prob": 0.661,
+      "market_total": 8.5,
+      "mc_mean": 0.6616,
+      "mc_std": 0.0157,
+      "ensemble": {
+        "prob": 0.6608,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.6374,
+          "ml": 0.6656,
+          "market": 0.662,
+          "mc": 0.6616
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.27,
+        "away_bat_adv": -0.76,
+        "net_advantage": 1.03,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 早川隆久(R/power) vs HNS: 均勢 +0.3 | 客隊打線 vs 主隊先發: 才木浩人(R/power) vs RKT: 均勢 -0.8"
+      }
+    },
+    "HRC|ORX": {
+      "home_win_prob": 0.439,
+      "market_total": 8.5,
+      "mc_mean": 0.4349,
+      "mc_std": 0.0159,
+      "ensemble": {
+        "prob": 0.4393,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.4591,
+          "ml": 0.438,
+          "market": 0.435,
+          "mc": 0.4349
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.07,
+        "away_bat_adv": -0.77,
+        "net_advantage": 0.84,
+        "home_pitcher_type": "power",
+        "away_pitcher_type": "power",
+        "detail": "主隊打線 vs 客隊先發: 山下舜平太(R/power) vs HRC: 均勢 +0.1 | 客隊打線 vs 主隊先發: 大瀨良大地(R/power) vs ORX: 均勢 -0.8"
+      }
+    },
+    "YKL|HAM": {
+      "home_win_prob": 0.441,
+      "market_total": 8.5,
+      "mc_mean": 0.4397,
+      "mc_std": 0.016,
+      "ensemble": {
+        "prob": 0.4407,
+        "weights": {
+          "elo": 0.12,
+          "ml": 0.48,
+          "market": 0.28,
+          "mc": 0.12
+        },
+        "model_probs": {
+          "elo": 0.4712,
+          "ml": 0.4345,
+          "market": 0.439,
+          "mc": 0.4397
         },
         "bayesian_adj": 1.0
       },
       "matchup": {
         "label": "投打匹配",
         "home_bat_adv": -0.35,
-        "away_bat_adv": 1.14,
-        "net_advantage": -1.49,
+        "away_bat_adv": 0.81,
+        "net_advantage": -1.16,
         "home_pitcher_type": "balanced",
         "away_pitcher_type": "power",
-        "detail": "主隊打線 vs 客隊先發: 菅野智之(R/power) vs YKL: 均勢 -0.3 | 客隊打線 vs 主隊先發: 小川泰弘(R/balanced) vs GNT: 打線佔優 +1.1"
+        "detail": "主隊打線 vs 客隊先發: 伊藤大海(R/power) vs YKL: 均勢 -0.3 | 客隊打線 vs 主隊先發: 小川泰弘(R/balanced) vs HAM: 均勢 +0.8"
       }
     }
   },
