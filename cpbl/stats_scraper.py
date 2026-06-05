@@ -1448,16 +1448,52 @@ def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
 
 def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     """
-    Parse Yahoo Japan NPB schedule using two-phase text-scan approach.
+    Parse Yahoo Japan NPB schedule using multi-phase text-scan approach.
 
-    Phase 1: scan every small text node for known team names; pair consecutive
-    different codes into games (HTML-structure-agnostic, avoids concatenation bugs).
-
-    Phase 2: scan for Japanese pitcher names from _JP_PITCHER_NAME_MAP, convert
-    to Chinese names, then assign each pitcher to the game whose team matches
-    the pitcher's team in _NPB_PITCHER_TEAM. This works regardless of where
-    in the HTML the pitcher names appear.
+    Phase 0.1: decode JSON \\uXXXX escapes in raw HTML, then search for team
+               names (catches Next.js __NEXT_DATA__ JSON blobs with escaped Unicode).
+    Phase 0.2: scan raw HTML for Yahoo Japan team URL patterns (/npb/teams/{code}/)
+               as a structural fallback — stable even when team names are encoded.
+    Phase 0:   scan <script> tags for pitcher names (before decompose).
+    Phase 0.5: scan <script> text for team names (Japanese, via BeautifulSoup).
+    Phase 1:   scan text nodes for team names (server-rendered content).
+    Phase 2:   assign pitcher names to games by team membership.
     """
+    # ── Phase 0.1: decode \\uXXXX then search decoded raw HTML for team codes ──
+    # Next.js __NEXT_DATA__ JSON often stores Japanese chars as \\u5de8\\u4eba etc.
+    decoded = re.sub(r'\\u([0-9a-fA-F]{4})',
+                     lambda m: chr(int(m.group(1), 16)), html)
+    sorted_team_keys_01 = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pattern_01 = re.compile(
+        '(' + '|'.join(re.escape(k) for k in sorted_team_keys_01) + ')'
+    )
+    codes_from_decoded: list[str] = []
+    for m in team_pattern_01.finditer(decoded):
+        code = _YAHOO_NPB_TEAM_MAP[m.group()]
+        if not codes_from_decoded or codes_from_decoded[-1] != code:
+            codes_from_decoded.append(code)
+    if codes_from_decoded:
+        log.info("Yahoo Japan Phase-0.1 (decoded HTML): %d entries %s",
+                 len(codes_from_decoded), codes_from_decoded[:12])
+
+    # ── Phase 0.2: scan raw HTML for Yahoo Japan team URL codes ───────────────
+    # e.g. href="/npb/teams/g/" → Giants,  href="/npb/teams/sb/" → SoftBank
+    # URL structure is stable even when all text content is client-side rendered.
+    _YAHOO_URL_CODE: dict[str, str] = {
+        "g": "GNT", "t": "HNS", "c": "HRC", "db": "YDB",
+        "s": "YKL", "d": "CND", "sb": "SBH", "b": "ORX",
+        "e": "RKT", "m": "LTT", "l": "SEI", "f": "HAM",
+    }
+    _team_url_re = re.compile(r'/npb/(?:team|teams)/([a-z]+)(?:/|")')
+    codes_from_urls: list[str] = []
+    for m in _team_url_re.finditer(html):
+        code = _YAHOO_URL_CODE.get(m.group(1))
+        if code and (not codes_from_urls or codes_from_urls[-1] != code):
+            codes_from_urls.append(code)
+    if codes_from_urls:
+        log.info("Yahoo Japan Phase-0.2 (URL codes): %d entries %s",
+                 len(codes_from_urls), codes_from_urls[:12])
+
     soup = BeautifulSoup(html, "html.parser")
 
     # ── Phase 0: scan <script> tags BEFORE removing them ─────────────────
@@ -1499,6 +1535,17 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     else:
         log.warning("Yahoo Japan Phase-0.5: no team codes found in script tags either")
 
+    # Choose best candidate for seeding codes_in_order (prefer decoded-HTML result,
+    # fall back to Phase 0.5 scripts result, then Phase 0.2 URL codes as last resort)
+    if codes_from_decoded:
+        seed_codes = codes_from_decoded
+    elif codes_from_scripts:
+        seed_codes = codes_from_scripts
+    else:
+        seed_codes = codes_from_urls
+        if codes_from_urls:
+            log.info("Yahoo Japan: falling back to URL-code seed (%d entries)", len(codes_from_urls))
+
     for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
         tag.decompose()
 
@@ -1506,8 +1553,8 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     sorted_team_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
     team_pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_team_keys) + ')')
 
-    # Start with codes found in scripts; text node scan appends additional matches
-    codes_in_order: list[str] = list(codes_from_scripts)
+    # Start with best seed; text node scan appends additional matches
+    codes_in_order: list[str] = list(seed_codes)
     for node in soup.find_all(string=True):
         text = node.strip()
         if not text or len(text) > 50:
