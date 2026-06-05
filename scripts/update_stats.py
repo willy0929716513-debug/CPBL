@@ -1102,26 +1102,54 @@ def update_schedule(games: list, dry: bool = False):
         if g.get("league") and g.get("date", "") >= cutoff
     ]
 
-    existing_ids = {
-        g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}"
+    # Index by game_id for O(1) lookup and in-place updates
+    kept_by_id: dict[str, dict] = {
+        g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}": g
         for g in kept
     }
+
     added = 0
+    updated = 0
     for g in games:
         gid = g.get("game_id") or f"{g['date']}-{g['away']}-{g['home']}"
-        if gid not in existing_ids:
+        if gid not in kept_by_id:
             kept.append(g)
-            existing_ids.add(gid)
+            kept_by_id[gid] = g
             added += 1
+        else:
+            # Update existing entry when new data fills in missing fields
+            existing_g = kept_by_id[gid]
+            changed = False
+            # Fill in pitcher names if previously empty
+            if g.get("away_pitcher") and not existing_g.get("away_pitcher"):
+                existing_g["away_pitcher"] = g["away_pitcher"]
+                changed = True
+            if g.get("home_pitcher") and not existing_g.get("home_pitcher"):
+                existing_g["home_pitcher"] = g["home_pitcher"]
+                changed = True
+            # Fill in game time if previously empty
+            if g.get("time") and not existing_g.get("time"):
+                existing_g["time"] = g["time"]
+                changed = True
+            # Update score/status if game has been played
+            if g.get("away_score") is not None and existing_g.get("away_score") is None:
+                existing_g["away_score"] = g["away_score"]
+                existing_g["home_score"] = g["home_score"]
+                existing_g["status"] = g.get("status", existing_g.get("status", "終了"))
+                changed = True
+            if changed:
+                updated += 1
 
     kept.sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
     payload = {"games": kept, "updated_at": datetime.date.today().isoformat()}
     if dry:
-        log.info("[DRY] 會新增 %d 場賽程到 schedule.json（總計 %d 場）", added, len(kept))
+        log.info("[DRY] 新增 %d 場、更新 %d 場到 schedule.json（總計 %d 場）",
+                 added, updated, len(kept))
         return
     with open(SCHED_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    log.info("schedule.json 新增 %d 場（總計 %d 場）", added, len(kept))
+    log.info("schedule.json 新增 %d 場、更新 %d 場（總計 %d 場）",
+             added, updated, len(kept))
 
 
 # ─────────────────────────────────────────────────────────────
