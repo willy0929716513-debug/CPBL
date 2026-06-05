@@ -156,15 +156,25 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         name = sp.get("name", "")
         if not name:
             return "未定"
-        era = sp.get("era")
-        k9  = sp.get("k9")
-        # 已確認先發：無前綴；輪值預測：🔮 前綴
-        prefix = "" if sp.get("confirmed", False) else "🔮"
-        if era is not None and k9 is not None:
-            return f"{prefix}{name} (ERA {era:.2f} K/9 {k9:.1f})"
-        if era is not None:
-            return f"{prefix}{name} (ERA {era:.2f})"
-        return f"{prefix}{name}" if prefix else name
+        confirmed = sp.get("confirmed", False)
+        if confirmed:
+            era = sp.get("era")
+            k9  = sp.get("k9")
+            if era is not None and k9 is not None:
+                return f"{name} (ERA {era:.2f} K/9 {k9:.1f})"
+            if era is not None:
+                return f"{name} (ERA {era:.2f})"
+            return name
+        else:
+            # Rotation prediction: show name only — stats omitted since pitcher slot is unconfirmed
+            return f"🔮{name}"
+
+    # Pre-compute a short date tag (MM/DD) for all game cards
+    try:
+        _gd = datetime.date.fromisoformat(str(game_date))
+        _date_tag = f"📅 {_gd.month:02d}/{_gd.day:02d}"
+    except Exception:
+        _date_tag = f"📅 {str(game_date)[5:].replace('-', '/')}"
 
     for pr in all_preds:
         away    = pr["away"]
@@ -176,7 +186,7 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         g_time  = pr.get("game_time", pr.get("time", ""))
         league  = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
         flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
-        time_tag = f"  🕐 {g_time}" if g_time else ""
+        time_tag = f"  {_date_tag}" + (f" 🕐 {g_time}" if g_time else "")
 
         asp = pr.get("away_sp") or {}
         hsp = pr.get("home_sp") or {}
