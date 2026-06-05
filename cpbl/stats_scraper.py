@@ -1,10 +1,12 @@
 """
 V8 Stats Scraper — 多來源投手數據抓取器 (NPB / KBO)
 
-先發投手抓取優先順序：
+NPB/KBO 自成獨立體系，完全不依賴 MLB 任何 API。
+
+賽程與先發投手來源：
   NPB: Yahoo Japan Baseball (baseball.yahoo.co.jp) — 日文名自動轉中文
-  KBO: MLB Stats API sportId=5 (hydrate=probablePitcher) — 英文名
-  補漏: The Odds API /events — 有賽程，無先發
+  KBO: koreabaseball.com 官方 → Naver Sports KBO
+  保底: The Odds API /events — 有賽程，無先發
 
 ESPN 已移除：不提供 NPB/KBO 的先發投手資料。
 
@@ -42,7 +44,7 @@ _HEADERS = {
     "Accept-Language": "ja,ko,en-US;q=0.8",
 }
 
-# NPB-only team map (used for baseball_npb Odds API key / MLB Stats API sportId=6)
+# NPB-only team map (used for baseball_npb Odds API key)
 _NPB_TEAM_MAP = {
     "Yomiuri Giants":               "GNT", "Giants":              "GNT",
     "Hanshin Tigers":               "HNS", "Tigers":              "HNS",
@@ -58,7 +60,7 @@ _NPB_TEAM_MAP = {
     "Hokkaido Nippon-Ham Fighters": "HAM", "Nippon-Ham Fighters": "HAM", "Fighters": "HAM",
 }
 
-# KBO-only team map (used for baseball_kbo Odds API key / MLB Stats API sportId=5)
+# KBO-only team map (used for baseball_kbo Odds API key)
 _KBO_TEAM_MAP = {
     "Samsung Lions":  "SSL",
     "LG Twins":       "LGT",
@@ -485,73 +487,198 @@ def fetch_espn_web_schedule(game_date: date) -> list[dict]:
     return games
 
 
-def fetch_mlbstats_schedule(game_date: date) -> list[dict]:
-    """MLB Stats API 備援（statsapi.mlb.com，sportId=6 NPB / sportId=5 KBO）。
-    hydrate=probablePitcher 讓 API 一併回傳先發投手資料。"""
-    date_str_us = game_date.strftime("%m/%d/%Y")
-    date_iso    = game_date.isoformat()
-    games: list[dict] = []
-    for sport_id, league in [(6, "NPB"), (5, "KBO")]:
-        team_map = _NPB_TEAM_MAP if league == "NPB" else _KBO_TEAM_MAP
-        url = (f"https://statsapi.mlb.com/api/v1/schedule"
-               f"?sportId={sport_id}&date={date_str_us}&hydrate=probablePitcher")
+# ─────────────────────────────────────────────────────────────
+# KBO 官方與韓國媒體賽程（不使用 MLB API，KBO 自成一體）
+# ─────────────────────────────────────────────────────────────
+
+_KBO_OFFICIAL_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,*/*;q=0.9",
+    "Accept-Language": "ko,en-US;q=0.8,en;q=0.6",
+    "Referer": "https://www.koreabaseball.com/",
+}
+
+# koreabaseball.com 隊名文字 → 內部代碼
+_KBO_OFFICIAL_TEAM_MAP = {
+    "삼성":  "SSL", "Samsung":  "SSL",
+    "LG":    "LGT",
+    "두산":  "DSB", "Doosan":   "DSB",
+    "KT":    "KTW",
+    "SSG":   "SSG",
+    "NC":    "NCD",
+    "KIA":   "KIA",
+    "롯데":  "LTG", "Lotte":    "LTG",
+    "한화":  "HWE", "Hanwha":   "HWE",
+    "키움":  "KWH", "Kiwoom":   "KWH",
+}
+
+
+def _kbo_official_team_code(text: str) -> str:
+    t = text.strip()
+    for k, v in _KBO_OFFICIAL_TEAM_MAP.items():
+        if k == t or k in t:
+            return v
+    return ""
+
+
+def fetch_kbo_schedule(game_date: date) -> list[dict]:
+    """
+    KBO 賽程抓取 — 只使用韓國本地資料來源，不依賴 MLB API。
+    嘗試順序：koreabaseball.com → Naver Sports KBO → 空列表
+    先發投手若頁面有則抓，無則留空（由 rotation 補漏）。
+    """
+    date_str = game_date.isoformat()
+    y, m, d  = game_date.year, game_date.month, game_date.day
+
+    # 1. koreabaseball.com 官方網站
+    kbo_urls = [
+        f"https://www.koreabaseball.com/Schedule/Schedule.aspx?leId=1&srId=0&date={y:04d}{m:02d}{d:02d}",
+        f"https://www.koreabaseball.com/Schedule/Schedule.aspx",
+    ]
+    for url in kbo_urls:
         try:
-            resp = requests.get(url, headers=_HEADERS, timeout=10)
-            if resp.status_code != 200:
+            resp = requests.get(url, headers=_KBO_OFFICIAL_HEADERS, timeout=15)
+            if resp.status_code == 403:
+                log.debug("koreabaseball.com 403 for %s", url)
                 continue
-            for date_entry in resp.json().get("dates", []):
-                for game in date_entry.get("games", []):
-                    home_t = game.get("teams", {}).get("home", {})
-                    away_t = game.get("teams", {}).get("away", {})
-                    home   = home_t.get("team", {})
-                    away   = away_t.get("team", {})
-                    home_name = home.get("name", "")
-                    away_name = away.get("name", "")
-                    home_code = team_map.get(home_name)
-                    away_code = team_map.get(away_name)
-                    if not home_code or not away_code:
-                        log.debug("MLB Stats [%s]: unknown team %s@%s — skip", league, away_name, home_name)
-                        continue
-                    state = game.get("status", {}).get("abstractGameState", "Preview")
-
-                    # probablePitcher names come in English from MLB Stats API; translate to Chinese
-                    _ap_en = away_t.get("probablePitcher", {}).get("fullName", "")
-                    _hp_en = home_t.get("probablePitcher", {}).get("fullName", "")
-                    away_pitcher = _translate_mlb_pitcher(_ap_en) if _ap_en else ""
-                    home_pitcher = _translate_mlb_pitcher(_hp_en) if _hp_en else ""
-
-                    # 比賽時間（gameDate 為 UTC ISO，轉台灣時間）
-                    game_time = ""
-                    try:
-                        import datetime as _dt
-                        raw = game.get("gameDate", "")
-                        if raw:
-                            dt_utc = _dt.datetime.strptime(raw[:19], "%Y-%m-%dT%H:%M:%S")
-                            dt_tw  = dt_utc + _dt.timedelta(hours=8)
-                            game_time = dt_tw.strftime("%H:%M")
-                    except Exception:
-                        pass
-
-                    games.append({
-                        "game_id":      f"{date_iso}-{away_code}-{home_code}",
-                        "date":         date_iso,
-                        "time":         game_time,
-                        "away":         away_code,
-                        "away_name":    away_name,
-                        "home":         home_code,
-                        "home_name":    home_name,
-                        "venue":        game.get("venue", {}).get("name", ""),
-                        "league":       league,
-                        "status":       "結束" if state == "Final" else "預定",
-                        "away_score":   None,
-                        "home_score":   None,
-                        "away_pitcher": away_pitcher,
-                        "home_pitcher": home_pitcher,
-                        "_source":      "mlbstats",
-                    })
+            if resp.status_code != 200:
+                log.debug("koreabaseball.com HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            games = _parse_koreabaseball_html(resp.text, date_str)
+            if games:
+                log.info("KBO schedule from koreabaseball.com: %d games", len(games))
+                return games
         except Exception as e:
-            log.debug("MLB Stats API [sport=%s]: %s", sport_id, e)
+            log.debug("koreabaseball.com %s: %s", url, e)
+
+    # 2. Naver Sports KBO 賽程
+    naver_urls = [
+        f"https://sports.news.naver.com/kbaseball/schedule/index.nhn?year={y}&month={m:02d}",
+        "https://sports.news.naver.com/kbaseball/schedule/index.nhn",
+    ]
+    for url in naver_urls:
+        try:
+            resp = requests.get(url, headers=_KBO_OFFICIAL_HEADERS, timeout=15)
+            if resp.status_code != 200:
+                log.debug("Naver KBO HTTP %s", resp.status_code)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            games = _parse_naver_kbo_html(resp.text, date_str)
+            if games:
+                log.info("KBO schedule from Naver Sports: %d games", len(games))
+                return games
+        except Exception as e:
+            log.debug("Naver KBO %s: %s", url, e)
+
+    return []
+
+
+def _parse_koreabaseball_html(html: str, date_str: str) -> list[dict]:
+    """
+    Parse koreabaseball.com schedule page.
+    Uses text-scan approach (same as Yahoo Japan parser) for robustness.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(['script', 'style', 'noscript', 'head']):
+        tag.decompose()
+
+    sorted_keys = sorted(_KBO_OFFICIAL_TEAM_MAP.keys(), key=len, reverse=True)
+    pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
+
+    codes_in_order: list[str] = []
+    for node in soup.find_all(string=True):
+        text = node.strip()
+        if not text or len(text) > 50:
+            continue
+        for m in pattern.finditer(text):
+            code = _kbo_official_team_code(m.group())
+            if code and (not codes_in_order or codes_in_order[-1] != code):
+                codes_in_order.append(code)
+
+    games = _pair_team_codes(codes_in_order, date_str, "KBO", "koreabaseball")
+
+    # Try to extract pitcher names from the same page
+    # koreabaseball.com typically lists probable pitchers near each game row
+    _enrich_kbo_pitchers_from_html(soup, games)
     return games
+
+
+def _parse_naver_kbo_html(html: str, date_str: str) -> list[dict]:
+    """Parse Naver Sports KBO schedule page using text-scan approach."""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(['script', 'style', 'noscript', 'head']):
+        tag.decompose()
+
+    sorted_keys = sorted(_KBO_OFFICIAL_TEAM_MAP.keys(), key=len, reverse=True)
+    pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
+
+    codes_in_order: list[str] = []
+    for node in soup.find_all(string=True):
+        text = node.strip()
+        if not text or len(text) > 50:
+            continue
+        for m in pattern.finditer(text):
+            code = _kbo_official_team_code(m.group())
+            if code and (not codes_in_order or codes_in_order[-1] != code):
+                codes_in_order.append(code)
+
+    return _pair_team_codes(codes_in_order, date_str, "KBO", "naver_kbo")
+
+
+def _pair_team_codes(codes: list[str], date_str: str, league: str, source: str) -> list[dict]:
+    """Pair consecutive different team codes into games (shared by NPB and KBO parsers)."""
+    games: list[dict] = []
+    seen: set[tuple] = set()
+    i = 0
+    while i < len(codes) - 1:
+        c1, c2 = codes[i], codes[i + 1]
+        if c1 != c2:
+            key = tuple(sorted((c1, c2)))
+            if key not in seen:
+                seen.add(key)
+                games.append({
+                    "game_id":      f"{date_str}-{c1}-{c2}",
+                    "date":         date_str,
+                    "time":         "",
+                    "away":         c1,
+                    "away_name":    "",
+                    "home":         c2,
+                    "home_name":    "",
+                    "venue":        "",
+                    "league":       league,
+                    "status":       "預定",
+                    "away_score":   None,
+                    "home_score":   None,
+                    "away_pitcher": "",
+                    "home_pitcher": "",
+                    "_source":      source,
+                })
+            i += 2
+        else:
+            i += 1
+    return games
+
+
+def _enrich_kbo_pitchers_from_html(soup, games: list[dict]) -> None:
+    """
+    Best-effort: look for Korean pitcher names near game rows.
+    Korean pitcher names are 2-4 Korean characters (Hangul).
+    Matches them against each game's away/home team position in the page.
+    """
+    hangul_name = re.compile(r'^[가-힣]{2,4}$')
+    candidates = [
+        node.strip() for node in soup.find_all(string=True)
+        if hangul_name.match(node.strip())
+    ]
+    # If we found exactly 2× number of games worth of names, assign them
+    if len(candidates) == len(games) * 2:
+        for i, g in enumerate(games):
+            g["away_pitcher"] = candidates[i * 2]
+            g["home_pitcher"] = candidates[i * 2 + 1]
 
 
 def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
@@ -655,54 +782,34 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
 
 def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
     """
-    多來源賽程（含先發投手），優先順序：
-      1. MLB Stats API (sportId=5/6, hydrate=probablePitcher) — KBO+NPB，有確認先發
-      2. Yahoo Japan Baseball (date-specific URL only) — NPB 補漏
-      3. The Odds API /events — 最終保底（只有賽程，無先發）
+    多來源賽程（含先發投手），完全不使用 MLB API — NPB/KBO 自成體系。
 
-    Yahoo Japan 現在只補漏，不再主動覆蓋已有資料，且只嘗試日期特定 URL。
+    優先順序：
+      NPB: Yahoo Japan Baseball (baseball.yahoo.co.jp, 日期特定 URL)
+      KBO: koreabaseball.com 官方 → Naver Sports KBO
+      保底: The Odds API /events（只有賽程，無先發）
     """
     games_kbo: list[dict] = []
     games_npb: list[dict] = []
 
-    # 1. MLB Stats API — 最可靠的先發投手來源（hydrate=probablePitcher）
-    try:
-        mlb_games = fetch_mlbstats_schedule(game_date)
-        if mlb_games:
-            games_kbo = [g for g in mlb_games if g.get("league") == "KBO"]
-            games_npb = [g for g in mlb_games if g.get("league") == "NPB"]
-            log.info("MLB Stats API: %d KBO + %d NPB games", len(games_kbo), len(games_npb))
-        else:
-            log.debug("MLB Stats API: no games returned for %s", game_date)
-    except Exception as e:
-        log.debug("MLB Stats API failed: %s", e)
-
-    # 2. Yahoo Japan — 補 NPB 賽程（只在 MLB Stats API 沒有 NPB 資料時啟用）
-    #    若 MLB Stats API 已取得 NPB，僅用 Yahoo Japan 補充缺失的先發投手
+    # 1. NPB — Yahoo Japan Baseball（日期特定 URL，已確認 GH Actions 可達）
     try:
         yahoo_games = fetch_yahoo_npb_schedule(game_date)
         if yahoo_games:
-            if not games_npb:
-                games_npb = yahoo_games
-                log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
-            else:
-                # MLB Stats API 已有 NPB 賽程 — 只補充先發投手名
-                yahoo_map = {(g["away"], g["home"]): g for g in yahoo_games}
-                filled = 0
-                for g in games_npb:
-                    key = (g.get("away", ""), g.get("home", ""))
-                    yg = yahoo_map.get(key)
-                    if yg:
-                        if not g.get("away_pitcher") and yg.get("away_pitcher"):
-                            g["away_pitcher"] = yg["away_pitcher"]
-                            filled += 1
-                        if not g.get("home_pitcher") and yg.get("home_pitcher"):
-                            g["home_pitcher"] = yg["home_pitcher"]
-                            filled += 1
-                if filled:
-                    log.info("Yahoo Japan supplemented %d pitcher slots for NPB", filled)
+            games_npb = yahoo_games
+            log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
+        else:
+            log.debug("Yahoo Japan NPB: no games for %s", game_date)
     except Exception as e:
         log.debug("Yahoo Japan NPB failed: %s", e)
+
+    # 2. KBO — 韓國本地來源（koreabaseball.com → Naver Sports）
+    try:
+        kbo_games = fetch_kbo_schedule(game_date)
+        if kbo_games:
+            games_kbo = kbo_games
+    except Exception as e:
+        log.debug("KBO schedule fetch failed: %s", e)
 
     # 3. The Odds API /events — 保底（有賽程但無先發）
     if not games_kbo or not games_npb:
@@ -964,86 +1071,6 @@ _JP_PITCHER_NAME_MAP = {
     "伊藤大海": "伊藤大海", "加藤貴之": "加藤貴之", "金村尚真": "金村尚真",
     "マルティネス": "馬丁尼斯",
 }
-
-
-# MLB Stats API 回傳英文姓名（羅馬字） → 我們使用的中文名
-# 格式：MLB Stats API 慣用西式姓名（名 姓）
-_MLB_PITCHER_EN_TO_ZH: dict[str, str] = {
-    # NPB — 讀賣巨人
-    "Tomoyuki Sugano":   "菅野智之", "Shosei Togo":      "戶鄉翔征",
-    "Trevor Cahill":     "葛瑞芬",   "Yuji Akahoshi":    "赤星優志",
-    # NPB — 阪神虎
-    "Hiroto Saiki":      "才木浩人", "Shoki Murakami":   "村上頌樹",
-    "Yuki Nishi":        "西勇輝",   "Aaron Bummer":     "比茲利",
-    "Joe Biagini":       "比茲利",
-    # NPB — 廣島鯉魚
-    "Daichi Osera":      "大瀨良大地","Hiroki Tokodani":  "床田寬樹",
-    "Aren Kurisato":     "九里亞蓮", "Aaron Hahn":       "漢恩",
-    # NPB — 橫濱DeNA海星
-    "Katsuki Azuma":     "東克樹",   "Yutaro Ishida":    "石田裕太郎",
-    "Shinichi Onuki":    "大貫晉一", "Graeme Stinson":   "傑克森",
-    "Griffin":           "葛瑞芬",
-    # NPB — 養樂多燕子
-    "Yasuhiro Ogawa":    "小川泰弘", "Keiji Takahashi":  "高橋奎二",
-    "Tylor Megill":      "賽斯尼德", "Kojiro Yoshimura": "吉村貢司郎",
-    # NPB — 中日龍
-    "Yudai Ono":         "大野雄大", "Hiroya Yanagi":    "柳裕也",
-    "Miguel Mejia":      "梅希亞",   "Hideaki Wakui":    "涌井秀章",
-    # NPB — 福岡軟銀鷹
-    "Livan Moinelo":     "莫伊內羅", "Kohei Arihara":    "有原航平",
-    "Takahiro Higashihama": "東濱巨","Bryce Montes de Oca": "史都華特二世",
-    "Drew Steckenrider": "史都華特二世",
-    # NPB — 歐力士水牛
-    "Shunpeita Yamashita": "山下舜平太","Daiki Tajima":  "田嶋大樹",
-    "Hiroya Miyagi":     "宮城大彌", "Yohan Espinosa":   "艾斯皮諾薩",
-    # NPB — 東北樂天金鷹
-    "Takahisa Hayakawa": "早川隆久", "Takayuki Kishi":   "岸孝之",
-    "Cody Stashak":      "塔利",     "Masahiro Tanaka":  "田中將大",
-    # NPB — 千葉羅德水手
-    "Roki Sasaki":       "佐佐木朗希","Kazuya Ojima":    "小島和哉",
-    "Atsuki Taneichi":   "種市篤暉", "Cesar Vargas":     "梅賽德斯",
-    # NPB — 埼玉西武獅
-    "Mitsunari Takahashi": "高橋光成","Kaima Taira":     "平良海馬",
-    "Tatsuya Imai":      "今井達也",  "Bo Takahashi":    "寶高橋",
-    # NPB — 北海道火腿鬥士
-    "Hiromi Ito":        "伊藤大海", "Takayuki Kato":    "加藤貴之",
-    "Hisanori Kanemura": "金村尚真", "Gerson Bautista":  "馬丁尼斯",
-    # KBO — 三星雄獅
-    "Tae-In Won":        "元泰仁",   "Anderson Espinoza":"阿貝吉",
-    "Jae-Hyun Lee":      "李在現",   "Jeong-Hyeon Baek": "白正賢",
-    # KBO — LG雙子星
-    "Chan-Gyu Lim":      "林贊圭",   "Casey Kelly":      "凱利",
-    "Juyeong Son":       "孫柱榮",   "Austin Pruitt":    "普魯特科",
-    # KBO — 斗山熊
-    "Sean Fosse":        "佛雷斯特", "Geon-Hee Hong":    "洪建熙",
-    "Taek-Hyeong Kim":   "金澤亨",   "Seung-Jin Lee":    "李承珍",
-    # KBO — KT巫師
-    "Josh Breaux":       "班傑明",   "Joel Kuhnel":      "奎瓦斯",
-    "Young-Pyo Ko":      "高英杓",   "Ryan Weiss":       "威爾克森",
-    # KBO — SSG藍德
-    "Kwang-Hyun Kim":    "金廣鉉",   "Jong-Hoon Park":   "朴鐘勳",
-    "Edward Cabrera":    "羅薩里奧", "Won-Seok Oh":      "吳源石",
-    # KBO — NC恐龍
-    "Drew Rucinski":     "魯欽斯基", "Min-Hyeok Shin":   "申敏爀",
-    "Jiovanni Mier":     "費迪",     "Chang-Mo Koo":     "具昌模",
-    # KBO — KIA老虎
-    "Hyeon-Jong Yang":   "梁鉉種",   "Cionel Perez":     "納夫",
-    "Eui-Li Lee":        "李義利",   "Young-Cheol Yoon": "尹永哲",
-    # KBO — 釜山樂天
-    "Logan Allen":       "格洛弗",   "Drew Strahm":      "史特萊利",
-    "Se-Ung Park":       "朴世雄",   "Hyeon-Ho Kang":    "姜賢浩",
-    # KBO — 韓華老鷹
-    "Hyun-Jin Ryu":      "柳賢振",   "Dong-Ju Moon":     "文東柱",
-    "Andrew Chafin":     "卡特",     "Chad Bell":        "查德貝爾",
-    # KBO — 基咖英雄
-    "Woo-Jin Ahn":       "安祐真",   "Young-Min Ha":     "河榮敏",
-    "Freddy Tarnok":     "埃雷迪亞", "Seon-Gi Kim":      "金善紀",
-}
-
-
-def _translate_mlb_pitcher(en_name: str) -> str:
-    """MLB Stats API 英文姓名 → 中文名（找不到則原樣回傳）"""
-    return _MLB_PITCHER_EN_TO_ZH.get(en_name.strip(), en_name.strip())
 
 
 def _yahoo_team_code(text: str) -> str:
