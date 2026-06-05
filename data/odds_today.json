@@ -1,14 +1,14 @@
 {
   "game_date": "2026-06-05",
-  "updated_at": "2026-06-05 08:38",
+  "updated_at": "2026-06-05 09:27",
   "source": "The Odds API (KBO)",
   "odds": {
     "KWH-DSB": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.51,
-      "curr_home_odds": 1.54,
-      "open_away_odds": 2.51,
-      "open_home_odds": 1.54,
+      "curr_away_odds": 2.47,
+      "curr_home_odds": 1.55,
+      "open_away_odds": 2.47,
+      "open_home_odds": 1.55,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -17,7 +17,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.78,
+      "vig_pct": 5.0,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -25,10 +25,10 @@
     },
     "HWE-LTG": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.51,
-      "curr_home_odds": 2.58,
-      "open_away_odds": 1.51,
-      "open_home_odds": 2.58,
+      "curr_away_odds": 1.59,
+      "curr_home_odds": 2.38,
+      "open_away_odds": 1.59,
+      "open_home_odds": 2.38,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -37,7 +37,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.98,
+      "vig_pct": 4.91,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -45,10 +45,10 @@
     },
     "KTW-SSG": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.23,
-      "curr_home_odds": 1.67,
-      "open_away_odds": 2.23,
-      "open_home_odds": 1.67,
+      "curr_away_odds": 2.24,
+      "curr_home_odds": 1.66,
+      "open_away_odds": 2.24,
+      "open_home_odds": 1.66,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -57,7 +57,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.72,
+      "vig_pct": 4.88,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -65,10 +65,10 @@
     },
     "SSL-KIA": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 2.21,
-      "curr_home_odds": 1.68,
-      "open_away_odds": 2.21,
-      "open_home_odds": 1.68,
+      "curr_away_odds": 2.17,
+      "curr_home_odds": 1.7,
+      "open_away_odds": 2.17,
+      "open_home_odds": 1.7,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -77,7 +77,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.77,
+      "vig_pct": 4.91,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -85,10 +85,10 @@
     },
     "LGT-NCD": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.99,
-      "curr_home_odds": 1.83,
-      "open_away_odds": 1.99,
-      "open_home_odds": 1.83,
+      "curr_away_odds": 1.98,
+      "curr_home_odds": 1.84,
+      "open_away_odds": 1.98,
+      "open_home_odds": 1.84,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -97,7 +97,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.9,
+      "vig_pct": 4.85,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
