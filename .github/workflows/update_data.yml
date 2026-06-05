@@ -46,7 +46,29 @@ jobs:
       - name: Install dependencies
         run: pip install requests beautifulsoup4 lxml
 
-      # 4. 抓投手成績 + 賽程（失敗繼續，fallback 到 mock）
+      # 4. 先測試網路可達性（方便 debug 哪個來源能用）
+      - name: Network reachability check
+        run: |
+          python - <<'PYEOF'
+          import urllib.request, ssl
+          ctx = ssl.create_default_context()
+          sites = [
+              ("MyKBO Stats",          "https://mykbostats.com/schedule"),
+              ("Yahoo Japan Baseball", "https://baseball.yahoo.co.jp/npb/schedule/"),
+              ("ESPN NPB jlb",         "https://site.api.espn.com/apis/site/v2/sports/baseball/jlb/scoreboard"),
+              ("The Odds API",         "https://api.the-odds-api.com/v4/sports"),
+          ]
+          for name, url in sites:
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent":"Mozilla/5.0"})
+                  with urllib.request.urlopen(req, timeout=8, context=ctx) as r:
+                      print(f"✅ {name}: HTTP {r.status}")
+              except Exception as e:
+                  print(f"❌ {name}: {str(e)[:80]}")
+          PYEOF
+        continue-on-error: true
+
+      # 5. 抓投手成績 + 賽程（失敗繼續，fallback 到 mock）
       - name: Scrape pitcher stats & schedule
         if: ${{ !inputs.skip_stats }}
         run: |
@@ -58,7 +80,7 @@ jobs:
           PYTHONUNBUFFERED: '1'
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
 
-      # 5. 抓賠率（有設定 ODDS_API_KEY 才跑）
+      # 6. 抓賠率（有設定 ODDS_API_KEY 才跑）
       - name: Scrape odds
         run: |
           if [ -z "$ODDS_API_KEY" ]; then

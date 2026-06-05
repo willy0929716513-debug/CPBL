@@ -1,10 +1,11 @@
 """
 V8 Stats Scraper — 多來源投手數據抓取器 (NPB / KBO)
 
-優先順序：
-  1. ESPN 非官方 API （免費、JSON、不需金鑰、不擋 GH Actions）
-     NPB: /baseball/jlb/  KBO: /baseball/kor/
-  2. 從已抓到的 K/BB/HR/IP 自動計算 FIP / K% / BB%
+先發投手抓取優先順序：
+  1. MyKBO Stats (mykbostats.com)   — KBO 先發，英文，最準確
+  2. Yahoo Japan Baseball           — NPB 先發，日文名自動轉中文
+  3. ESPN jlb/kor                   — 補漏，probables 不穩定
+  4. The Odds API /events           — 保底（有賽程，無先發）
 
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
   NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
@@ -639,33 +640,465 @@ def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
 
 
 def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
-    """多來源賽程：ESPN → ESPN Web → MLB Stats API → The Odds API /events"""
-    # 1. ESPN (primary)
-    games = fetch_espn_schedule(game_date)
-    if games:
-        log.info("Schedule from ESPN: %d games", len(games))
-        return games
+    """
+    多來源賽程（含先發投手），優先順序：
+      1. MyKBO Stats  → KBO 先發（英文，GitHub Actions 可達）
+      2. Yahoo Japan  → NPB 先發（日文，GitHub Actions 可達）
+      3. ESPN jlb/kor → 作為補漏（有時含 probables）
+      4. ESPN Web API → 備援
+      5. MLB Stats API（通常被擋）
+      6. The Odds API /events → 最終保底（有賽程，無先發）
+    合併 KBO + NPB 結果後回傳。
+    """
+    games_kbo: list[dict] = []
+    games_npb: list[dict] = []
 
-    # 2. ESPN web API (different subdomain)
-    games = fetch_espn_web_schedule(game_date)
-    if games:
-        log.info("Schedule from ESPN web: %d games", len(games))
-        return games
+    # 1. MyKBO Stats — KBO 先發最準確的英文來源
+    try:
+        games_kbo = fetch_mykbo_schedule(game_date)
+        if games_kbo:
+            log.info("Schedule KBO from MyKBO Stats: %d games", len(games_kbo))
+    except Exception as e:
+        log.debug("MyKBO schedule failed: %s", e)
 
-    # 3. MLB Stats API (statsapi.mlb.com, covers NPB/KBO international leagues)
-    games = fetch_mlbstats_schedule(game_date)
-    if games:
-        log.info("Schedule from MLB Stats API: %d games", len(games))
-        return games
+    # 2. Yahoo Japan Baseball — NPB 先發
+    try:
+        games_npb = fetch_yahoo_npb_schedule(game_date)
+        if games_npb:
+            log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
+    except Exception as e:
+        log.debug("Yahoo Japan NPB schedule failed: %s", e)
 
-    # 4. The Odds API /events (free, no quota cost) — works from GH Actions
-    games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
-    if games:
-        log.info("Schedule from Odds API events: %d games", len(games))
-        return games
+    # 如果兩個專業來源都成功，直接合併回傳
+    if games_kbo and games_npb:
+        return games_kbo + games_npb
 
-    log.warning("All schedule sources failed for %s", game_date)
+    # 3. ESPN jlb/kor（有時含 probables，可補充缺失聯盟）
+    espn_games = fetch_espn_schedule(game_date)
+    if espn_games:
+        log.info("Schedule from ESPN: %d games", len(espn_games))
+        # 用 ESPN 補充缺失的聯盟
+        if not games_kbo:
+            games_kbo = [g for g in espn_games if g.get("league") == "KBO"]
+        if not games_npb:
+            games_npb = [g for g in espn_games if g.get("league") == "NPB"]
+
+    if games_kbo or games_npb:
+        if games_kbo and games_npb:
+            return games_kbo + games_npb
+
+    # 4. ESPN Web API
+    web_games = fetch_espn_web_schedule(game_date)
+    if web_games:
+        log.info("Schedule from ESPN web: %d games", len(web_games))
+        if not games_kbo:
+            games_kbo = [g for g in web_games if g.get("league") == "KBO"]
+        if not games_npb:
+            games_npb = [g for g in web_games if g.get("league") == "NPB"]
+
+    if games_kbo or games_npb:
+        if games_kbo and games_npb:
+            return games_kbo + games_npb
+
+    # 5. MLB Stats API（通常從 GH Actions 被擋，但試試無妨）
+    mlb_games = fetch_mlbstats_schedule(game_date)
+    if mlb_games:
+        log.info("Schedule from MLB Stats API: %d games", len(mlb_games))
+        all_games = (games_kbo or []) + (games_npb or []) + mlb_games
+        return all_games
+
+    # 6. The Odds API /events — 保底（有賽程但無先發）
+    odds_games = fetch_odds_api_schedule(game_date, api_key=odds_api_key)
+    if odds_games:
+        log.info("Schedule from Odds API events: %d games", len(odds_games))
+        # 合併已取得的聯盟資料 + Odds API 補漏
+        existing_ids = {g["game_id"] for g in (games_kbo + games_npb)}
+        extras = [g for g in odds_games if g["game_id"] not in existing_ids]
+        return games_kbo + games_npb + extras
+
+    result = games_kbo + games_npb
+    if not result:
+        log.warning("All schedule sources failed for %s", game_date)
+    return result
+
+
+# ── MyKBO Stats — KBO 先發投手 ────────────────────────────────────────────────
+
+_MYKBO_TEAM_MAP = {
+    # 英文全名 → 內部代碼
+    "samsung lions":  "SSL", "samsung":  "SSL",
+    "lg twins":       "LGT", "lg twins": "LGT",
+    "doosan bears":   "DSB", "doosan":   "DSB",
+    "kt wiz":         "KTW", "kt":       "KTW",
+    "ssg landers":    "SSG", "ssg":      "SSG",
+    "nc dinos":       "NCD", "nc":       "NCD",
+    "kia tigers":     "KIA", "kia":      "KIA",
+    "lotte giants":   "LTG", "lotte":    "LTG",
+    "hanwha eagles":  "HWE", "hanwha":   "HWE",
+    "kiwoom heroes":  "KWH", "kiwoom":   "KWH",
+}
+
+_MYKBO_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://mykbostats.com/",
+}
+
+
+def _mykbo_team_code(name: str) -> str:
+    n = name.lower().strip()
+    for k, v in _MYKBO_TEAM_MAP.items():
+        if k in n or n in k:
+            return v
+    return ""
+
+
+def fetch_mykbo_schedule(game_date: date) -> list[dict]:
+    """
+    mykbostats.com 抓今日 KBO 賽程與預計先發投手。
+    URL: https://mykbostats.com/schedule/YYYY-MM-DD
+    """
+    date_str = game_date.isoformat()
+    urls = [
+        f"https://mykbostats.com/schedule/{date_str}",
+        f"https://mykbostats.com/schedule?date={date_str}",
+        "https://mykbostats.com/schedule",
+    ]
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=_MYKBO_HEADERS, timeout=15)
+            if resp.status_code == 403:
+                log.debug("MyKBO 403 for %s", url)
+                continue
+            if resp.status_code != 200:
+                log.debug("MyKBO HTTP %s for %s", resp.status_code, url)
+                continue
+            games = _parse_mykbo_html(resp.text, date_str)
+            if games:
+                log.info("MyKBO: parsed %d KBO games from %s", len(games), url)
+                return games
+        except Exception as e:
+            log.debug("MyKBO fetch %s: %s", url, e)
     return []
+
+
+def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
+    """解析 mykbostats.com 賽程頁面，提取先發投手。"""
+    soup  = BeautifulSoup(html, "html.parser")
+    games = []
+
+    # 嘗試各種可能的 CSS 結構
+    # Pattern A: game cards / rows with team and pitcher info
+    for container in soup.select(
+        ".game-card, .schedule-game, .game-row, "
+        "[class*='game'], [class*='match'], [class*='schedule']"
+    ):
+        text = container.get_text(" ", strip=True)
+        # 找隊名
+        team_els = container.select(
+            ".team-name, .team, [class*='team'], "
+            "a[href*='/teams/'], span[class*='name']"
+        )
+        teams = [el.get_text(strip=True) for el in team_els if el.get_text(strip=True)]
+        if len(teams) < 2:
+            continue
+        away_code = _mykbo_team_code(teams[0])
+        home_code = _mykbo_team_code(teams[-1])
+        if not away_code or not home_code or away_code == home_code:
+            continue
+
+        # 找先發投手
+        pitcher_els = container.select(
+            ".pitcher, .sp, .starter, [class*='pitcher'], "
+            "[class*='starter'], [class*='probable']"
+        )
+        pitchers = [el.get_text(strip=True) for el in pitcher_els
+                    if el.get_text(strip=True) and len(el.get_text(strip=True)) > 2]
+
+        away_pitcher = pitchers[0] if len(pitchers) > 0 else ""
+        home_pitcher = pitchers[1] if len(pitchers) > 1 else ""
+
+        # 比賽時間
+        time_el = container.select_one(
+            ".game-time, .time, [class*='time'], [class*='start']"
+        )
+        game_time = ""
+        if time_el:
+            t = time_el.get_text(strip=True)
+            m = re.search(r"(\d{1,2}:\d{2})", t)
+            if m:
+                game_time = m.group(1)
+
+        games.append({
+            "game_id":      f"{date_str}-{away_code}-{home_code}",
+            "date":         date_str,
+            "time":         game_time,
+            "away":         away_code,
+            "away_name":    teams[0],
+            "home":         home_code,
+            "home_name":    teams[-1],
+            "venue":        "",
+            "league":       "KBO",
+            "status":       "預定",
+            "away_score":   None,
+            "home_score":   None,
+            "away_pitcher": away_pitcher,
+            "home_pitcher": home_pitcher,
+            "_source":      "mykbo",
+        })
+
+    # Pattern B: 表格結構（行 = 一場比賽）
+    if not games:
+        for row in soup.select("table tr, tbody tr"):
+            cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if len(cells) < 4:
+                continue
+            # 嘗試找隊名欄位
+            away_code = home_code = ""
+            for c in cells:
+                code = _mykbo_team_code(c)
+                if code and not away_code:
+                    away_code = code
+                elif code and code != away_code:
+                    home_code = code
+                    break
+            if not away_code or not home_code:
+                continue
+            games.append({
+                "game_id":      f"{date_str}-{away_code}-{home_code}",
+                "date":         date_str,
+                "time":         "",
+                "away":         away_code,
+                "away_name":    "",
+                "home":         home_code,
+                "home_name":    "",
+                "venue":        "",
+                "league":       "KBO",
+                "status":       "預定",
+                "away_score":   None,
+                "home_score":   None,
+                "away_pitcher": "",
+                "home_pitcher": "",
+                "_source":      "mykbo_table",
+            })
+
+    return games
+
+
+# ── Yahoo Japan Baseball — NPB 先發投手 ───────────────────────────────────────
+
+_YAHOO_JP_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.8,en;q=0.6",
+    "Referer": "https://baseball.yahoo.co.jp/",
+}
+
+# 日職隊名 (Yahoo Japan 日文) → 內部代碼
+_YAHOO_NPB_TEAM_MAP = {
+    "巨人":       "GNT", "読売":    "GNT", "読売ジャイアンツ": "GNT",
+    "阪神":       "HNS", "タイガース": "HNS",
+    "広島":       "HRC", "カープ":  "HRC",
+    "ＤｅＮＡ":  "YDB", "DeNA":   "YDB", "ベイスターズ": "YDB",
+    "ヤクルト":   "YKL", "スワローズ": "YKL",
+    "中日":       "CND", "ドラゴンズ": "CND",
+    "ソフトバンク": "SBH", "ホークス": "SBH", "福岡": "SBH",
+    "オリックス": "ORX", "バファローズ": "ORX",
+    "楽天":       "RKT", "イーグルス": "RKT",
+    "ロッテ":     "LTT", "マリーンズ": "LTT",
+    "西武":       "SEI", "ライオンズ": "SEI",
+    "日本ハム":   "HAM", "ファイターズ": "HAM",
+}
+
+# 投手日文名 → 中文名（我們 PITCHERS 使用的中文名）
+_JP_PITCHER_NAME_MAP = {
+    # GNT
+    "菅野智之": "菅野智之", "戸郷翔征": "戶鄉翔征", "グリフィン": "葛瑞芬",
+    "赤星優志": "赤星優志",
+    # HNS
+    "才木浩人": "才木浩人", "村上頌樹": "村上頌樹", "西勇輝": "西勇輝",
+    "ビーズリー": "比茲利",
+    # HRC
+    "大瀬良大地": "大瀨良大地", "床田寛樹": "床田寬樹", "九里亜蓮": "九里亞蓮",
+    "ハーン": "漢恩",
+    # YDB
+    "東克樹": "東克樹", "石田裕太郎": "石田裕太郎", "大貫晋一": "大貫晉一",
+    "ジャクソン": "傑克森",
+    # YKL
+    "小川泰弘": "小川泰弘", "高橋奎二": "高橋奎二", "サイスニード": "賽斯尼德",
+    "吉村貢司郎": "吉村貢司郎",
+    # CND
+    "大野雄大": "大野雄大", "柳裕也": "柳裕也", "メヒア": "梅希亞",
+    "涌井秀章": "涌井秀章",
+    # SBH
+    "モイネロ": "莫伊內羅", "有原航平": "有原航平", "東浜巨": "東濱巨",
+    "スチュワート・ジュニア": "史都華特二世",
+    # ORX
+    "山下舜平大": "山下舜平太", "田嶋大樹": "田嶋大樹", "宮城大弥": "宮城大彌",
+    "エスピノーザ": "艾斯皮諾薩",
+    # RKT
+    "早川隆久": "早川隆久", "岸孝之": "岸孝之", "ターリー": "塔利",
+    "田中将大": "田中將大",
+    # LTT
+    "佐々木朗希": "佐佐木朗希", "小島和哉": "小島和哉", "種市篤暉": "種市篤暉",
+    "メルセデス": "梅賽德斯",
+    # SEI
+    "高橋光成": "高橋光成", "平良海馬": "平良海馬", "今井達也": "今井達也",
+    "ボー・タカハシ": "寶高橋",
+    # HAM
+    "伊藤大海": "伊藤大海", "加藤貴之": "加藤貴之", "金村尚真": "金村尚真",
+    "マルティネス": "馬丁尼斯",
+}
+
+
+def _yahoo_team_code(text: str) -> str:
+    t = text.strip()
+    for k, v in _YAHOO_NPB_TEAM_MAP.items():
+        if k in t:
+            return v
+    return ""
+
+
+def _translate_jp_pitcher(jp_name: str) -> str:
+    """日文投手名 → 我們使用的中文名（找不到則原樣回傳）"""
+    return _JP_PITCHER_NAME_MAP.get(jp_name.strip(), jp_name.strip())
+
+
+def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
+    """
+    baseball.yahoo.co.jp 抓今日 NPB 賽程與先發投手。
+    URL: https://baseball.yahoo.co.jp/npb/schedule/
+    """
+    date_str = game_date.isoformat()
+    y, m, d  = game_date.year, game_date.month, game_date.day
+    urls = [
+        f"https://baseball.yahoo.co.jp/npb/schedule/{y:04d}{m:02d}{d:02d}/",
+        f"https://baseball.yahoo.co.jp/npb/schedule/?date={y:04d}{m:02d}{d:02d}",
+        "https://baseball.yahoo.co.jp/npb/schedule/",
+    ]
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
+            if resp.status_code == 403:
+                log.debug("Yahoo Japan NPB 403 for %s", url)
+                continue
+            if resp.status_code != 200:
+                log.debug("Yahoo Japan NPB HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            games = _parse_yahoo_npb_html(resp.text, date_str)
+            if games:
+                log.info("Yahoo Japan NPB: parsed %d games from %s", len(games), url)
+                return games
+        except Exception as e:
+            log.debug("Yahoo Japan NPB fetch %s: %s", url, e)
+    return []
+
+
+def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
+    """解析 baseball.yahoo.co.jp 賽程 HTML，提取先發投手。"""
+    soup  = BeautifulSoup(html, "html.parser")
+    games = []
+
+    # Yahoo Japan NPB 賽程：通常每場比賽是一個 table 或 li 區塊
+    # 常見 CSS class: bb-score, bb-score__team, bb-score__pitcher
+    for container in soup.select(
+        ".bb-score, .bb-score__container, "
+        "[class*='score'], [class*='game'], [class*='match']"
+    ):
+        # 隊名
+        team_els = container.select(
+            ".bb-score__team-name, .team-name, [class*='team']"
+        )
+        team_texts = [el.get_text(strip=True) for el in team_els
+                      if el.get_text(strip=True)]
+        if len(team_texts) < 2:
+            # 嘗試從 abbr 或 alt 屬性取名
+            imgs = container.find_all("img", alt=True)
+            team_texts = [img["alt"] for img in imgs if _yahoo_team_code(img["alt"])]
+
+        away_code = home_code = ""
+        for t in team_texts:
+            code = _yahoo_team_code(t)
+            if code and not away_code:
+                away_code = code
+            elif code and code != away_code:
+                home_code = code
+                break
+        if not away_code or not home_code:
+            continue
+
+        # 先發投手
+        pitcher_els = container.select(
+            ".bb-score__pitcher, .pitcher, [class*='pitcher'], "
+            "[class*='starter'], [class*='sp']"
+        )
+        pitchers = [el.get_text(strip=True) for el in pitcher_els
+                    if el.get_text(strip=True) and len(el.get_text(strip=True)) > 1]
+        away_pitcher = _translate_jp_pitcher(pitchers[0]) if len(pitchers) > 0 else ""
+        home_pitcher = _translate_jp_pitcher(pitchers[1]) if len(pitchers) > 1 else ""
+
+        # 比賽時間
+        time_el = container.select_one("[class*='time'], [class*='start']")
+        game_time = ""
+        if time_el:
+            m2 = re.search(r"(\d{1,2}:\d{2})", time_el.get_text())
+            if m2:
+                game_time = m2.group(1)
+
+        games.append({
+            "game_id":      f"{date_str}-{away_code}-{home_code}",
+            "date":         date_str,
+            "time":         game_time,
+            "away":         away_code,
+            "away_name":    team_texts[0] if team_texts else away_code,
+            "home":         home_code,
+            "home_name":    team_texts[-1] if len(team_texts) > 1 else home_code,
+            "venue":        "",
+            "league":       "NPB",
+            "status":       "預定",
+            "away_score":   None,
+            "home_score":   None,
+            "away_pitcher": away_pitcher,
+            "home_pitcher": home_pitcher,
+            "_source":      "yahoo_jp",
+        })
+
+    # Pattern B: 通用 table 解析（Yahoo Japan 有時用 table 排列）
+    if not games:
+        for row in soup.select("tr"):
+            cells = row.find_all(["td", "th"])
+            if len(cells) < 3:
+                continue
+            cell_texts = [c.get_text(strip=True) for c in cells]
+            codes = [_yahoo_team_code(t) for t in cell_texts if _yahoo_team_code(t)]
+            if len(codes) >= 2 and codes[0] != codes[1]:
+                games.append({
+                    "game_id":      f"{date_str}-{codes[0]}-{codes[1]}",
+                    "date":         date_str,
+                    "time":         "",
+                    "away":         codes[0],
+                    "away_name":    "",
+                    "home":         codes[1],
+                    "home_name":    "",
+                    "venue":        "",
+                    "league":       "NPB",
+                    "status":       "預定",
+                    "away_score":   None,
+                    "home_score":   None,
+                    "away_pitcher": "",
+                    "home_pitcher": "",
+                    "_source":      "yahoo_jp_table",
+                })
+
+    return games
 
 
 # 删除舊的 CPBL 官網函數，保留 stub 避免 import 錯誤
