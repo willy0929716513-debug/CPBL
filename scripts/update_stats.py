@@ -738,7 +738,7 @@ def _parse_json_pitchers(data) -> dict:
 
 def scrape_schedule(year: int, months: list[int], session: requests.Session) -> list:
     """從 ESPN API 抓 NPB + KBO 滾動日期窗口的賽程（昨天 ~ 14 天後）。"""
-    from cpbl.stats_scraper import fetch_espn_schedule
+    from cpbl.stats_scraper import fetch_schedule_multi
     import datetime
 
     all_games = []
@@ -748,7 +748,7 @@ def scrape_schedule(year: int, months: list[int], session: requests.Session) -> 
 
     current = start
     while current <= end:
-        games = fetch_espn_schedule(current)
+        games = fetch_schedule_multi(current)
         all_games.extend(games)
         time.sleep(0.3)
         current += datetime.timedelta(days=1)
