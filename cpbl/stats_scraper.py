@@ -8,7 +8,8 @@ NPB/KBO 自成獨立體系，完全不依賴 MLB 任何 API。
   KBO: koreabaseball.com 官方 → Naver Sports KBO
   保底: The Odds API /events — 有賽程，無先發
 
-ESPN 已移除：不提供 NPB/KBO 的先發投手資料。
+ESPN 保底：KBO (kor) / NPB (jlb) scoreboard API 提供 probables 先發資料，無需 API key，
+  GH Actions 可達。作為 HTML 來源的最終保底使用。
 
 FIP 公式：FIP = (13×HR + 3×(BB+HBP) - 2×K) / IP + FIP_C
   NPB FIP_C ≈ 3.20  KBO FIP_C ≈ 3.60
@@ -763,6 +764,54 @@ def fetch_espn_kbo_pitchers(game_date: date) -> dict[str, tuple]:
     return result
 
 
+def fetch_espn_npb_pitchers(game_date: date) -> dict[str, tuple]:
+    """
+    ESPN NPB (jlb) scoreboard API 取得確認先發投手。
+    無需 API key，不受 WAF 封鎖，GH Actions 可達。
+
+    Returns: dict of game_id → (away_pitcher_zh, home_pitcher_zh)
+    Empty strings if pitcher not announced or not in our name map.
+    """
+    date_str = game_date.strftime("%Y%m%d")
+    url = f"{BASE_ESPN_NPB}/scoreboard?dates={date_str}"
+    result: dict[str, tuple] = {}
+    try:
+        resp = requests.get(url, headers=_HEADERS, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        for ev in data.get("events", []):
+            comps = ev.get("competitions", [{}])[0]
+            competitors = comps.get("competitors", [])
+            if len(competitors) < 2:
+                continue
+            home_c = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+            away_c = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+
+            home_name = home_c.get("team", {}).get("displayName", "")
+            away_name = away_c.get("team", {}).get("displayName", "")
+            home_code = _NPB_TEAM_MAP.get(home_name, "")
+            away_code = _NPB_TEAM_MAP.get(away_name, "")
+            if not home_code or not away_code:
+                continue
+
+            away_en = _espn_starter(away_c)
+            home_en = _espn_starter(home_c)
+
+            away_zh = _NPB_PITCHER_EN_MAP.get(away_en, away_en) if away_en else ""
+            home_zh = _NPB_PITCHER_EN_MAP.get(home_en, home_en) if home_en else ""
+
+            gid = f"{game_date.isoformat()}-{away_code}-{home_code}"
+            result[gid] = (away_zh, home_zh)
+
+        if result:
+            log.info("ESPN NPB pitchers: enriched %d games", len(result))
+        else:
+            log.debug("ESPN NPB: scoreboard returned no pitcher data for %s", game_date)
+    except Exception as e:
+        log.debug("ESPN NPB pitchers fetch failed: %s", e)
+    return result
+
+
 def fetch_odds_api_schedule(game_date: date, api_key: str = "") -> list[dict]:
     """
     The Odds API /events 端點（免費，不扣額度）取得 NPB/KBO 賽程。
@@ -929,6 +978,22 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
                         g["home_pitcher"] = home_p
         except Exception as e:
             log.debug("ESPN KBO pitcher enrichment failed: %s", e)
+
+    # 5. ESPN NPB pitcher enrichment — fills in pitchers still missing after Yahoo Japan
+    npb_missing = [g for g in games_npb if not g.get("away_pitcher") or not g.get("home_pitcher")]
+    if npb_missing:
+        try:
+            espn_npb_pitchers = fetch_espn_npb_pitchers(game_date)
+            for g in games_npb:
+                info = espn_npb_pitchers.get(g["game_id"])
+                if info:
+                    away_p, home_p = info
+                    if away_p and not g.get("away_pitcher"):
+                        g["away_pitcher"] = away_p
+                    if home_p and not g.get("home_pitcher"):
+                        g["home_pitcher"] = home_p
+        except Exception as e:
+            log.debug("ESPN NPB pitcher enrichment failed: %s", e)
 
     result = games_kbo + games_npb
     if not result:
@@ -1292,6 +1357,62 @@ _KBO_PITCHER_EN_MAP: dict[str, str] = {
     "An Woo-Jin": "安祐真", "Woo-Jin An": "安祐真",
     "Ha Yeong-Min": "河榮敏",
     "Kim Seon-Gi": "金善紀",
+}
+
+# ESPN 英文 displayName → 中文名（ESPN NPB jlb scoreboard API）
+_NPB_PITCHER_EN_MAP: dict[str, str] = {
+    # GNT 讀賣巨人
+    "Tomoyuki Sugano": "菅野智之", "Sugano Tomoyuki": "菅野智之",
+    "Shoki Togo": "戶鄉翔征", "Togo Shoki": "戶鄉翔征",
+    "Yuji Akahoshi": "赤星優志", "Akahoshi Yuji": "赤星優志",
+    # HNS 阪神虎
+    "Hiroto Saiki": "才木浩人", "Saiki Hiroto": "才木浩人",
+    "Shoki Murakami": "村上頌樹", "Murakami Shoki": "村上頌樹",
+    "Yuki Nishi": "西勇輝", "Nishi Yuki": "西勇輝",
+    # HRC 廣島鯉魚
+    "Daichi Osera": "大瀨良大地", "Osera Daichi": "大瀨良大地",
+    "Hiroki Tokoda": "床田寬樹", "Tokoda Hiroki": "床田寬樹",
+    "Aren Kuri": "九里亞蓮", "Kuri Aren": "九里亞蓮",
+    # YDB 橫濱DeNA海星
+    "Katsuki Azuma": "東克樹", "Azuma Katsuki": "東克樹",
+    "Yutaro Ishida": "石田裕太郎", "Ishida Yutaro": "石田裕太郎",
+    "Shinichi Onuki": "大貫晉一", "Onuki Shinichi": "大貫晉一",
+    # YKL 養樂多燕子
+    "Yasuhiro Ogawa": "小川泰弘", "Ogawa Yasuhiro": "小川泰弘",
+    "Keiji Takahashi": "高橋奎二", "Takahashi Keiji": "高橋奎二",
+    "Cy Sneed": "賽斯尼德",
+    "Kojiro Yoshimura": "吉村貢司郎", "Yoshimura Kojiro": "吉村貢司郎",
+    # CND 中日龍
+    "Yudai Ohno": "大野雄大", "Ohno Yudai": "大野雄大",
+    "Hiroya Yanagi": "柳裕也", "Yanagi Hiroya": "柳裕也",
+    "Hideaki Wakui": "涌井秀章", "Wakui Hideaki": "涌井秀章",
+    # SBH 福岡軟銀鷹
+    "Livan Moinelo": "莫伊內羅", "Moinelo Livan": "莫伊內羅",
+    "Kohei Arihara": "有原航平", "Arihara Kohei": "有原航平",
+    "Brock Stewart": "史都華特二世",
+    "Masaru Higashihama": "東濱巨", "Higashihama Masaru": "東濱巨",
+    # ORX 歐力士水牛
+    "Shunpeita Yamashita": "山下舜平太", "Yamashita Shunpeita": "山下舜平太",
+    "Daiki Tajima": "田嶋大樹", "Tajima Daiki": "田嶋大樹",
+    "Daiya Miyagi": "宮城大彌", "Miyagi Daiya": "宮城大彌",
+    # RKT 東北樂天金鷹
+    "Takahisa Hayakawa": "早川隆久", "Hayakawa Takahisa": "早川隆久",
+    "Takayuki Kishi": "岸孝之", "Kishi Takayuki": "岸孝之",
+    "Masahiro Tanaka": "田中將大", "Tanaka Masahiro": "田中將大",
+    # LTT 千葉羅德水手
+    "Roki Sasaki": "佐佐木朗希", "Sasaki Roki": "佐佐木朗希",
+    "Kazuya Ojima": "小島和哉", "Ojima Kazuya": "小島和哉",
+    "Atsuki Taneichi": "種市篤暉", "Taneichi Atsuki": "種市篤暉",
+    # SEI 埼玉西武獅
+    "Kosei Takahashi": "高橋光成", "Takahashi Kosei": "高橋光成",
+    "Kaima Taira": "平良海馬", "Taira Kaima": "平良海馬",
+    "Tatsuya Imai": "今井達也", "Imai Tatsuya": "今井達也",
+    "Bo Takahashi": "寶高橋",
+    # HAM 北海道火腿鬥士
+    "Hiromi Ito": "伊藤大海", "Ito Hiromi": "伊藤大海",
+    "Takayuki Kato": "加藤貴之", "Kato Takayuki": "加藤貴之",
+    "Shouma Kanemura": "金村尚真", "Kanemura Shouma": "金村尚真",
+    "Elio Martinez": "馬丁尼斯",
 }
 
 
