@@ -535,10 +535,9 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
     date_str = game_date.isoformat()
     y, m, d  = game_date.year, game_date.month, game_date.day
 
-    # 1. koreabaseball.com 官方網站
+    # 1. koreabaseball.com 官方網站（只用帶日期的 URL，避免無日期版本永遠回傳今天賽程）
     kbo_urls = [
         f"https://www.koreabaseball.com/Schedule/Schedule.aspx?leId=1&srId=0&date={y:04d}{m:02d}{d:02d}",
-        f"https://www.koreabaseball.com/Schedule/Schedule.aspx",
     ]
     for url in kbo_urls:
         try:
@@ -716,64 +715,114 @@ def _enrich_kbo_pitchers_from_html(soup_before_decompose, games: list[dict]) -> 
                 g["home_pitcher"] = zh
 
 
-def fetch_npb_official_pitchers(game_date: date, games: list[dict]) -> None:
+def fetch_npb_official_schedule(game_date: date) -> list[dict]:
     """
-    npb.jp 官方月賽程頁面取得先發投手並填入 games。
+    npb.jp 官方月賽程頁面取得指定日期的 NPB 賽程與先發投手。
 
     URL: https://npb.jp/games/{year}/schedule_{month:02d}_detail.html
-    使用與 Yahoo Japan 完全相同的 Phase 0/2 掃描法：
-    先掃 <script> 標籤（JS 資料常嵌在這裡），再掃文字節點，
-    透過 _JP_PITCHER_NAME_MAP 轉譯，再由 _NPB_PITCHER_TEAM 指派到比賽。
+    作為 Yahoo Japan 失敗時的 NPB 主要賽程備援來源。
+    同時提取先發投手（透過 _JP_PITCHER_NAME_MAP + _NPB_PITCHER_TEAM）。
     """
-    if not games:
-        return
+    date_str = game_date.isoformat()
     url = (f"https://npb.jp/games/{game_date.year}/"
            f"schedule_{game_date.month:02d}_detail.html")
     try:
         resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
         if resp.status_code != 200:
-            log.debug("NPB official HTTP %s for %s", resp.status_code, url)
-            return
+            log.warning("NPB official HTTP %s for %s", resp.status_code, url)
+            return []
         resp.encoding = resp.apparent_encoding or "utf-8"
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        sorted_keys = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
-        pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_keys) + ')')
-
+        # ── pitcher Phase 0: script tags ──────────────────────────────────
+        sorted_pk = sorted(_JP_PITCHER_NAME_MAP.keys(), key=len, reverse=True)
+        pitcher_pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_pk) + ')')
         found_zh: set[str] = set()
-
-        # Phase 0 — script tags before decompose
         for script in soup.find_all('script'):
-            for m in pat.finditer(script.get_text() or ""):
+            for m in pitcher_pat.finditer(script.get_text() or ""):
                 found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
-        if found_zh:
-            log.info("NPB official Phase-0: found %s", found_zh)
+
+        # ── team Phase 0.5: script tags ───────────────────────────────────
+        sorted_tk = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+        team_pat = re.compile('(' + '|'.join(re.escape(k) for k in sorted_tk) + ')')
+        team_codes_scripts: list[str] = []
+        for script in soup.find_all('script'):
+            for m in team_pat.finditer(script.get_text() or ""):
+                code = _YAHOO_NPB_TEAM_MAP[m.group()]
+                if not team_codes_scripts or team_codes_scripts[-1] != code:
+                    team_codes_scripts.append(code)
 
         for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
             tag.decompose()
 
-        # Phase 2 — text nodes
+        # ── team Phase 1: text nodes ──────────────────────────────────────
+        # npb.jp is server-rendered (not SPA); team names appear in static HTML.
+        # Narrow the scan to the target date's section using a kanji date anchor.
+        target_day_jp = f"{game_date.month}月{game_date.day}日"
+        in_target_section = False
+        codes_in_order: list[str] = list(team_codes_scripts)
+        for node in soup.find_all(string=True):
+            text = node.strip()
+            if not text:
+                continue
+            # Detect date section header (e.g. "6月5日" or "6月5日（木）")
+            if target_day_jp in text:
+                in_target_section = True
+            # Stop when we hit the NEXT date section
+            elif in_target_section and re.search(r'\d+月\d+日', text) and target_day_jp not in text:
+                break
+            if len(text) > 50:
+                continue
+            for m in team_pat.finditer(text):
+                code = _YAHOO_NPB_TEAM_MAP[m.group()]
+                if not codes_in_order or codes_in_order[-1] != code:
+                    codes_in_order.append(code)
+
+        # Pitcher Phase 2: text nodes
         for node in soup.find_all(string=True):
             text = node.strip()
             if not text or len(text) > 50:
                 continue
-            for m in pat.finditer(text):
+            for m in pitcher_pat.finditer(text):
                 found_zh.add(_JP_PITCHER_NAME_MAP[m.group()])
 
-        if not found_zh:
-            log.debug("NPB official: no pitcher names found for %s", game_date)
-            return
-        log.info("NPB official: found pitchers %s", found_zh)
+        if not codes_in_order:
+            log.warning("NPB official: no team codes found for %s in %s", game_date, url)
+            return []
 
-        for g in games:
-            for zh in found_zh:
-                team = _NPB_PITCHER_TEAM.get(zh, "")
+        games = _pair_team_codes(codes_in_order, date_str, "NPB", "npb_official")
+
+        # assign pitchers by team membership
+        for zh in found_zh:
+            team = _NPB_PITCHER_TEAM.get(zh, "")
+            for g in games:
                 if team == g["away"] and not g.get("away_pitcher"):
                     g["away_pitcher"] = zh
                 elif team == g["home"] and not g.get("home_pitcher"):
                     g["home_pitcher"] = zh
+
+        log.info("NPB official: %d games, pitchers found: %s", len(games), found_zh or "(none)")
+        return games
     except Exception as e:
         log.debug("NPB official fetch failed: %s", e)
+        return []
+
+
+def fetch_npb_official_pitchers(game_date: date, games: list[dict]) -> None:
+    """先發投手補強版：只填 games 裡缺少投手的欄位，不建立新 game 物件。"""
+    if not games:
+        return
+    enriched = fetch_npb_official_schedule(game_date)
+    if not enriched:
+        return
+    enriched_by_id = {g["game_id"]: g for g in enriched}
+    for g in games:
+        src = enriched_by_id.get(g["game_id"])
+        if src:
+            if src.get("away_pitcher") and not g.get("away_pitcher"):
+                g["away_pitcher"] = src["away_pitcher"]
+            if src.get("home_pitcher") and not g.get("home_pitcher"):
+                g["home_pitcher"] = src["home_pitcher"]
 
 
 def fetch_daum_kbo_pitchers(game_date: date, games: list[dict]) -> None:
@@ -959,16 +1008,28 @@ def fetch_schedule_multi(game_date: date, odds_api_key: str = "") -> list[dict]:
     games_kbo: list[dict] = []
     games_npb: list[dict] = []
 
-    # 1. NPB — Yahoo Japan Baseball（日期特定 URL，已確認 GH Actions 可達）
+    # 1. NPB — Yahoo Japan Baseball（日期特定 URL）
     try:
         yahoo_games = fetch_yahoo_npb_schedule(game_date)
         if yahoo_games:
             games_npb = yahoo_games
             log.info("Schedule NPB from Yahoo Japan: %d games", len(games_npb))
         else:
-            log.debug("Yahoo Japan NPB: no games for %s", game_date)
+            log.warning("Yahoo Japan NPB: 0 games for %s — trying npb.jp official", game_date)
     except Exception as e:
-        log.debug("Yahoo Japan NPB failed: %s", e)
+        log.warning("Yahoo Japan NPB exception: %s — trying npb.jp official", e)
+
+    # 1b. NPB fallback — npb.jp 官方月賽程（Yahoo Japan 失敗或回傳 0 場時觸發）
+    if not games_npb:
+        try:
+            official_games = fetch_npb_official_schedule(game_date)
+            if official_games:
+                games_npb = official_games
+                log.info("Schedule NPB from npb.jp official: %d games", len(games_npb))
+            else:
+                log.warning("npb.jp official also returned 0 games for %s", game_date)
+        except Exception as e:
+            log.debug("npb.jp official failed: %s", e)
 
     # 2. KBO — 韓國本地來源（koreabaseball.com → Naver Sports）
     try:
@@ -1364,16 +1425,22 @@ def fetch_yahoo_npb_schedule(game_date: date) -> list[dict]:
         try:
             resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
             if resp.status_code == 403:
-                log.debug("Yahoo Japan NPB 403 for %s", url)
+                log.warning("Yahoo Japan NPB 403 (WAF blocked) for %s", url)
                 continue
             if resp.status_code != 200:
-                log.debug("Yahoo Japan NPB HTTP %s for %s", resp.status_code, url)
+                log.warning("Yahoo Japan NPB HTTP %s for %s", resp.status_code, url)
                 continue
             resp.encoding = resp.apparent_encoding or "utf-8"
             games = _parse_yahoo_npb_html(resp.text, date_str)
             if games:
                 log.info("Yahoo Japan NPB: parsed %d games from %s", len(games), url)
                 return games
+            else:
+                log.warning("Yahoo Japan NPB: HTTP 200 but 0 games parsed from %s | "
+                            "HTML len=%d title=%s",
+                            url, len(resp.text),
+                            (resp.text[:500].split('<title>')[1].split('</title>')[0].strip()
+                             if '<title>' in resp.text else '(no title)'))
         except Exception as e:
             log.debug("Yahoo Japan NPB fetch %s: %s", url, e)
     return []
@@ -1410,14 +1477,37 @@ def _parse_yahoo_npb_html(html: str, date_str: str) -> list[dict]:
     else:
         log.debug("Yahoo Japan Phase-0 (scripts): no pitcher names found in script tags")
 
+    # ── Phase 0.5: scan script content for team codes (handles Next.js JSON blobs) ──
+    # Modern Yahoo Japan pages (Next.js/React) embed schedule data in <script> tags.
+    # Phase 1 below only reads short text nodes, missing the JSON blob entirely.
+    sorted_team_keys_p05 = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pattern_p05 = re.compile(
+        '(' + '|'.join(re.escape(k) for k in sorted_team_keys_p05) + ')'
+    )
+    codes_from_scripts: list[str] = []
+    for script in soup.find_all('script'):
+        sc = script.get_text() or ""
+        if not sc.strip():
+            continue
+        for m in team_pattern_p05.finditer(sc):
+            code = _YAHOO_NPB_TEAM_MAP[m.group()]
+            if not codes_from_scripts or codes_from_scripts[-1] != code:
+                codes_from_scripts.append(code)
+    if codes_from_scripts:
+        log.info("Yahoo Japan Phase-0.5 (scripts team scan): %d code entries %s",
+                 len(codes_from_scripts), codes_from_scripts[:12])
+    else:
+        log.warning("Yahoo Japan Phase-0.5: no team codes found in script tags either")
+
     for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
         tag.decompose()
 
-    # ── Phase 1: Team code extraction ────────────────────────────────────
+    # ── Phase 1: Team code extraction (text nodes, picks up server-rendered content) ──
     sorted_team_keys = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
     team_pattern = re.compile('(' + '|'.join(re.escape(k) for k in sorted_team_keys) + ')')
 
-    codes_in_order: list[str] = []
+    # Start with codes found in scripts; text node scan appends additional matches
+    codes_in_order: list[str] = list(codes_from_scripts)
     for node in soup.find_all(string=True):
         text = node.strip()
         if not text or len(text) > 50:
