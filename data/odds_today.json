@@ -1,14 +1,14 @@
 {
   "game_date": "2026-06-06",
-  "updated_at": "2026-06-05 16:13",
+  "updated_at": "2026-06-05 22:11",
   "source": "The Odds API (KBO)",
   "odds": {
     "KTW-SSG": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.85,
-      "curr_home_odds": 1.96,
-      "open_away_odds": 1.85,
-      "open_home_odds": 1.96,
+      "curr_away_odds": 1.87,
+      "curr_home_odds": 1.95,
+      "open_away_odds": 1.87,
+      "open_home_odds": 1.95,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -17,7 +17,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 5.07,
+      "vig_pct": 4.76,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -45,10 +45,10 @@
     },
     "HWE-LTG": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.55,
-      "curr_home_odds": 2.48,
-      "open_away_odds": 1.55,
-      "open_home_odds": 2.48,
+      "curr_away_odds": 1.52,
+      "curr_home_odds": 2.55,
+      "open_away_odds": 1.52,
+      "open_home_odds": 2.55,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -57,7 +57,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.84,
+      "vig_pct": 5.01,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
@@ -85,10 +85,10 @@
     },
     "LGT-NCD": {
       "source": "The Odds API (KBO)",
-      "curr_away_odds": 1.58,
-      "curr_home_odds": 2.4,
-      "open_away_odds": 1.58,
-      "open_home_odds": 2.4,
+      "curr_away_odds": 1.56,
+      "curr_home_odds": 2.45,
+      "open_away_odds": 1.56,
+      "open_home_odds": 2.45,
       "run_line": -1.5,
       "rl_home_odds": 1.9,
       "rl_away_odds": 1.9,
@@ -97,7 +97,7 @@
       "under_odds": 1.9,
       "public_home_pct": 50,
       "public_away_pct": 50,
-      "vig_pct": 4.96,
+      "vig_pct": 4.92,
       "bookmakers": [
         "The Odds API (KBO)"
       ],
