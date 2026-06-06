@@ -42,9 +42,9 @@ jobs:
           python-version: '3.11'
           cache: pip
 
-      # 3. 裝套件（輕量，不需要 Playwright）
+      # 3. 裝套件（含 nk-datasets 作為主要統計來源）
       - name: Install dependencies
-        run: pip install requests beautifulsoup4 lxml
+        run: pip install requests beautifulsoup4 lxml nk-datasets pandas
 
       # 4. 先測試網路可達性（方便 debug 哪個來源能用）
       - name: Network reachability check
@@ -110,6 +110,7 @@ jobs:
 
           files = {
               "data/pitcher_stats.json": lambda d: f"  投手: {len(d.get('stats',{}))} 名 | 更新: {d.get('updated_at','?')}",
+              "data/team_stats.json":    lambda d: f"  球隊: {len(d.get('stats',{}))} 支 | 來源: {d.get('source','?')}",
               "data/schedule.json":      lambda d: f"  賽程: {len(d.get('games',[]))} 場",
               "data/odds_today.json":    lambda d: f"  賠率: {len(d.get('odds',{}))} 場 | 來源: {d.get('source','?')} | 日期: {d.get('game_date','?')}",
           }
@@ -137,7 +138,7 @@ jobs:
           # 先 pull 最新再 commit，避免衝突
           git pull --rebase origin "${BRANCH}" || true
 
-          git add data/pitcher_stats.json data/schedule.json data/odds_today.json 2>/dev/null || true
+          git add data/pitcher_stats.json data/team_stats.json data/schedule.json data/odds_today.json 2>/dev/null || true
 
           if git diff --cached --quiet; then
             echo "✅ 資料沒有變化，跳過 commit"

@@ -12,9 +12,39 @@ NPB / KBO V2.0 勝負預測模型 — 9大因子 100+變量
   天氣影響    3%  氣溫/風速/濕度/降雨
   守備能力    2%  守備率/DRS/UZR/失誤數
 """
+import os as _os, json as _json, copy as _copy
 from .elo import ELOSystem
-from .mock_data import PITCHERS, TEAM_STATS, H2H, VENUE_FACTORS, BATTERS, BULLPEN, TEAM_INFO
+from .mock_data import PITCHERS, TEAM_STATS as _TEAM_STATS_MOCK, H2H, VENUE_FACTORS, BATTERS, BULLPEN, TEAM_INFO
 from . import odds as odds_module
+
+# Load real team stats from team_stats.json if available, overlay on mock
+def _load_team_stats() -> dict:
+    base = _copy.deepcopy(_TEAM_STATS_MOCK)
+    _data_path = _os.path.join(_os.path.dirname(__file__), "..", "data", "team_stats.json")
+    try:
+        with open(_data_path, encoding="utf-8") as _f:
+            _d = _json.load(_f)
+        for code, ts in _d.get("stats", {}).items():
+            if code not in base:
+                base[code] = {}
+            if "pitching" in ts:
+                base[code].setdefault("pitching", {}).update(ts["pitching"])
+                if "bullpen" not in base[code]:
+                    base[code]["bullpen"] = {
+                        "era":  ts["pitching"].get("era",  4.0),
+                        "whip": ts["pitching"].get("whip", 1.30),
+                    }
+            if "batting" in ts:
+                bat = ts["batting"]
+                # Only overlay ops/wrc_plus when the data is meaningful
+                safe_bat = {k: v for k, v in bat.items()
+                            if k not in ("ops", "wrc_plus") or (isinstance(v, (int, float)) and v > 0.01)}
+                base[code].setdefault("batting", {}).update(safe_bat)
+    except (FileNotFoundError, _json.JSONDecodeError, KeyError):
+        pass
+    return base
+
+TEAM_STATS = _load_team_stats()
 
 WEIGHTS = {
     "starter":     0.35,
