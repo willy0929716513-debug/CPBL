@@ -1,381 +1,55 @@
 {
-  "updated_at": "2026-06-06 15:20",
+  "updated_at": "2026-06-06 18:38",
   "year": 2026,
-  "source": "nk-datasets",
+  "source": "npbdata.jp",
   "stats": {
-    "CND": {
-      "batting": {
-        "hr_per_game": 0.256,
-        "runs_per_game": 1.325,
-        "year": 2025,
-        "ops": 0.582
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 2.782,
-        "whip": 1.181,
-        "k9": 7.085,
-        "bb9": 2.722,
-        "fip": 3.333,
-        "year": 2025
-      }
-    },
-    "YDB": {
-      "batting": {
-        "hr_per_game": 0.291,
-        "runs_per_game": 1.97,
-        "year": 2025,
-        "ops": 0.6295
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 2.343,
-        "whip": 1.126,
-        "k9": 7.912,
-        "bb9": 2.664,
-        "fip": 3.262,
-        "year": 2025
-      }
-    },
     "HNS": {
-      "batting": {
-        "hr_per_game": 0.301,
-        "runs_per_game": 1.985,
-        "year": 2025,
-        "ops": 0.6475
-      },
       "league": "NPB",
-      "pitching": {
-        "era": 2.111,
-        "whip": 1.073,
-        "k9": 7.187,
-        "bb9": 2.396,
-        "fip": 2.754,
-        "year": 2025
-      }
-    },
-    "HRC": {
-      "batting": {
-        "hr_per_game": 0.243,
-        "runs_per_game": 1.733,
-        "year": 2025,
-        "ops": 0.619
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 2.44,
-        "whip": 1.058,
-        "k9": 7.098,
-        "bb9": 2.4,
-        "fip": 2.983,
-        "year": 2025
-      }
-    },
-    "LTT": {
-      "batting": {
-        "hr_per_game": 0.305,
-        "runs_per_game": 1.5,
-        "year": 2025,
-        "ops": 0.575
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 3.388,
-        "whip": 1.23,
-        "k9": 7.036,
-        "bb9": 2.547,
-        "fip": 3.701,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.518,
+      "source": "npbdata.jp"
     },
     "HAM": {
-      "batting": {
-        "hr_per_game": 0.531,
-        "runs_per_game": 1.935,
-        "year": 2025,
-        "ops": 0.6453
-      },
       "league": "NPB",
-      "pitching": {
-        "era": 2.242,
-        "whip": 1.048,
-        "k9": 6.996,
-        "bb9": 1.952,
-        "fip": 3.26,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.236,
+      "source": "npbdata.jp"
     },
-    "ORX": {
-      "batting": {
-        "hr_per_game": 0.406,
-        "runs_per_game": 1.974,
-        "year": 2025,
-        "ops": 0.6917
-      },
+    "LTT": {
       "league": "NPB",
-      "pitching": {
-        "era": 3.291,
-        "whip": 1.323,
-        "k9": 7.273,
-        "bb9": 2.966,
-        "fip": 3.435,
-        "year": 2025
-      }
-    },
-    "RKT": {
-      "batting": {
-        "hr_per_game": 0.204,
-        "runs_per_game": 1.436,
-        "year": 2025,
-        "ops": 0.6043
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 2.933,
-        "whip": 1.299,
-        "k9": 6.775,
-        "bb9": 3.378,
-        "fip": 3.834,
-        "year": 2025
-      }
-    },
-    "SEI": {
-      "batting": {
-        "hr_per_game": 0.283,
-        "runs_per_game": 1.72,
-        "year": 2025,
-        "ops": 0.6174
-      },
-      "league": "NPB",
-      "pitching": {
-        "era": 2.458,
-        "whip": 1.149,
-        "k9": 7.193,
-        "bb9": 3.103,
-        "fip": 3.426,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.089,
+      "source": "npbdata.jp"
     },
     "SBH": {
-      "batting": {
-        "hr_per_game": 0.328,
-        "runs_per_game": 1.922,
-        "year": 2025,
-        "ops": 0.6536
-      },
       "league": "NPB",
-      "pitching": {
-        "era": 2.791,
-        "whip": 1.159,
-        "k9": 6.869,
-        "bb9": 2.514,
-        "fip": 3.649,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.491,
+      "source": "npbdata.jp"
     },
-    "YKL": {
-      "batting": {
-        "hr_per_game": 0.22,
-        "runs_per_game": 1.386,
-        "year": 2025,
-        "ops": 0.5773
-      },
+    "YDB": {
       "league": "NPB",
-      "pitching": {
-        "era": 3.723,
-        "whip": 1.367,
-        "k9": 6.641,
-        "bb9": 3.201,
-        "fip": 4.11,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.208,
+      "source": "npbdata.jp"
+    },
+    "RKT": {
+      "league": "NPB",
+      "year": 2026,
+      "hr_per_game": 0.161,
+      "source": "npbdata.jp"
     },
     "GNT": {
-      "batting": {
-        "hr_per_game": 0.393,
-        "runs_per_game": 1.719,
-        "year": 2025,
-        "ops": 0.6479
-      },
       "league": "NPB",
-      "pitching": {
-        "era": 2.742,
-        "whip": 1.202,
-        "k9": 7.75,
-        "bb9": 2.59,
-        "fip": 3.371,
-        "year": 2025
-      }
+      "year": 2026,
+      "hr_per_game": 0.214,
+      "source": "npbdata.jp"
     },
-    "DSB": {
-      "batting": {
-        "hr_per_game": 0.458,
-        "runs_per_game": 3.436,
-        "year": 2025,
-        "ops": 0.7087
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 4.04,
-        "whip": 1.297,
-        "k9": 7.137,
-        "bb9": 3.524,
-        "fip": 4.393,
-        "year": 2025
-      }
-    },
-    "HWE": {
-      "batting": {
-        "hr_per_game": 0.534,
-        "runs_per_game": 3.092,
-        "year": 2025,
-        "ops": 0.6915
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 3.164,
-        "whip": 1.181,
-        "k9": 8.696,
-        "bb9": 3.096,
-        "fip": 3.934,
-        "year": 2025
-      }
-    },
-    "KIA": {
-      "batting": {
-        "hr_per_game": 0.561,
-        "runs_per_game": 3.333,
-        "year": 2025,
-        "ops": 0.7056
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 4.524,
-        "whip": 1.438,
-        "k9": 7.379,
-        "bb9": 3.847,
-        "fip": 4.294,
-        "year": 2025
-      }
-    },
-    "KTW": {
-      "batting": {
-        "hr_per_game": 0.447,
-        "runs_per_game": 2.68,
-        "year": 2025,
-        "ops": 0.6669
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 3.271,
-        "whip": 1.234,
-        "k9": 7.595,
-        "bb9": 3.139,
-        "fip": 4.01,
-        "year": 2025
-      }
-    },
-    "KWH": {
-      "batting": {
-        "hr_per_game": 0.54,
-        "runs_per_game": 2.778,
-        "year": 2025,
-        "ops": 0.6388
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 6.053,
-        "whip": 1.703,
-        "k9": 6.924,
-        "bb9": 4.268,
-        "fip": 5.279,
-        "year": 2025
-      }
-    },
-    "LGT": {
-      "batting": {
-        "hr_per_game": 0.69,
-        "runs_per_game": 3.974,
-        "year": 2025,
-        "ops": 0.7603
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 2.985,
-        "whip": 1.125,
-        "k9": 8.082,
-        "bb9": 3.283,
-        "fip": 3.924,
-        "year": 2025
-      }
-    },
-    "LTG": {
-      "batting": {
-        "hr_per_game": 0.395,
-        "runs_per_game": 3.299,
-        "year": 2025,
-        "ops": 0.752
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 4.246,
-        "whip": 1.368,
-        "k9": 7.978,
-        "bb9": 3.925,
-        "fip": 4.393,
-        "year": 2025
-      }
-    },
-    "NCD": {
-      "batting": {
-        "hr_per_game": 0.647,
-        "runs_per_game": 3.443,
-        "year": 2025,
-        "ops": 0.7426
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 4.895,
-        "whip": 1.462,
-        "k9": 6.578,
-        "bb9": 4.615,
-        "fip": 5.237,
-        "year": 2025
-      }
-    },
-    "SSG": {
-      "batting": {
-        "hr_per_game": 0.466,
-        "runs_per_game": 2.828,
-        "year": 2025,
-        "ops": 0.6502
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 3.583,
-        "whip": 1.278,
-        "k9": 7.828,
-        "bb9": 3.834,
-        "fip": 4.419,
-        "year": 2025
-      }
-    },
-    "SSL": {
-      "batting": {
-        "hr_per_game": 0.874,
-        "runs_per_game": 4.005,
-        "year": 2025,
-        "ops": 0.7785
-      },
-      "league": "KBO",
-      "pitching": {
-        "era": 4.041,
-        "whip": 1.293,
-        "k9": 7.194,
-        "bb9": 3.197,
-        "fip": 4.419,
-        "year": 2025
-      }
+    "HRC": {
+      "league": "NPB",
+      "year": 2026,
+      "hr_per_game": 0.137,
+      "source": "npbdata.jp"
     }
   }
 }
