@@ -1,15 +1,15 @@
 {
-  "updated_at": "2026-06-06 18:42",
+  "updated_at": "2026-06-06 22:00",
   "game_date": "2026-06-07",
   "source": "The Odds API (NPB)",
   "odds": {
     "SEI-CND": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 1.87,
-      "curr_home_odds": 2.02,
-      "open_away_odds": 1.87,
-      "open_home_odds": 2.02,
-      "vig_pct": 2.98,
+      "curr_away_odds": 1.83,
+      "curr_home_odds": 2.07,
+      "open_away_odds": 1.83,
+      "open_home_odds": 2.07,
+      "vig_pct": 2.95,
       "bookmakers": [
         "The Odds API"
       ]
@@ -49,11 +49,11 @@
     },
     "RKT-HNS": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 2.76,
-      "curr_home_odds": 1.49,
-      "open_away_odds": 2.76,
-      "open_home_odds": 1.49,
-      "vig_pct": 3.35,
+      "curr_away_odds": 2.75,
+      "curr_home_odds": 1.5,
+      "open_away_odds": 2.75,
+      "open_home_odds": 1.5,
+      "vig_pct": 3.03,
       "bookmakers": [
         "The Odds API"
       ]
@@ -61,10 +61,10 @@
     "HAM-YKL": {
       "source": "The Odds API (NPB)",
       "curr_away_odds": 1.6,
-      "curr_home_odds": 2.47,
+      "curr_home_odds": 2.46,
       "open_away_odds": 1.6,
-      "open_home_odds": 2.47,
-      "vig_pct": 2.99,
+      "open_home_odds": 2.46,
+      "vig_pct": 3.15,
       "bookmakers": [
         "The Odds API"
       ]
