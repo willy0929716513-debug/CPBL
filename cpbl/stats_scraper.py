@@ -6,6 +6,7 @@ NPB Stats Scraper — 日本職棒專用數據抓取器
   賽程:     Yahoo Japan Baseball → npb.jp 官方 → 日刊體育 → The Odds API
   先發投手: Yahoo Japan 予告先発頁面
 """
+import io
 import os
 import re
 import math
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────
 
 PITCHER_URL = "https://npbdata.jp/stats/pitcher"
-BATTER_URL  = "https://npbdata.jp/stats/batter"
+BATTER_URL  = "https://npbdata.jp/stats/fielder"
 
 _FIP_CONSTANT_NPB = 3.20
 _FIP_CONSTANT     = 3.20
@@ -132,6 +133,65 @@ _NK_NPB_TEAM = {
     "DENA": "YDB",    "YAKULT":  "YKL", "CHUNICHI":  "CND",
     "SOFTBANK":"SBH",  "ORIX":   "ORX", "RAKUTEN":   "RKT",
     "LOTTE":   "LTT",  "SEIBU":  "SEI", "NIPPON-HAM":"HAM",
+}
+
+# nk-datasets 英文名 → 系統中文名（對應 mock_data.py / schedule 中的球員名）
+_NK_EN_TO_CN: dict[str, str] = {
+    # GNT 讀賣巨人
+    "Tomoyuki Sugano":   "菅野智之",
+    "Shosei Togo":       "戶鄉翔征",
+    "Foster Griffin":    "葛瑞芬",
+    "Yuji Akahoshi":     "赤星優志",
+    "Raidel Martinez":   "馬丁尼斯",
+    # HNS 阪神虎
+    "Hiroto Saiki":      "才木浩人",
+    "Shoki Murakami":    "村上頌樹",
+    "Jeremy Beasley":    "比茲利",
+    # HRC 廣島鯉魚
+    "Daichi Osera":      "大瀨良大地",
+    "Hiroki Tokoda":     "床田寬樹",
+    "Aren Kuri":         "九里亞蓮",
+    "Johan Dominguez":   "漢恩",
+    # YDB 橫濱DeNA海星
+    "Katsuki Azuma":     "東克樹",
+    "Yutaro Ishida":     "石田裕太郎",
+    "Andre Jackson":     "傑克森",
+    "Shinichi Onuki":    "大貫晉一",
+    "Trevor Bauer":      "拜爾",
+    # YKL 養樂多燕子
+    "Yasuhiro Ogawa":    "小川泰弘",
+    "Kojiro Yoshimura":  "吉村貢司郎",
+    "Peter Lambert":     "賽斯尼德",
+    # CND 中日龍
+    "Yudai Ono":         "大野雄大",
+    "Yuya Yanagi":       "柳裕也",
+    "Hideaki Wakui":     "涌井秀章",
+    "Takahiro Matsuba":  "松葉貴大",
+    "Kyle Muller":       "梅希亞",
+    # SBH 福岡軟銀鷹
+    "Livan Moinelo":     "莫伊內羅",
+    "Kohei Arihara":     "有原航平",
+    "Tomohisa Ohzeki":   "東濱巨",
+    # ORX 歐力士水牛
+    "Hiroya Miyagi":     "宮城大彌",
+    "Anderson Espinoza": "艾斯皮諾薩",
+    "Ryuhei Sotani":     "田嶋大樹",
+    # RKT 東北樂天金鷹
+    "Takahisa Hayakawa": "早川隆久",
+    "Takayuki Kishi":    "岸孝之",
+    # LTT 千葉羅德水手
+    "Roki Sasaki":       "佐佐木朗希",
+    "Kazuya Ojima":      "小島和哉",
+    "Atsuki Taneichi":   "種市篤暉",
+    "Austin Voth":       "梅賽德斯",
+    # SEI 埼玉西武獅
+    "Mitsunari Takahashi": "高橋光成",
+    "Kaima Taira":       "平良海馬",
+    "Tatsuya Imai":      "今井達也",
+    # HAM 北海道火腿鬥士
+    "Hiromi Itoh":       "伊藤大海",
+    "Takayuki Kato":     "加藤貴之",
+    "Shoma Kanemura":    "金村尚真",
 }
 
 # 投手日文名 → 中文名
@@ -296,7 +356,7 @@ def fetch_npbdata_jp_pitchers(year: int | None = None) -> dict:
             log.warning("npbdata.jp pitcher HTTP %s", resp.status_code)
             return {}
         resp.encoding = resp.apparent_encoding or "utf-8"
-        tables = pd.read_html(resp.text)
+        tables = pd.read_html(io.StringIO(resp.text))
     except Exception as e:
         log.warning("npbdata.jp pitcher fetch failed: %s", e)
         return {}
@@ -418,7 +478,7 @@ def fetch_npbdata_jp_batters(year: int | None = None) -> dict:
             log.warning("npbdata.jp batter HTTP %s", resp.status_code)
             return {}
         resp.encoding = resp.apparent_encoding or "utf-8"
-        tables = pd.read_html(resp.text)
+        tables = pd.read_html(io.StringIO(resp.text))
     except Exception as e:
         log.warning("npbdata.jp batter fetch failed: %s", e)
         return {}
@@ -576,6 +636,15 @@ def fetch_pitcher_stats_nk(year: int | None = None) -> dict:
         log.info("nk-datasets NPB pitchers: %d entries", len(result))
     except Exception as e:
         log.warning("nk-datasets NPB pitching failed: %s", e)
+
+    # 英文名 → 中文名 alias：讓 merge_stats 能用中文名查到 live 數據
+    added = 0
+    for en_name, cn_name in _NK_EN_TO_CN.items():
+        if en_name in result and cn_name not in result:
+            result[cn_name] = result[en_name].copy()
+            added += 1
+    if added:
+        log.info("nk-datasets 新增 %d 個中文名 alias", added)
 
     return result
 

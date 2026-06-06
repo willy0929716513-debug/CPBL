@@ -171,131 +171,140 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
     TIER_LABEL = agent_module.TIER_LABEL
     pick_map   = {(p["away"], p["home"]): p for p in picks}
 
+    # ── 標題 ──
+    title_suffix = f"  ✅ 推薦 **{rec_count}** 場" if rec_count else "  無推薦"
     lines = [
-        f"⚾ **NPB/KBO {game_date} 賽前分析**",
-        f"🕐 {time_str} 台灣時間 | 共 {len(all_preds)} 場"
-        + (f" | **推薦 {rec_count} 場下注**" if rec_count else ""),
+        f"⚾ **NPB {game_date} 賽前分析**{title_suffix}",
+        f"🕐 {time_str} 台灣時間　共 {len(all_preds)} 場",
         "",
     ]
 
-    def fmt_sp(sp: dict) -> str:
-        if not sp:
-            return "未定"
-        name = sp.get("name", "")
+    # ─────────────────────────────────────────────────────────────
+    # 輔助函數
+    # ─────────────────────────────────────────────────────────────
+
+    def _sp_line(label: str, sp: dict) -> str:
+        """單行先發投手：  ✈ 佐佐木  ERA 2.50  K/9 12.0  FIP 2.80"""
+        name = (sp.get("name") or "").strip()
         if not name:
-            return "未定"
+            return f"{label} 未定"
         era = sp.get("era")
         k9  = sp.get("k9")
         fip = sp.get("fip")
-        stats_parts = []
+        parts = [f"**{name}**"]
         if era is not None:
-            stats_parts.append(f"ERA {era:.2f}")
+            parts.append(f"ERA {era:.2f}")
         if k9 is not None:
-            stats_parts.append(f"K/9 {k9:.1f}")
-        if fip is not None and era is not None and abs(fip - era) > 0.3:
-            stats_parts.append(f"FIP {fip:.2f}")
-        return f"{name} ({' '.join(stats_parts)})" if stats_parts else name
+            parts.append(f"K/9 {k9:.1f}")
+        if fip is not None and era is not None and abs(fip - era) > 0.25:
+            parts.append(f"FIP {fip:.2f}")
+        return f"{label} {'  '.join(parts)}"
 
-    def factor_tags(pr: dict) -> str:
-        """從各因子生成優劣標籤，如 先發▲客 | 打線▲主 | 牛棚▲客"""
+    def _factor_str(pr: dict) -> str:
+        """先發▲客 · 打線▲主 · …   （最多 3 項，超過省略）"""
         factors = pr.get("factors", {})
-        away_cn = pr.get("away_cn", pr.get("away", "客"))
-        home_cn = pr.get("home_cn", pr.get("home", "主"))
-        tags = []
+        away_cn = pr.get("away_cn", "客")
+        home_cn = pr.get("home_cn", "主")
         FACTOR_MAP = [
             ("starter",     "先發"),
             ("lineup",      "打線"),
             ("bullpen",     "牛棚"),
             ("recent_form", "近況"),
             ("home_away",   "主客場"),
-            ("h2h",         "對戰"),
         ]
+        tags = []
         for key, label in FACTOR_MAP:
-            f = factors.get(key, {})
-            adv = f.get("advantage", 0)
+            adv = factors.get(key, {}).get("advantage", 0)
             if adv > 3:
                 tags.append(f"{label}▲{home_cn}")
             elif adv < -3:
                 tags.append(f"{label}▲{away_cn}")
-        return " | ".join(tags) if tags else "各項相近"
+        return " · ".join(tags[:3]) if tags else "各項相近"
 
-    def _make_date_tag(d_str):
+    def _odds_str(h_odds: float, a_odds: float, mkt_home: float) -> str:
+        ho = f"{h_odds:.2f}" if h_odds > 1 else "—"
+        ao = f"{a_odds:.2f}" if a_odds > 1 else "—"
+        if mkt_home > 0:
+            return (f"賠率 主 {ho} ({mkt_home:.0f}%) / "
+                    f"客 {ao} ({100-mkt_home:.0f}%)")
+        return f"賠率 主 {ho} / 客 {ao}" if h_odds > 1 else "無賠率"
+
+    def _game_date_str(pr: dict) -> str:
         try:
-            gd = datetime.date.fromisoformat(str(d_str))
-            return f"📅 {gd.month:02d}/{gd.day:02d}"
+            gd = datetime.date.fromisoformat(str(pr.get("game_date") or game_date))
+            return f"{gd.month}/{gd.day:02d}"
         except Exception:
-            return f"📅 {str(d_str)[5:].replace('-', '/')}"
+            return str(pr.get("game_date") or game_date)[5:].replace("-", "/")
+
+    # ─────────────────────────────────────────────────────────────
+    # 先推薦場次（帶邊框），再顯示其他場次
+    # ─────────────────────────────────────────────────────────────
+
+    BORDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    DIVIDER = "──────────────────────────"
 
     for pr in all_preds:
         away    = pr["away"]
         home    = pr["home"]
         away_cn = pr.get("away_cn", away)
         home_cn = pr.get("home_cn", home)
-        hw      = round(pr.get("home_win_prob", 0.5) * 100, 1)
-        aw      = round(pr.get("away_win_prob", 0.5) * 100, 1)
-        g_time  = pr.get("game_time", pr.get("time", ""))
-        league  = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
-        flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
-        _date_tag = _make_date_tag(pr.get("game_date") or game_date)
-        time_tag = (_date_tag + (f" 🕐 {g_time}" if g_time else ""))
+        hw  = round(pr.get("home_win_prob", 0.5) * 100, 1)
+        aw  = round(pr.get("away_win_prob", 0.5) * 100, 1)
+        league = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
+        flag   = "🇯🇵" if league == "NPB" else "⚾"
 
-        # ── 先發投手 ──
+        g_time = pr.get("game_time") or pr.get("time") or ""
+        date_s = _game_date_str(pr)
+        time_s = f"  🕐 {g_time}" if g_time else ""
+
         asp = pr.get("away_sp") or {}
         hsp = pr.get("home_sp") or {}
-        asp_str = fmt_sp(asp)
-        hsp_str = fmt_sp(hsp)
 
-        # ── 市場賠率與 edge ──
-        of        = pr.get("factors", {}).get("odds", {})
-        h_odds    = float(of.get("curr_home_odds") or pr.get("curr_home_odds") or 0)
-        a_odds    = float(of.get("curr_away_odds") or pr.get("curr_away_odds") or 0)
-        mkt_home  = float(of.get("market_home_prob") or 0)  # 已是 % 值
+        of       = pr.get("factors", {}).get("odds", {})
+        h_odds   = float(of.get("curr_home_odds") or pr.get("curr_home_odds") or 0)
+        a_odds   = float(of.get("curr_away_odds") or pr.get("curr_away_odds") or 0)
+        mkt_home = float(of.get("market_home_prob") or 0)
+        edge_h   = hw - mkt_home
+        edge_a   = aw - (100.0 - mkt_home)
 
-        # Edge = 模型勝率 − 市場隱含勝率（完全獨立計算）
-        edge_home = hw - mkt_home  # + 表示模型比市場更看好主隊
-        edge_away = aw - (100.0 - mkt_home)
+        ftags    = _factor_str(pr)
 
-        def odds_fmt(o: float) -> str:
-            return f"{o:.2f}" if o > 1 else "–"
+        is_pick  = (away, home) in pick_map
 
-        def mkt_str() -> str:
-            if mkt_home > 0:
-                return f"市場：主 {mkt_home:.1f}% ({odds_fmt(h_odds)}) / 客 {100-mkt_home:.1f}% ({odds_fmt(a_odds)})"
-            return "市場：無賠率"
-
-        ftags = factor_tags(pr)
-
-        if (away, home) in pick_map:
-            p    = pick_map[(away, home)]
-            tier = TIER_LABEL.get(p["tier"], "⭐ 穩定")
-            be   = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
-            side_cn = home_cn if p["side"] == "home" else away_cn
+        if is_pick:
+            p        = pick_map[(away, home)]
+            tier     = TIER_LABEL.get(p["tier"], "⭐ 穩定")
+            side_cn  = home_cn if p["side"] == "home" else away_cn
             edge_val = p["edge"] * 100
+            be       = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
 
             lines += [
-                f"{flag} **{away_cn} @ {home_cn}**  {time_tag}",
-                f"  先發：客 {asp_str}  vs  主 {hsp_str}",
-                f"  優勢：{ftags}",
-                f"  🎯 模型：客 **{aw}%** / 主 **{hw}%**",
-                f"  📊 {mkt_str()}",
-                f"  ⚡ Edge：{side_cn} `{edge_val:+.1f}%`  →  {tier} 💰 `{p['bet_label']}` @ **{p['bp']}**  BEP {be}%",
+                BORDER,
+                f"{flag}  **{away_cn}**  ✈→🏠  **{home_cn}**  ·  {date_s}{time_s}",
+                _sp_line("  ✈", asp),
+                _sp_line("  🏠", hsp),
+                f"  📊  客 **{aw}%** / 主 **{hw}%**    {_odds_str(h_odds, a_odds, mkt_home)}",
+                f"  💡  {ftags}",
+                DIVIDER,
+                f"  🎯 **{p['bet_label']}**  @  **{p['bp']}**",
+                f"      {tier}    Edge `{edge_val:+.1f}%`    BEP {be}%",
+                BORDER,
                 "",
             ]
         else:
-            # 無推薦：仍顯示完整分析
+            # 無推薦：精簡格式
             if hw >= aw:
-                model_verdict = f"主 **{home_cn}** {hw}%  >  客 {away_cn} {aw}%"
-                edge_show = f"主隊 {edge_home:+.1f}%"
+                prob_str = f"主 **{hw}%** > 客 {aw}%"
+                edge_str = f"Edge 主 {edge_h:+.1f}%"
             else:
-                model_verdict = f"客 **{away_cn}** {aw}%  >  主 {home_cn} {hw}%"
-                edge_show = f"客隊 {edge_away:+.1f}%"
+                prob_str = f"客 **{aw}%** > 主 {hw}%"
+                edge_str = f"Edge 客 {edge_a:+.1f}%"
 
             lines += [
-                f"{flag} {away_cn} @ {home_cn}  {time_tag}",
-                f"  先發：客 {asp_str}  vs  主 {hsp_str}",
-                f"  優勢：{ftags}",
-                f"  🎯 模型：{model_verdict}",
-                f"  📊 {mkt_str()}  Edge {edge_show}（不推薦）",
+                f"{flag}  {away_cn} vs {home_cn}  ·  {date_s}{time_s}",
+                _sp_line("  ✈", asp) if asp.get("name") else "  ✈ 先發未定",
+                _sp_line("  🏠", hsp) if hsp.get("name") else "  🏠 先發未定",
+                f"  {prob_str}    {edge_str}  ❌",
                 "",
             ]
 
@@ -304,7 +313,8 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         if settled:
             wins = sum(1 for h in settled if h["result"] == "W")
             lines += [
-                f"📊 歷史: {wins}勝/{len(settled)}場 ({wins/len(settled)*100:.0f}%)",
+                DIVIDER,
+                f"📊 歷史  {wins}勝 / {len(settled)}場  ({wins/len(settled)*100:.0f}%)",
             ]
 
     _discord_post("\n".join(lines))
