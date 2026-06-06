@@ -61,6 +61,14 @@ class PredictionModel:
         hp = pitcher_db.get(hp_name, {})
         ap = pitcher_db.get(ap_name, {})
 
+        # Fallback: when no specific starter announced, use team rotation average.
+        # This gives the model real team pitching quality data instead of league avg (50).
+        # Discord display still shows '未定' — only the model score benefits from this.
+        if not hp and ht:
+            hp = _team_rotation_avg(ht, pitcher_db)
+        if not ap and at:
+            ap = _team_rotation_avg(at, pitcher_db)
+
         factors: dict[str, dict] = {}
 
         # ── 1. 先發投手 (35%) ──────────────────────────
@@ -242,6 +250,36 @@ class PredictionModel:
 # 各因子評分函式（0~100，50=聯盟平均）
 # ──────────────────────────────────────────────────────────────────
 
+def _team_rotation_avg(team: str, pitcher_db: dict) -> dict:
+    """
+    Returns the average stats of all known starters for a team.
+    Called when no individual starter is confirmed for a game.
+    The result gives the model real team-level pitching quality data,
+    rather than defaulting to the league average (score=50) for both teams.
+    """
+    rotation = [
+        p for p in pitcher_db.values()
+        if isinstance(p, dict)
+        and p.get("team") == team
+        and p.get("era") is not None
+        and p.get("gs", p.get("g", 0)) >= 2  # started at least 2 games
+    ]
+    if not rotation:
+        return {}
+    avg: dict = {"team": team, "_is_team_avg": True}
+    for key in ("era", "whip", "fip", "xfip", "k9", "bb9",
+                "k_pct", "bb_pct", "babip", "lob_pct", "hr9",
+                "recent_3_era", "recent_5_era", "recent_10_era"):
+        vals = [p[key] for p in rotation if key in p and p[key] is not None]
+        if vals:
+            avg[key] = round(sum(vals) / len(vals), 3)
+    # Propagate foreign flag if majority are foreign pitchers
+    foreign_count = sum(1 for p in rotation if p.get("foreign"))
+    if foreign_count > len(rotation) / 2:
+        avg["foreign"] = True
+    return avg
+
+
 def _pitcher_score(p: dict) -> float:
     """
     先發投手綜合評分 (0~100)。
@@ -315,7 +353,13 @@ def _pitcher_detail(hp: dict, ap: dict) -> str:
     lines = []
     for label, p in [("主隊", hp), ("客隊", ap)]:
         if not p:
-            lines.append(f"{label} 無資料")
+            lines.append(f"{label} 未定（無資料，用聯盟平均）")
+            continue
+        if p.get("_is_team_avg"):
+            lines.append(
+                f"{label} 未定（輪值平均 ERA {p.get('era','-')} "
+                f"FIP {p.get('fip','-')} K/9 {p.get('k9','-')}）"
+            )
             continue
         foreign_tag = "🌏" if p.get("foreign") else ""
         trend = _trend_label(p.get("era", LEAGUE_AVG_ERA),
