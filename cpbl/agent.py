@@ -25,20 +25,43 @@ TIER_EMOJI = {1: "💎", 2: "🔥", 3: "⭐"}
 TIER_LABEL = {1: "💎 頂級", 2: "🔥 強力", 3: "⭐ 穩定"}
 
 
-def kelly_stake(p_win: float, dec_odds: float) -> float:
+def _devig(home_odds: float, away_odds: float) -> tuple[float, float]:
+    """去抽水：把莊家抽水去掉後的真實隱含概率。"""
+    if home_odds <= 1.0 or away_odds <= 1.0:
+        return 0.5, 0.5
+    h_implied = 1.0 / home_odds
+    a_implied = 1.0 / away_odds
+    total = h_implied + a_implied
+    if total <= 0:
+        return 0.5, 0.5
+    return round(h_implied / total, 4), round(a_implied / total, 4)
+
+
+def kelly_stake(p_win: float, dec_odds: float, other_odds: float = 0.0) -> float:
     b = dec_odds - 1.0
     if b <= 0:
         return 0.0
-    k = (b * p_win - (1 - p_win)) / b
+    # kp = 模型勝率×50% + Devigged市場概率×50%
+    if other_odds > 1.0:
+        dv, _ = _devig(dec_odds, other_odds)
+        kp = p_win * 0.50 + dv * 0.50
+    else:
+        kp = p_win
+    k = (b * kp - (1 - kp)) / b
     if k <= 0:
         return 0.0
-    return round(min(max(k * KELLY_FRAC * BANK, KELLY_FLOOR), KELLY_MAX), 0)
+    stake = k * KELLY_FRAC * BANK
+    return round(min(max(stake, KELLY_FLOOR), KELLY_MAX), 0)
 
 
-def calc_edge(p_model: float, dec_odds: float) -> float:
+def calc_edge(p_model: float, dec_odds: float, other_odds: float = 0.0) -> float:
+    """edge = 模型勝率 - Devigged市場概率"""
     if dec_odds <= 1.0:
         return 0.0
-    return p_model - 1.0 / dec_odds
+    if other_odds > 1.0:
+        dv, _ = _devig(dec_odds, other_odds)
+        return round(p_model - dv, 4)
+    return round(p_model - 1.0 / dec_odds, 4)
 
 
 def get_tier(conf: float) -> int:
