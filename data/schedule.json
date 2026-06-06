@@ -1633,6 +1633,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-05-DSB-HWE",
+      "date": "2026-06-05",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-05-LTT-GNT",
       "date": "2026-06-05",
       "time": "17:00",
@@ -2568,6 +2585,23 @@
       "_source": "nikkansports"
     },
     {
+      "game_id": "2026-06-06-DSB-HWE",
+      "date": "2026-06-06",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-07-GNT-YKL",
       "date": "2026-06-07",
       "time": "",
@@ -3382,6 +3416,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-07-DSB-HWE",
+      "date": "2026-06-07",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-07-SEI-CND",
@@ -4302,6 +4353,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-08-DSB-HWE",
+      "date": "2026-06-08",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-09-GNT-YKL",
       "date": "2026-06-09",
       "time": "",
@@ -5116,6 +5184,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-09-DSB-HWE",
+      "date": "2026-06-09",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-10-GNT-YKL",
@@ -5934,6 +6019,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-10-DSB-HWE",
+      "date": "2026-06-10",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-11-GNT-YKL",
       "date": "2026-06-11",
       "time": "",
@@ -6748,6 +6850,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-11-DSB-HWE",
+      "date": "2026-06-11",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-12-GNT-YKL",
@@ -7566,6 +7685,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-12-DSB-HWE",
+      "date": "2026-06-12",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-13-GNT-YKL",
       "date": "2026-06-13",
       "time": "",
@@ -8380,6 +8516,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-13-DSB-HWE",
+      "date": "2026-06-13",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-14-GNT-YKL",
@@ -9198,6 +9351,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-14-DSB-HWE",
+      "date": "2026-06-14",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-15-GNT-YKL",
       "date": "2026-06-15",
       "time": "",
@@ -10012,6 +10182,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-15-DSB-HWE",
+      "date": "2026-06-15",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-16-GNT-YKL",
@@ -10830,6 +11017,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-16-DSB-HWE",
+      "date": "2026-06-16",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-17-GNT-YKL",
       "date": "2026-06-17",
       "time": "",
@@ -11644,6 +11848,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-17-DSB-HWE",
+      "date": "2026-06-17",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     },
     {
       "game_id": "2026-06-18-GNT-YKL",
@@ -12462,6 +12683,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-18-DSB-HWE",
+      "date": "2026-06-18",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-19-GNT-YKL",
       "date": "2026-06-19",
       "time": "",
@@ -13278,6 +13516,23 @@
       "_source": "npb_official"
     },
     {
+      "game_id": "2026-06-19-DSB-HWE",
+      "date": "2026-06-19",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
+    },
+    {
       "game_id": "2026-06-20-GNT-ORX",
       "date": "2026-06-20",
       "time": "",
@@ -14075,6 +14330,23 @@
       "away_pitcher": "史都華特二世",
       "home_pitcher": "",
       "_source": "npb_official"
+    },
+    {
+      "game_id": "2026-06-20-DSB-HWE",
+      "date": "2026-06-20",
+      "time": "",
+      "away": "DSB",
+      "away_name": "",
+      "home": "HWE",
+      "home_name": "",
+      "venue": "",
+      "league": "KBO",
+      "status": "預定",
+      "away_score": null,
+      "home_score": null,
+      "away_pitcher": "",
+      "home_pitcher": "",
+      "_source": "mykbo"
     }
   ],
   "updated_at": "2026-06-06"
