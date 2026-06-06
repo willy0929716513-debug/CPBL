@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+# Prevent two simultaneous runs (e.g. workflow_run + schedule firing at same time)
+concurrency:
+  group: cpbl-bot
+  cancel-in-progress: false
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
