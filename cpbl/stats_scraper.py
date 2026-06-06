@@ -531,13 +531,24 @@ def _kbo_official_team_code(text: str) -> str:
 def fetch_kbo_schedule(game_date: date) -> list[dict]:
     """
     KBO 賽程抓取 — 只使用韓國本地資料來源，不依賴 MLB API。
-    嘗試順序：koreabaseball.com → Naver Sports KBO → 空列表
+    嘗試順序：mykbostats.com（日期特定）→ koreabaseball.com → Naver Sports KBO → 空列表
     先發投手若頁面有則抓，無則留空（由 rotation 補漏）。
+    mykbostats.com 排第一是因為它提供日期特定 URL，不會把整個月的賽事重複回傳。
     """
     date_str = game_date.isoformat()
     y, m, d  = game_date.year, game_date.month, game_date.day
 
-    # 1. koreabaseball.com 官方網站（只用帶日期的 URL，避免無日期版本永遠回傳今天賽程）
+    # 1. mykbostats.com — 日期特定 URL，最可靠，含 Probable Pitchers
+    try:
+        time.sleep(random.uniform(0.5, 1.5))
+        mykbo_games = fetch_mykbo_schedule(game_date)
+        if mykbo_games:
+            log.info("KBO schedule from MyKBO Stats: %d games (with pitchers)", len(mykbo_games))
+            return mykbo_games
+    except Exception as e:
+        log.debug("MyKBO Stats failed: %s", e)
+
+    # 2. koreabaseball.com 官方網站（只用帶日期的 URL，避免無日期版本永遠回傳今天賽程）
     kbo_urls = [
         f"https://www.koreabaseball.com/Schedule/Schedule.aspx?leId=1&srId=0&date={y:04d}{m:02d}{d:02d}",
     ]
@@ -558,7 +569,7 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
         except Exception as e:
             log.debug("koreabaseball.com %s: %s", url, e)
 
-    # 2. Naver Sports KBO 賽程
+    # 3. Naver Sports KBO 賽程
     naver_urls = [
         f"https://sports.news.naver.com/kbaseball/schedule/index.nhn?year={y}&month={m:02d}",
         "https://sports.news.naver.com/kbaseball/schedule/index.nhn",
@@ -576,16 +587,6 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
                 return games
         except Exception as e:
             log.debug("Naver KBO %s: %s", url, e)
-
-    # 3. MyKBO Stats — 英文愛好者站點，靜態 HTML，附帶 Probable Pitchers
-    try:
-        time.sleep(random.uniform(0.5, 1.5))
-        mykbo_games = fetch_mykbo_schedule(game_date)
-        if mykbo_games:
-            log.info("KBO schedule from MyKBO Stats: %d games (with pitchers)", len(mykbo_games))
-            return mykbo_games
-    except Exception as e:
-        log.debug("MyKBO Stats failed: %s", e)
 
     return []
 
@@ -1295,11 +1296,62 @@ def fetch_mykbo_schedule(game_date: date) -> list[dict]:
 
 
 def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
-    """解析 mykbostats.com 賽程頁面，提取先發投手。"""
+    """
+    解析 mykbostats.com 賽程頁面，提取先發投手。
+    使用多策略方法：先試 CSS 選取器，再試文字掃描，確保在 HTML 結構變動時仍能工作。
+    """
     soup  = BeautifulSoup(html, "html.parser")
     games = []
+    seen_pairs: set[tuple] = set()
 
-    # 嘗試各種可能的 CSS 結構
+    # Build team-code lookup (case-insensitive) from _MYKBO_TEAM_MAP
+    # Also build a set of all known team name tokens for text scan
+    _all_team_tokens = sorted(_MYKBO_TEAM_MAP.keys(), key=len, reverse=True)
+    _team_text_re = re.compile(
+        r'\b(' + '|'.join(re.escape(k) for k in _all_team_tokens) + r')\b',
+        re.IGNORECASE,
+    )
+
+    def _find_two_teams_in_text(text: str):
+        """Return (away_code, home_code) if 2+ distinct team codes found, else (None, None)."""
+        found = []
+        for m in _team_text_re.finditer(text):
+            code = _mykbo_team_code(m.group())
+            if code and (not found or found[-1] != code):
+                found.append(code)
+        # Return first two distinct codes
+        unique = []
+        for c in found:
+            if c not in unique:
+                unique.append(c)
+            if len(unique) == 2:
+                return unique[0], unique[1]
+        return None, None
+
+    def _add_game(away_code, home_code, away_name="", home_name="",
+                  away_pitcher="", home_pitcher="", game_time="", source="mykbo"):
+        key = tuple(sorted((away_code, home_code)))
+        if key in seen_pairs:
+            return
+        seen_pairs.add(key)
+        games.append({
+            "game_id":      f"{date_str}-{away_code}-{home_code}",
+            "date":         date_str,
+            "time":         game_time,
+            "away":         away_code,
+            "away_name":    away_name,
+            "home":         home_code,
+            "home_name":    home_name,
+            "venue":        "",
+            "league":       "KBO",
+            "status":       "預定",
+            "away_score":   None,
+            "home_score":   None,
+            "away_pitcher": away_pitcher,
+            "home_pitcher": home_pitcher,
+            "_source":      source,
+        })
+
     # Pattern A: game cards / rows with team and pitcher info
     for container in soup.select(
         ".game-card, .schedule-game, .game-row, "
@@ -1311,13 +1363,19 @@ def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
             ".team-name, .team, [class*='team'], "
             "a[href*='/teams/'], span[class*='name']"
         )
-        teams = [el.get_text(strip=True) for el in team_els if el.get_text(strip=True)]
-        if len(teams) < 2:
-            continue
-        away_code = _mykbo_team_code(teams[0])
-        home_code = _mykbo_team_code(teams[-1])
+        teams_raw = [el.get_text(strip=True) for el in team_els if el.get_text(strip=True)]
+        away_code = home_code = ""
+        away_name = home_name = ""
+        if len(teams_raw) >= 2:
+            away_code = _mykbo_team_code(teams_raw[0])
+            home_code = _mykbo_team_code(teams_raw[-1])
+            away_name = teams_raw[0]
+            home_name = teams_raw[-1]
+        # Fallback: scan the whole container text
         if not away_code or not home_code or away_code == home_code:
-            continue
+            away_code, home_code = _find_two_teams_in_text(text)
+            if not away_code or not home_code:
+                continue
 
         # 找先發投手
         pitcher_els = container.select(
@@ -1337,62 +1395,57 @@ def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
         game_time = ""
         if time_el:
             t = time_el.get_text(strip=True)
-            m = re.search(r"(\d{1,2}:\d{2})", t)
-            if m:
-                game_time = m.group(1)
+            tm = re.search(r"(\d{1,2}:\d{2})", t)
+            if tm:
+                game_time = tm.group(1)
 
-        games.append({
-            "game_id":      f"{date_str}-{away_code}-{home_code}",
-            "date":         date_str,
-            "time":         game_time,
-            "away":         away_code,
-            "away_name":    teams[0],
-            "home":         home_code,
-            "home_name":    teams[-1],
-            "venue":        "",
-            "league":       "KBO",
-            "status":       "預定",
-            "away_score":   None,
-            "home_score":   None,
-            "away_pitcher": away_pitcher,
-            "home_pitcher": home_pitcher,
-            "_source":      "mykbo",
-        })
+        _add_game(away_code, home_code, away_name, home_name,
+                  away_pitcher, home_pitcher, game_time, "mykbo")
 
     # Pattern B: 表格結構（行 = 一場比賽）
     if not games:
         for row in soup.select("table tr, tbody tr"):
             cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
-            if len(cells) < 4:
+            if len(cells) < 2:
                 continue
-            # 嘗試找隊名欄位
-            away_code = home_code = ""
-            for c in cells:
-                code = _mykbo_team_code(c)
-                if code and not away_code:
-                    away_code = code
-                elif code and code != away_code:
-                    home_code = code
-                    break
+            row_text = " ".join(cells)
+            away_code, home_code = _find_two_teams_in_text(row_text)
             if not away_code or not home_code:
                 continue
-            games.append({
-                "game_id":      f"{date_str}-{away_code}-{home_code}",
-                "date":         date_str,
-                "time":         "",
-                "away":         away_code,
-                "away_name":    "",
-                "home":         home_code,
-                "home_name":    "",
-                "venue":        "",
-                "league":       "KBO",
-                "status":       "預定",
-                "away_score":   None,
-                "home_score":   None,
-                "away_pitcher": "",
-                "home_pitcher": "",
-                "_source":      "mykbo_table",
-            })
+            _add_game(away_code, home_code, source="mykbo_table")
+
+    # Pattern C: aggressive text-scan — look for any element containing 2+ known team names
+    # (links, spans, divs that mykbostats.com uses for matchup display)
+    if not games:
+        # Try links that contain team names (e.g. /teams/samsung-lions/)
+        for a_tag in soup.find_all("a", href=re.compile(r'/teams?/', re.I)):
+            href = a_tag.get("href", "")
+            text = a_tag.get_text(strip=True)
+            code = _mykbo_team_code(text) or _mykbo_team_code(href)
+            if code:
+                log.debug("mykbo link team: %s → %s", text or href, code)
+
+        # Walk all visible text and collect consecutive team codes
+        codes_in_order: list[str] = []
+        for node in soup.find_all(string=True):
+            if node.parent and node.parent.name in ('script', 'style', 'noscript', 'head'):
+                continue
+            text = node.strip()
+            if not text:
+                continue
+            for m in _team_text_re.finditer(text):
+                code = _mykbo_team_code(m.group())
+                if code and (not codes_in_order or codes_in_order[-1] != code):
+                    codes_in_order.append(code)
+
+        i = 0
+        while i < len(codes_in_order) - 1:
+            c1, c2 = codes_in_order[i], codes_in_order[i + 1]
+            if c1 != c2:
+                _add_game(c1, c2, source="mykbo_scan")
+                i += 2
+            else:
+                i += 1
 
     return games
 
