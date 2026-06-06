@@ -12,9 +12,39 @@ NPB / KBO V2.0 勝負預測模型 — 9大因子 100+變量
   天氣影響    3%  氣溫/風速/濕度/降雨
   守備能力    2%  守備率/DRS/UZR/失誤數
 """
+import os as _os, json as _json, copy as _copy
 from .elo import ELOSystem
-from .mock_data import PITCHERS, TEAM_STATS, H2H, VENUE_FACTORS, BATTERS, BULLPEN
+from .mock_data import PITCHERS, TEAM_STATS as _TEAM_STATS_MOCK, H2H, VENUE_FACTORS, BATTERS, BULLPEN, TEAM_INFO
 from . import odds as odds_module
+
+# Load real team stats from team_stats.json if available, overlay on mock
+def _load_team_stats() -> dict:
+    base = _copy.deepcopy(_TEAM_STATS_MOCK)
+    _data_path = _os.path.join(_os.path.dirname(__file__), "..", "data", "team_stats.json")
+    try:
+        with open(_data_path, encoding="utf-8") as _f:
+            _d = _json.load(_f)
+        for code, ts in _d.get("stats", {}).items():
+            if code not in base:
+                base[code] = {}
+            if "pitching" in ts:
+                base[code].setdefault("pitching", {}).update(ts["pitching"])
+                if "bullpen" not in base[code]:
+                    base[code]["bullpen"] = {
+                        "era":  ts["pitching"].get("era",  4.0),
+                        "whip": ts["pitching"].get("whip", 1.30),
+                    }
+            if "batting" in ts:
+                bat = ts["batting"]
+                # Only overlay ops/wrc_plus when the data is meaningful
+                safe_bat = {k: v for k, v in bat.items()
+                            if k not in ("ops", "wrc_plus") or (isinstance(v, (int, float)) and v > 0.01)}
+                base[code].setdefault("batting", {}).update(safe_bat)
+    except (FileNotFoundError, _json.JSONDecodeError, KeyError):
+        pass
+    return base
+
+TEAM_STATS = _load_team_stats()
 
 WEIGHTS = {
     "starter":     0.35,
@@ -34,6 +64,64 @@ LEAGUE_AVG_WOBA = 0.325  # 日韓聯盟平均
 LEAGUE_AVG_WRC  = 100
 LEAGUE_AVG_RPG  = 4.5    # NPB≈4.1, KBO≈5.0, blended ≈ 4.5
 FOREIGN_PREMIUM = 4.0    # 洋將平均表現高於本土投手
+
+NPB_BASE_RPG = 4.1   # NPB平均每隊每場得分
+KBO_BASE_RPG = 5.0   # KBO平均每隊每場得分
+_RUN_STD     = 3.0   # 比賽得分差標準差（用於NormalCDF）
+
+
+def _effective_era(p: dict) -> float:
+    """FIP Blend 有效ERA：ERA幸運程度越高，FIP權重越大。"""
+    if not p:
+        return LEAGUE_AVG_ERA
+    era   = p.get("era",      LEAGUE_AVG_ERA)
+    fip   = p.get("fip",      era)
+    babip = p.get("babip",    0.300)
+    lob   = p.get("lob_pct",  72.0)
+
+    # FIP-ERA gap → FIP weight
+    fip_gap = fip - era
+    if fip_gap > 1.5:   fip_w = 0.85
+    elif fip_gap > 1.0: fip_w = 0.70
+    elif fip_gap > 0.5: fip_w = 0.55
+    else:               fip_w = 0.35
+
+    # BABIP/LOB% 幸運調整（最多+20%）
+    luck = 0.0
+    if babip < 0.270:  luck += 0.10
+    elif babip < 0.285: luck += 0.05
+    if lob > 82:       luck += 0.10
+    elif lob > 78:     luck += 0.05
+    fip_w = min(1.0, fip_w + luck)
+
+    eff = era * (1 - fip_w) + fip * fip_w
+
+    # 休息天數懲罰
+    rest = p.get("rest_days")
+    if rest is not None and (rest <= 3 or rest >= 9):
+        eff += 0.30
+
+    # 近況趨勢（近3場 vs 季均ERA，30%權重）
+    r3 = p.get("recent_3_era", era)
+    eff += (r3 - era) * 0.30
+
+    # opener / 短局投手：向聯盟均值回歸
+    total_ip = p.get("avg_ip", p.get("ip", 0.0)) or 0.0
+    if 0 < total_ip < 4.0:
+        eff = eff * 0.50 + LEAGUE_AVG_ERA * 0.50   # 50% regression
+    elif 0 < total_ip < 5.0:
+        eff = eff * 0.80 + LEAGUE_AVG_ERA * 0.20
+
+    return round(max(1.5, min(9.0, eff)), 3)
+
+
+def _exp_runs(team: str, opp_eff_era: float, opp_bp_era: float,
+              bat_factor: float = 1.0, park_factor: float = 1.0,
+              home_adv: float = 0.0) -> float:
+    """期望得分 = 對手有效ERA(60%先發+40%牛棚) × 打擊質量因子 × 球場係數 + 主場加成"""
+    blended_era = opp_eff_era * 0.60 + opp_bp_era * 0.40
+    exp = blended_era * bat_factor * park_factor + home_adv
+    return round(max(0.5, min(14.0, exp)), 3)
 
 
 class PredictionModel:
@@ -233,6 +321,22 @@ class PredictionModel:
                 "market_home_prob": round(home_prob * 100, 1),
             }
 
+        # ── 期望得分（供 Poisson MC 使用）─────────────────────────
+        league   = TEAM_INFO.get(ht, {}).get("league", "NPB")
+        base_rpg = NPB_BASE_RPG if league == "NPB" else KBO_BASE_RPG
+        h_eff_era = _effective_era(hp)
+        a_eff_era = _effective_era(ap)
+        h_bp_era  = TEAM_STATS.get(ht, {}).get("bullpen", {}).get("era", LEAGUE_AVG_ERA)
+        a_bp_era  = TEAM_STATS.get(at, {}).get("bullpen", {}).get("era", LEAGUE_AVG_ERA)
+        h_bat_ops = TEAM_STATS.get(ht, {}).get("batting", {}).get("ops", LEAGUE_AVG_OPS)
+        a_bat_ops = TEAM_STATS.get(at, {}).get("batting", {}).get("ops", LEAGUE_AVG_OPS)
+        h_bat_factor = h_bat_ops / LEAGUE_AVG_OPS
+        a_bat_factor = a_bat_ops / LEAGUE_AVG_OPS
+        pf = VENUE_FACTORS.get(game.get("venue",""), {}).get("run_factor", 1.0)
+        home_exp_runs = _exp_runs(ht, a_eff_era, a_bp_era, h_bat_factor, pf, 0.20)
+        away_exp_runs = _exp_runs(at, h_eff_era, h_bp_era, a_bat_factor, pf, 0.00)
+        exp_run_diff  = round(home_exp_runs - away_exp_runs, 3)
+
         return {
             "home_win_prob": round(home_prob, 4),
             "away_win_prob": round(1.0 - home_prob, 4),
@@ -243,6 +347,11 @@ class PredictionModel:
             "home_elo":      self.elo.get(ht),
             "away_elo":      self.elo.get(at),
             "memory_applied": memory is not None,
+            "home_exp_runs": home_exp_runs,
+            "away_exp_runs": away_exp_runs,
+            "exp_run_diff":  exp_run_diff,
+            "h_eff_era":     h_eff_era,
+            "a_eff_era":     a_eff_era,
         }
 
 

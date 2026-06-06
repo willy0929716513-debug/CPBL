@@ -219,11 +219,12 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
                 tags.append(f"{label}▲{away_cn}")
         return " | ".join(tags) if tags else "各項相近"
 
-    try:
-        _gd = datetime.date.fromisoformat(str(game_date))
-        _date_tag = f"📅 {_gd.month:02d}/{_gd.day:02d}"
-    except Exception:
-        _date_tag = f"📅 {str(game_date)[5:].replace('-', '/')}"
+    def _make_date_tag(d_str):
+        try:
+            gd = datetime.date.fromisoformat(str(d_str))
+            return f"📅 {gd.month:02d}/{gd.day:02d}"
+        except Exception:
+            return f"📅 {str(d_str)[5:].replace('-', '/')}"
 
     for pr in all_preds:
         away    = pr["away"]
@@ -235,6 +236,7 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         g_time  = pr.get("game_time", pr.get("time", ""))
         league  = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
         flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
+        _date_tag = _make_date_tag(pr.get("game_date") or game_date)
         time_tag = (_date_tag + (f" 🕐 {g_time}" if g_time else ""))
 
         # ── 先發投手 ──
@@ -604,6 +606,7 @@ def main():
             model_prob  = adj_model,
             market_prob = mkt_prob if mkt_prob > 0 else 0.5,
             mc_mean     = mc["mean_prob"],
+            mc_norm_cdf = mc.get("norm_cdf_prob"),
             memory      = memory,
         )
         log.info("Ensemble %s@%s: %.4f (ELO=%.3f ML=%.3f mkt=%.3f MC=%.3f bayes×%.2f)",
@@ -711,6 +714,9 @@ def main():
     all_preds.sort(key=lambda x: (not x["recommended"], -abs(x["home_win_prob"] - 0.5)))
     log.info("Picks: %d from %d games", len(picks), len(games))
 
+    # game_display_date is the actual date of the games (may be tomorrow if today's all ended)
+    game_display_date = today_str
+
     # ── V8 儲存 Feature Store + CLV ──────────────────────────────────────────
     fs_module.save(feature_store)
     clv_module.save(clv_records)
@@ -718,7 +724,7 @@ def main():
 
     # ── 5. Gist history + RL 更新 ────────────────────────────────────────────
     gid, history = load_gist()
-    today_str = str(today)
+    today_str = str(today)  # reset to actual today for gist/history bookkeeping
 
     # 用已結算記錄更新 RL 記憶
     mem_updated = _update_memory_from_history(memory, history)
@@ -754,7 +760,7 @@ def main():
     os.makedirs("docs", exist_ok=True)
     out = {
         "generated_at":    now_tw.strftime("%Y-%m-%d %H:%M") + " (台灣時間)",
-        "game_date":       today_str,
+        "game_date":       game_display_date,
         "picks":           picks,
         "predictions":     all_preds,
         "live_games":      existing.get("live_games", []),
@@ -772,9 +778,9 @@ def main():
 
     # ── 7. Discord ───────────────────────────────────────────────────────────
     if all_preds:
-        send_discord(picks, all_preds, today_str, history, memory)
+        send_discord(picks, all_preds, game_display_date, history, memory)
     elif not games and not DEMO_MODE:
-        send_discord_no_games(today_str, "今日無賽事（備份日程未填或真的休兵）")
+        send_discord_no_games(game_display_date, "今日無賽事（備份日程未填或真的休兵）")
 
 
 if __name__ == "__main__":

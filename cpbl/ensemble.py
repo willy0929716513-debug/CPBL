@@ -1,77 +1,68 @@
-"""
-Ensemble Model — ELO + ML + MC 三模型融合。
-
-⚠️ 重要架構決策：市場賠率（market_prob）不再納入 ensemble 計算。
-原因：若把賠率混入勝率計算，再拿這個勝率去跟賠率比較，邏輯上是循環推理。
-正確做法：模型勝率完全獨立計算，賠率只用於最後 edge 比較階段。
-"""
+"""NPB/KBO Ensemble — MC×70% + NormalCDF×30%，封頂22-76%"""
 from __future__ import annotations
 from . import bayesian
-
-# 基礎模型權重（三模型：ELO 歷史 + ML 9因子 + MC 模擬）
-_W_ELO   = 0.18
-_W_ML    = 0.67
-_W_MC    = 0.15
 
 
 def ensemble(
     elo_prob:    float,
     model_prob:  float,
-    market_prob: float = 0.5,  # 僅供記錄，不納入計算
+    market_prob: float = 0.5,
     mc_mean:     float | None = None,
+    mc_norm_cdf: float | None = None,
     memory:      dict | None  = None,
 ) -> dict:
     """
-    三模型加權 ensemble（ELO + ML + MC）。
+    Layer 4 勝率計算：
+        model_win_p = MC×70% + NormalCDF×30%
+    封頂 22%-76%
 
-    market_prob 僅保留供呼叫方記錄/顯示，不影響最終 prob。
+    elo_prob:    ELO 基礎勝率（僅供 metadata 記錄）
+    model_prob:  9因子 ML 模型輸出（備用，無MC時使用）
+    market_prob: 市場隱含勝率（顯示用，不參與計算）
+    mc_mean:     Poisson MC 平均勝率
+    mc_norm_cdf: NormalCDF(期望得分差 / σ)
+    memory:      RL 記憶（Bayesian 微調）
     """
-    w_elo   = _W_ELO
-    w_model = _W_ML
-    w_mc    = _W_MC
+    # ── MC 有效性 ─────────────────────────────────────────────────────
+    mc_valid   = mc_mean    is not None and 0.05 < mc_mean    < 0.95
+    norm_valid = mc_norm_cdf is not None and 0.05 < mc_norm_cdf < 0.95
 
-    # ── Bayesian 調整 ML 模型權重 ─────────────────────────────────
+    if mc_valid and norm_valid:
+        raw = mc_mean * 0.70 + mc_norm_cdf * 0.30
+    elif mc_valid:
+        raw = mc_mean * 0.85 + model_prob * 0.15
+    elif norm_valid:
+        raw = mc_norm_cdf * 0.70 + model_prob * 0.30
+    else:
+        raw = model_prob
+
+    # ── Bayesian 微調（資料夠多才啟動）───────────────────────────────
     bayes_adj = 1.0
     if memory and memory.get("total_games", 0) >= 10:
-        fa      = memory.get("factor_accuracy", {})
-        keys    = ["pitcher", "lineup", "bullpen", "form"]
-        bw_vals = [bayesian.bayesian_weight(fa, k) for k in keys]
-        bayes_adj = round(sum(bw_vals) / len(bw_vals), 3)
-        bayes_adj = max(0.75, min(1.25, bayes_adj))
-        w_model   = min(0.75, _W_ML * bayes_adj)
-        surplus   = w_model - _W_ML
-        w_elo     = max(0.05, _W_ELO - surplus * 0.40)
-        w_mc      = max(0.05, _W_MC  - surplus * 0.60)
+        fa     = memory.get("factor_accuracy", {})
+        keys   = ["pitcher", "lineup", "bullpen", "form"]
+        bw     = [bayesian.bayesian_weight(fa, k) for k in keys]
+        bayes_adj = round(sum(bw) / len(bw), 3)
+        bayes_adj = max(0.85, min(1.15, bayes_adj))
+        # 向中值方向輕微拉伸/壓縮
+        raw = 0.5 + (raw - 0.5) * bayes_adj
 
-    # ── MC 資料有效性 ─────────────────────────────────────────────
-    mc_valid = mc_mean is not None and 0.05 < mc_mean < 0.95
-    if not mc_valid:
-        w_model += w_mc * 0.60
-        w_elo   += w_mc * 0.40
-        w_mc     = 0.0
-
-    probs: list[tuple[float, float]] = [
-        (elo_prob,   w_elo),
-        (model_prob, w_model),
-    ]
-    if mc_valid:
-        probs.append((mc_mean, w_mc))
-
-    combined = bayesian.combine_probs(probs)
+    # ── 封頂 22%-76% ─────────────────────────────────────────────────
+    prob = round(max(0.22, min(0.76, raw)), 4)
 
     return {
-        "prob":         combined,
+        "prob":         prob,
         "weights": {
-            "elo":    round(w_elo,   3),
-            "ml":     round(w_model, 3),
-            "market": 0.0,  # 已移除
-            "mc":     round(w_mc,    3),
+            "mc":       0.70 if mc_valid else 0.0,
+            "norm_cdf": 0.30 if norm_valid else 0.0,
+            "ml":       0.0 if (mc_valid or norm_valid) else 1.0,
         },
         "model_probs": {
-            "elo":    round(elo_prob,   4),
-            "ml":     round(model_prob, 4),
-            "market": round(market_prob, 4) if 0.05 < market_prob < 0.95 else None,
-            "mc":     round(mc_mean,    4) if mc_valid else None,
+            "elo":      round(elo_prob,    4),
+            "ml":       round(model_prob,  4),
+            "mc":       round(mc_mean,     4) if mc_valid    else None,
+            "norm_cdf": round(mc_norm_cdf, 4) if norm_valid  else None,
+            "market":   round(market_prob, 4) if 0.05 < market_prob < 0.95 else None,
         },
         "bayesian_adj": bayes_adj,
     }

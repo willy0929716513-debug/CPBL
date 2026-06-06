@@ -2119,3 +2119,278 @@ def enrich_kbo_with_starters(game_date: date, games: list[dict]) -> None:
     if enriched:
         log.info("enrich_kbo_with_starters: filled %d KBO pitcher slots for %s",
                  enriched, game_date)
+
+
+# ── nk-datasets 整合：NPB/KBO 真實投打數據 ─────────────────────────────────
+
+# nk-datasets teamID → 本系統 team code
+_NK_NPB_TEAM = {
+    "YOMIURI": "GNT", "HANSHIN": "HNS", "HIROSHIMA": "HRC",
+    "DENA": "YDB",    "YAKULT":  "YKL", "CHUNICHI":  "CND",
+    "SOFTBANK":"SBH",  "ORIX":   "ORX", "RAKUTEN":   "RKT",
+    "LOTTE":   "LTT",  "SEIBU":  "SEI", "NIPPON-HAM":"HAM",
+}
+_NK_KBO_TEAM = {
+    "Samsung": "SSL", "LG":      "LGT", "Doosan": "DSB",
+    "KT":      "KTW", "SSG":     "SSG", "NC":     "NCD",
+    "KIA":     "KIA", "Lotte":   "LTG", "Hanwha": "HWE",
+    "Kiwoom":  "KWH",
+}
+
+
+def _calc_fip(hr, bb, hbp, k, ip_val, fip_c):
+    if ip_val <= 0:
+        return None
+    return round(((hr * 13 + (bb + hbp) * 3 - k * 2) / ip_val) + fip_c, 3)
+
+
+def _safe(val, default=0.0):
+    try:
+        v = float(val)
+        return v if math.isfinite(v) else default
+    except (TypeError, ValueError):
+        return default
+
+
+def fetch_pitcher_stats_nk(year: int | None = None) -> dict:
+    """
+    nk-datasets から NPB/KBO 投手成績を取得し pitcher_stats.json 形式で返す。
+
+    Returns: dict  {player_name: {team, era, fip, whip, k9, bb9, ...}, ...}
+    """
+    try:
+        import nk
+        import pandas as pd
+    except ImportError:
+        log.warning("nk-datasets not installed — run: pip install nk-datasets pandas")
+        return {}
+
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    current_year = year or date.today().year
+    prev_year = current_year - 1
+
+    result: dict = {}
+
+    def _process_pitchers(df_pit, df_people, team_map, fip_c, league):
+        for yr in [current_year, prev_year]:
+            mask = pd.to_numeric(df_pit.get("yearID", pd.Series(dtype=str)), errors="coerce") == yr
+            yr_df = df_pit[mask].copy()
+            if yr_df.empty:
+                continue
+
+            # Merge player names
+            people_cols = [c for c in ["playerID", "nameLast", "nameFirst"] if c in df_people.columns]
+            if len(people_cols) >= 1:
+                yr_df = yr_df.merge(df_people[people_cols], on="playerID", how="left")
+                yr_df["_name"] = (yr_df.get("nameFirst", pd.Series([""] * len(yr_df))).fillna("") +
+                                  " " +
+                                  yr_df.get("nameLast", pd.Series([""] * len(yr_df))).fillna("")).str.strip()
+            else:
+                yr_df["_name"] = yr_df["playerID"].astype(str)
+
+            for _, row in yr_df.iterrows():
+                name = str(row.get("_name", "")).strip()
+                if not name or name == "nan":
+                    continue
+                tid = str(row.get("teamID", "")).strip()
+                team_code = team_map.get(tid, "")
+                if not team_code:
+                    continue
+
+                ipo   = _safe(row.get("IPouts"), 0.0)
+                ip    = ipo / 3.0
+                er    = _safe(row.get("ER"),  0.0)
+                so    = _safe(row.get("SO"),  0.0)
+                bb    = _safe(row.get("BB"),  0.0)
+                hbp   = _safe(row.get("HBP"), 0.0)
+                hr    = _safe(row.get("HR"),  0.0)
+                h_val = _safe(row.get("H"),   0.0)
+                g_val = _safe(row.get("G"),   1.0)
+
+                if ip < 3.0:
+                    continue  # 太少局數，跳過
+
+                era  = round(er / ip * 9, 3) if ip > 0 else None
+                raw_era = _safe(row.get("ERA"), era or 4.0)
+                if era is None:
+                    era = raw_era
+
+                whip  = round((h_val + bb) / ip, 3) if ip > 0 else None
+                k9    = round(so / ip * 9, 3)       if ip > 0 else None
+                bb9   = round(bb / ip * 9, 3)       if ip > 0 else None
+                hr9   = round(hr / ip * 9, 3)       if ip > 0 else None
+                fip   = _calc_fip(hr, bb, hbp, so, ip, fip_c)
+                avg_ip_per_g = round(ip / g_val, 2) if g_val > 0 else None
+
+                # 先發 vs 牛棚判斷
+                gs_val = _safe(row.get("GS"), None)
+                if gs_val is None:
+                    is_starter = (avg_ip_per_g or 0) >= 4.5
+                else:
+                    is_starter = gs_val >= (g_val * 0.5)
+
+                entry = {
+                    "team":       team_code,
+                    "league":     league,
+                    "year":       int(yr),
+                    "era":        era,
+                    "fip":        fip,
+                    "whip":       whip,
+                    "k9":         k9,
+                    "bb9":        bb9,
+                    "hr9":        hr9,
+                    "ip":         round(ip, 1),
+                    "g":          int(g_val),
+                    "avg_ip":     avg_ip_per_g,
+                    "is_starter": is_starter,
+                    "source":     "nk-datasets",
+                }
+                # 只保留最新年份（若同名投手有多年，新年份覆蓋舊的）
+                existing = result.get(name, {})
+                if not existing or existing.get("year", 0) <= yr:
+                    result[name] = entry
+
+    # ── NPB ──────────────────────────────────────────────────────────────
+    try:
+        npb_pit    = nk.load_npb_pitching()
+        npb_people = nk.load_npb_people()
+        _process_pitchers(npb_pit, npb_people, _NK_NPB_TEAM, _FIP_CONSTANT_NPB, "NPB")
+        log.info("nk-datasets NPB pitchers loaded: %d entries", sum(1 for v in result.values() if v.get("league") == "NPB"))
+    except Exception as e:
+        log.warning("nk-datasets NPB pitching failed: %s", e)
+
+    # ── KBO ──────────────────────────────────────────────────────────────
+    try:
+        kbo_pit    = nk.load_kbo_pitching()
+        kbo_people = nk.load_kbo_people()
+        _process_pitchers(kbo_pit, kbo_people, _NK_KBO_TEAM, _FIP_CONSTANT_KBO, "KBO")
+        log.info("nk-datasets KBO pitchers loaded: %d entries", sum(1 for v in result.values() if v.get("league") == "KBO"))
+    except Exception as e:
+        log.warning("nk-datasets KBO pitching failed: %s", e)
+
+    return result
+
+
+def fetch_team_stats_nk(year: int | None = None) -> dict:
+    """
+    nk-datasets から NPB/KBO チーム打撃/投球成績を取得。
+
+    Returns: dict  {team_code: {"batting": {...}, "pitching": {...}}}
+    """
+    try:
+        import nk
+        import pandas as pd
+    except ImportError:
+        return {}
+
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    current_year = year or date.today().year
+    prev_year    = current_year - 1
+    result: dict = {}
+
+    def _team_bat(df_bat, team_map, fip_c, league):
+        for yr in [current_year, prev_year]:
+            mask  = pd.to_numeric(df_bat.get("yearID", pd.Series(dtype=str)), errors="coerce") == yr
+            yr_df = df_bat[mask].copy()
+            if yr_df.empty:
+                continue
+            for col in ["AB", "H", "HR", "BB", "HBP", "SF", "TB", "R", "PA", "G",
+                        "OPS", "OBP", "SLG", "AVG", "wRC+"]:
+                if col in yr_df.columns:
+                    yr_df[col] = pd.to_numeric(yr_df[col], errors="coerce").fillna(0)
+            team_grp = yr_df.groupby("teamID")
+            for tid, grp in team_grp:
+                tc = team_map.get(tid, "")
+                if not tc:
+                    continue
+                total_ab = grp["AB"].sum()
+                total_h  = grp["H"].sum()
+                total_hr = grp["HR"].sum()
+                total_bb = grp["BB"].sum()
+                total_g  = grp["G"].sum()
+                # weighted avg OPS (by AB) — use None if data is absent/zero
+                ops = None
+                if "OPS" in grp.columns and total_ab > 0:
+                    raw_ops = float((grp["OPS"] * grp["AB"]).sum() / total_ab)
+                    if raw_ops > 0.01:
+                        ops = raw_ops
+                if ops is None and "TB" in grp.columns:
+                    total_tb = grp["TB"].sum()
+                    if total_tb > 0 and total_ab > 0:
+                        obp = (total_h + total_bb) / max(1, total_ab + total_bb)
+                        slg = total_tb / total_ab
+                        ops = obp + slg
+                wrc_col = "wRC+" if "wRC+" in grp.columns else None
+                wrc_raw = float((grp[wrc_col] * grp["AB"]).sum() / max(1, total_ab)) if wrc_col else 0.0
+                wrc = wrc_raw if wrc_raw > 1.0 else None
+                hrpg = total_hr / max(1, total_g / 9)
+                bat: dict = {
+                    "hr_per_game":  round(float(hrpg), 3),
+                    "runs_per_game": round(float(grp["R"].sum() / max(1, total_g / 9)), 3),
+                    "year":         int(yr),
+                }
+                if ops is not None:
+                    bat["ops"] = round(ops, 4)
+                if wrc is not None:
+                    bat["wrc_plus"] = round(wrc, 1)
+                existing = result.setdefault(tc, {})
+                if not existing.get("batting") or existing["batting"].get("year", 0) <= yr:
+                    existing["batting"] = bat
+                    existing["league"]  = league
+
+    def _team_pit(df_pit, team_map, fip_c, league):
+        for yr in [current_year, prev_year]:
+            mask  = pd.to_numeric(df_pit.get("yearID", pd.Series(dtype=str)), errors="coerce") == yr
+            yr_df = df_pit[mask].copy()
+            if yr_df.empty:
+                continue
+            for col in ["IPouts", "ER", "SO", "BB", "HBP", "HR", "H", "G"]:
+                if col in yr_df.columns:
+                    yr_df[col] = pd.to_numeric(yr_df[col], errors="coerce").fillna(0)
+            team_grp = yr_df.groupby("teamID")
+            for tid, grp in team_grp:
+                tc = team_map.get(tid, "")
+                if not tc:
+                    continue
+                ip   = grp["IPouts"].sum() / 3.0
+                er   = grp["ER"].sum()
+                so   = grp["SO"].sum()
+                bb   = grp["BB"].sum()
+                hbp  = grp["HBP"].sum()
+                hr   = grp["HR"].sum()
+                h_v  = grp["H"].sum()
+                era  = round(er / max(1, ip) * 9,  3)
+                whip = round((h_v + bb) / max(1, ip), 3)
+                k9   = round(so / max(1, ip) * 9,  3)
+                bb9  = round(bb / max(1, ip) * 9,  3)
+                fip  = _calc_fip(hr, bb, hbp, so, ip, fip_c)
+                pit  = {"era": era, "whip": whip, "k9": k9, "bb9": bb9,
+                        "fip": fip, "year": int(yr)}
+                existing = result.setdefault(tc, {})
+                if not existing.get("pitching") or existing["pitching"].get("year", 0) <= yr:
+                    existing["pitching"] = pit
+
+    try:
+        import nk
+        npb_bat = nk.load_npb_batting()
+        npb_pit = nk.load_npb_pitching()
+        _team_bat(npb_bat, _NK_NPB_TEAM, _FIP_CONSTANT_NPB, "NPB")
+        _team_pit(npb_pit, _NK_NPB_TEAM, _FIP_CONSTANT_NPB, "NPB")
+    except Exception as e:
+        log.warning("nk-datasets NPB team stats failed: %s", e)
+
+    try:
+        import nk
+        kbo_bat = nk.load_kbo_batting()
+        kbo_pit = nk.load_kbo_pitching()
+        _team_bat(kbo_bat, _NK_KBO_TEAM, _FIP_CONSTANT_KBO, "KBO")
+        _team_pit(kbo_pit, _NK_KBO_TEAM, _FIP_CONSTANT_KBO, "KBO")
+    except Exception as e:
+        log.warning("nk-datasets KBO team stats failed: %s", e)
+
+    log.info("nk-datasets team stats: %d teams", len(result))
+    return result

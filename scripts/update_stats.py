@@ -8,8 +8,10 @@ NPB / KBO 數據本地更新腳本 — 在你的電腦執行，把數據推上 G
   python scripts/update_stats.py --push   # 爬完自動 git commit + push
   python scripts/update_stats.py --odds-only --push  # 只更新賠率
 
-資料來源：
-  - 投手統計：ESPN API (jlb/kor)，不受 WAF 封鎖
+資料來源優先順序：
+  1. nk-datasets (Python 套件，本地/GH Actions 均可用)
+  2. npb.jp / koreabaseball.com + statiz.co.kr (需個人電腦)
+  3. baseball-reference (備援)
   - 賽程：ESPN API
   - 賠率：The Odds API (baseball_kbo) / oddsportal
 """
@@ -19,16 +21,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import requests
 from bs4 import BeautifulSoup
 from cpbl.mock_data import PITCHERS
-from cpbl.stats_scraper import enrich_pitcher, calc_fip
+from cpbl.stats_scraper import enrich_pitcher, calc_fip, fetch_pitcher_stats_nk, fetch_team_stats_nk
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("update_stats")
 
-DATA_DIR   = os.path.join(os.path.dirname(__file__), "..", "data")
-STATS_FILE = os.path.join(DATA_DIR, "pitcher_stats.json")
-SCHED_FILE = os.path.join(DATA_DIR, "schedule.json")
-ODDS_FILE  = os.path.join(DATA_DIR, "odds_today.json")
+DATA_DIR        = os.path.join(os.path.dirname(__file__), "..", "data")
+STATS_FILE      = os.path.join(DATA_DIR, "pitcher_stats.json")
+TEAM_STATS_FILE = os.path.join(DATA_DIR, "team_stats.json")
+SCHED_FILE      = os.path.join(DATA_DIR, "schedule.json")
+ODDS_FILE       = os.path.join(DATA_DIR, "odds_today.json")
 
 _HEADERS = {
     "User-Agent": (
@@ -1082,6 +1085,19 @@ def save_stats(merged: dict, dry: bool = False):
     log.info("寫入 %s（%d 名投手）", STATS_FILE, len(merged))
 
 
+def save_team_stats(team_stats: dict, dry: bool = False):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    payload = {"updated_at": now, "year": datetime.date.today().year,
+               "source": "nk-datasets", "stats": team_stats}
+    if dry:
+        log.info("[DRY] 會寫入 %s（%d 支球隊）", TEAM_STATS_FILE, len(team_stats))
+        return
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(TEAM_STATS_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    log.info("寫入 %s（%d 支球隊）", TEAM_STATS_FILE, len(team_stats))
+
+
 def update_schedule(games: list, dry: bool = False):
     """將爬到的賽程寫入 schedule.json（只保留有 league 欄位的 NPB/KBO 資料）。"""
     if not games:
@@ -1242,43 +1258,68 @@ def main():
     today_str = _now_tw.date().isoformat()
     live_stats = {}
 
-    # ── 投手成績：NPB → KBO → BB-Ref 補漏 ──
+    # ── 投手成績：nk-datasets（優先）→ npb.jp / koreabaseball.com → BB-Ref 補漏 ──
     if not args.odds_only:
-        print("\n[1/4] 抓取 NPB 投手成績（npb.jp）...")
+        # ── [1a] nk-datasets：在任何環境均可用 ──
+        print("\n[1/5] 抓取 NPB/KBO 投手成績（nk-datasets）...")
+        nk_stats = fetch_pitcher_stats_nk(args.year)
+        nk_ok = bool(nk_stats)
+        if nk_ok:
+            live_stats.update(nk_stats)
+            npb_cnt = sum(1 for v in nk_stats.values() if v.get("league") == "NPB")
+            kbo_cnt = sum(1 for v in nk_stats.values() if v.get("league") == "KBO")
+            print(f"  ✅ nk-datasets: {len(nk_stats)} 名投手 (NPB={npb_cnt}, KBO={kbo_cnt}) "
+                  f"（ERA/WHIP/K9/BB9/FIP）")
+        else:
+            print("  ⚠️ nk-datasets 載入失敗（套件未安裝？）")
+
+        # ── [1b] nk-datasets 球隊成績 ──
+        print("\n[1b/5] 抓取 NPB/KBO 球隊成績（nk-datasets）...")
+        team_stats = fetch_team_stats_nk(args.year)
+        if team_stats:
+            print(f"  ✅ nk-datasets 球隊: {len(team_stats)} 支球隊")
+            save_team_stats(team_stats, dry=args.dry)
+        else:
+            print("  ⚠️ nk-datasets 球隊成績失敗")
+
+        # ── [1c] npb.jp 補充（若在個人電腦，可能有更新的數據）──
+        print("\n     補充 NPB 投手成績（npb.jp）...")
         npb_stats = scrape_npb_pitchers(args.year, session)
         npb_ok = bool(npb_stats)
         if npb_ok:
-            live_stats.update(npb_stats)
-            print(f"  ✅ npb.jp: {len(npb_stats)} 名投手 "
-                  f"（ERA/WHIP/K9/BB9/K%/BB%/FIP）")
+            # npb.jp 優先覆蓋 nk-datasets（更即時），但不刪除 nk 已有的
+            for name, p in npb_stats.items():
+                if name not in live_stats:
+                    live_stats[name] = p
+                else:
+                    live_stats[name].update({k: v for k, v in p.items()
+                                             if isinstance(v, (int, float))})
+            print(f"  ✅ npb.jp: 補充/更新 {len(npb_stats)} 名投手 (ERA/WHIP/K9/BB9/FIP)")
         else:
-            print("  ⚠️ npb.jp 失敗 → 將用 baseball-reference 補 NPB 數據")
+            print("  ⚠️ npb.jp 失敗（GH Actions 環境正常，個人電腦可能被擋）")
 
-        print("\n     抓取 KBO 投手成績（koreabaseball.com）...")
+        # ── [1d] koreabaseball.com + statiz.co.kr 補充 KBO ──
+        print("\n     補充 KBO 投手成績（koreabaseball.com）...")
         kbo_stats = scrape_kbo_pitchers(args.year, session)
         kbo_ok = bool(kbo_stats)
         if kbo_ok:
-            live_stats.update(kbo_stats)
-            print(f"  ✅ koreabaseball.com + statiz.co.kr: {len(kbo_stats)} 名投手 "
-                  f"（ERA/WHIP/K9/BB9/K%/BB%/FIP/xFIP）")
+            for name, p in kbo_stats.items():
+                if name not in live_stats:
+                    live_stats[name] = p
+                else:
+                    live_stats[name].update({k: v for k, v in p.items()
+                                             if isinstance(v, (int, float))})
+            print(f"  ✅ koreabaseball.com + statiz: 補充/更新 {len(kbo_stats)} 名投手 (ERA/WHIP/K9/BB9/FIP/xFIP)")
         else:
-            print("  ⚠️ koreabaseball.com 失敗 → 將用 baseball-reference 補 KBO 數據")
+            print("  ⚠️ koreabaseball.com 失敗（GH Actions 環境正常，個人電腦可能被擋）")
 
-        # 任一聯盟失敗就用 baseball-reference 補（NPB 在 GH Actions 常被擋）
-        if not npb_ok or not kbo_ok:
-            missing = []
-            if not npb_ok: missing.append("NPB")
-            if not kbo_ok: missing.append("KBO")
-            print(f"\n     baseball-reference 補充 {'+'.join(missing)} 數據...")
+        # ── [1e] 若 nk-datasets 也失敗，用 baseball-reference 當最後備援 ──
+        if not nk_ok and not npb_ok and not kbo_ok:
+            print("\n     baseball-reference 備援（所有主要來源失敗）...")
             bbref_stats = scrape_bbref(args.year, session)
             if bbref_stats:
-                # 只補沒有抓到的那個聯盟
-                added = 0
-                for name, p in bbref_stats.items():
-                    if p.get("league") in missing or not live_stats.get(name):
-                        live_stats[name] = p
-                        added += 1
-                print(f"  ✅ BB-Ref: 補充 {added} 名投手")
+                live_stats.update(bbref_stats)
+                print(f"  ✅ BB-Ref: {len(bbref_stats)} 名投手")
             else:
                 print("  ⚠️ BB-Ref 亦失敗；使用 mock 數據（加上衍生指標計算）")
 
@@ -1287,28 +1328,29 @@ def main():
         print(f"\n  合計: {len(merged)} 名投手 (live={len(live_stats)}, mock補充={len(merged)-len(live_stats)})")
         for name in list(merged.keys())[:3]:
             p = merged[name]
-            print(f"  {name}: ERA={p.get('era')} FIP={p.get('fip')} K%={p.get('k_pct')}% BB%={p.get('bb_pct')}%")
+            print(f"  {name}: ERA={p.get('era')} FIP={p.get('fip')} K9={p.get('k9')} BB9={p.get('bb9')}")
 
         # ── 儲存投手成績 ──
-        print("\n[2/4] 儲存投手成績...")
+        print("\n[2/5] 儲存投手成績...")
         save_stats(merged, dry=args.dry)
 
         # ── 賽程 ──
         if not args.skip_schedule:
-            print(f"\n[3/4] 抓取 {args.months} 月份賽程...")
+            print(f"\n[3/5] 抓取 {args.months} 月份賽程...")
             games = scrape_schedule(args.year, args.months, session)
             update_schedule(games, dry=args.dry)
 
             # ── 今明兩天先發投手補強 ──
-            print(f"\n[3b/4] 今明先發投手補強（Yahoo Japan 予告先発 + koreabaseball.com）...")
+            print(f"\n[3b/5] 今明先發投手補強（Yahoo Japan 予告先発 + koreabaseball.com）...")
             _enrich_starters_in_schedule(today_str, args.dry)
         else:
-            print("\n[3/4] 跳過賽程爬取")
+            print("\n[3/5] 跳過賽程爬取")
     else:
         print("\n[--odds-only] 跳過投手成績與賽程爬取")
 
     # ── 賠率 ──
-    step = "4/4" if not args.odds_only else "1/1"
+    step = "4/5" if not args.odds_only else "1/1"
+    step_save = "5/5" if not args.odds_only else "1/1"
     if not args.skip_odds:
         print(f"\n[{step}] 抓取今日賠率（{today_str}）...")
         use_pw = not args.no_playwright
@@ -1329,7 +1371,7 @@ def main():
             source_str = "none"
             odds = {}
 
-        print(f"\n[{step}] 儲存賠率...")
+        print(f"\n[{step_save}] 儲存賠率...")
         save_odds(odds, today_str, source=source_str, dry=args.dry)
     else:
         print(f"\n[{step}] 跳過賠率爬取")
@@ -1340,7 +1382,8 @@ def main():
         import subprocess
         files_to_add = []
         if not args.odds_only:
-            files_to_add += ["data/pitcher_stats.json", "data/schedule.json"]
+            files_to_add += ["data/pitcher_stats.json", "data/schedule.json",
+                             "data/team_stats.json"]
         if not args.skip_odds:
             files_to_add.append("data/odds_today.json")
         subprocess.run(["git", "add"] + files_to_add,
