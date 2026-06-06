@@ -6,6 +6,7 @@ NPB Stats Scraper — 日本職棒專用數據抓取器
   賽程:     Yahoo Japan Baseball → npb.jp 官方 → 日刊體育 → The Odds API
   先發投手: Yahoo Japan 予告先発頁面
 """
+import io
 import os
 import re
 import math
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────
 
 PITCHER_URL = "https://npbdata.jp/stats/pitcher"
-BATTER_URL  = "https://npbdata.jp/stats/batter"
+BATTER_URL  = "https://npbdata.jp/stats/fielder"
 
 _FIP_CONSTANT_NPB = 3.20
 _FIP_CONSTANT     = 3.20
@@ -296,7 +297,7 @@ def fetch_npbdata_jp_pitchers(year: int | None = None) -> dict:
             log.warning("npbdata.jp pitcher HTTP %s", resp.status_code)
             return {}
         resp.encoding = resp.apparent_encoding or "utf-8"
-        tables = pd.read_html(resp.text)
+        tables = pd.read_html(io.StringIO(resp.text))
     except Exception as e:
         log.warning("npbdata.jp pitcher fetch failed: %s", e)
         return {}
@@ -418,7 +419,7 @@ def fetch_npbdata_jp_batters(year: int | None = None) -> dict:
             log.warning("npbdata.jp batter HTTP %s", resp.status_code)
             return {}
         resp.encoding = resp.apparent_encoding or "utf-8"
-        tables = pd.read_html(resp.text)
+        tables = pd.read_html(io.StringIO(resp.text))
     except Exception as e:
         log.warning("npbdata.jp batter fetch failed: %s", e)
         return {}
