@@ -161,19 +161,19 @@ class PredictionModel:
         }
 
         # ── 整合勝率（ELO 為基底，各因子加權調整）────
+        # ⚠️  重要：勝率計算完全不混入賠率，確保模型獨立性。
+        # 賠率只用於最後 edge 比較，不作為概率輸入。
         elo_base = self.elo.win_probability(
             ht, at,
             hp.get("era"),
             ap.get("era"),
         )
 
-        # RL 記憶權重乘數（V7 新增）
         _MEM_KEY = {
             "starter":     "pitcher_weight",
             "lineup":      "lineup_weight",
             "bullpen":     "bullpen_weight",
             "recent_form": "form_weight",
-            "odds":        "market_weight",
         }
         home_prob = elo_base
         for key, w in WEIGHTS.items():
@@ -187,19 +187,14 @@ class PredictionModel:
             home_prob += float(memory.get("bias", 0.0))
         home_prob = max(0.05, min(0.95, home_prob))
 
-        # ── 盤口資料 (passthrough + 輕微校正) ──────────
+        # ── 盤口資料（純比較用，不修改 home_prob）──────
+        # 只記錄市場隱含勝率和賠率，供 Discord 顯示 edge 用。
         odds_key = f"{at}-{ht}"
         if odds_data is None:
             odds_data = odds_module.MOCK_ODDS.get(odds_key, {})
 
         if odds_data:
             o_analysis = odds_module.analyze(odds_data, home_prob)
-            # 盤口校正：市場權重由 RL 記憶動態調整 (預設 85/15)
-            mw = float(memory.get("market_weight", 1.0)) if memory else 1.0
-            market_blend = min(0.35, 0.15 * mw)   # 15%~35%，依市場權重調整
-            market_hp = o_analysis.get("market_home_prob", home_prob * 100) / 100.0
-            home_prob  = home_prob * (1 - market_blend) + market_hp * market_blend
-            home_prob  = max(0.05, min(0.95, home_prob))
             factors["odds"] = {
                 "label": "盤口 / 賠率",
                 "home_score": 50 + o_analysis["advantage"],
