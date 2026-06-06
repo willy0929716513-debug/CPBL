@@ -606,6 +606,7 @@ def main():
             model_prob  = adj_model,
             market_prob = mkt_prob if mkt_prob > 0 else 0.5,
             mc_mean     = mc["mean_prob"],
+            mc_norm_cdf = mc.get("norm_cdf_prob"),
             memory      = memory,
         )
         log.info("Ensemble %s@%s: %.4f (ELO=%.3f ML=%.3f mkt=%.3f MC=%.3f bayes×%.2f)",
