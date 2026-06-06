@@ -1088,7 +1088,8 @@ def update_schedule(games: list, dry: bool = False):
         log.info("update_schedule: 無新賽程，schedule.json 不變")
         return
     import datetime
-    cutoff = (datetime.date.today() - datetime.timedelta(days=2)).isoformat()
+    _tw = datetime.timezone(datetime.timedelta(hours=8))
+    cutoff = (datetime.datetime.now(_tw).date() - datetime.timedelta(days=2)).isoformat()
 
     try:
         with open(SCHED_FILE, encoding="utf-8") as f:
@@ -1141,7 +1142,7 @@ def update_schedule(games: list, dry: bool = False):
                 updated += 1
 
     kept.sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
-    payload = {"games": kept, "updated_at": datetime.date.today().isoformat()}
+    payload = {"games": kept, "updated_at": datetime.datetime.now(_tw).date().isoformat()}
     if dry:
         log.info("[DRY] 新增 %d 場、更新 %d 場到 schedule.json（總計 %d 場）",
                  added, updated, len(kept))
@@ -1150,6 +1151,65 @@ def update_schedule(games: list, dry: bool = False):
         json.dump(payload, f, ensure_ascii=False, indent=2)
     log.info("schedule.json 新增 %d 場、更新 %d 場（總計 %d 場）",
              added, updated, len(kept))
+
+
+# ─────────────────────────────────────────────────────────────
+# 先發投手補強
+# ─────────────────────────────────────────────────────────────
+
+def _enrich_starters_in_schedule(today_str: str, dry: bool = False) -> None:
+    """
+    Load schedule.json, fetch today's and tomorrow's announced starters from
+    Yahoo Japan 予告先発 (NPB) and koreabaseball.com 예고선발 (KBO),
+    and update pitcher fields in-place.
+    """
+    from cpbl.stats_scraper import enrich_schedule_with_starters, enrich_kbo_with_starters
+    import datetime
+
+    try:
+        with open(SCHED_FILE, encoding="utf-8") as f:
+            payload = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        log.warning("_enrich_starters: cannot load schedule.json: %s", e)
+        return
+
+    games = payload.get("games", [])
+    if not games:
+        log.info("_enrich_starters: schedule.json has no games")
+        return
+
+    today = datetime.date.fromisoformat(today_str)
+    tomorrow = today + datetime.timedelta(days=1)
+
+    enriched_total = 0
+    for target_date in (today, tomorrow):
+        date_str = target_date.isoformat()
+        day_games = [g for g in games if g.get("date") == date_str]
+        if not day_games:
+            continue
+
+        before = sum(1 for g in day_games if g.get("away_pitcher") or g.get("home_pitcher"))
+
+        # NPB: Yahoo Japan 予告先発
+        enrich_schedule_with_starters(target_date, day_games)
+        # KBO: koreabaseball.com 예고선발
+        enrich_kbo_with_starters(target_date, day_games)
+
+        after = sum(1 for g in day_games if g.get("away_pitcher") or g.get("home_pitcher"))
+        filled = after - before
+        enriched_total += filled
+        if filled:
+            print(f"  ✅ {date_str}: {filled} 場有先發投手資料（共 {len(day_games)} 場）")
+        else:
+            print(f"  ⚠️  {date_str}: 未找到先發投手資料（共 {len(day_games)} 場）")
+
+    if enriched_total and not dry:
+        payload["updated_at"] = today_str
+        with open(SCHED_FILE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        log.info("_enrich_starters: saved schedule.json with %d new pitcher slots", enriched_total)
+    elif not enriched_total:
+        log.info("_enrich_starters: no new pitcher data found for today/tomorrow")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1238,6 +1298,10 @@ def main():
             print(f"\n[3/4] 抓取 {args.months} 月份賽程...")
             games = scrape_schedule(args.year, args.months, session)
             update_schedule(games, dry=args.dry)
+
+            # ── 今明兩天先發投手補強 ──
+            print(f"\n[3b/4] 今明先發投手補強（Yahoo Japan 予告先発 + koreabaseball.com）...")
+            _enrich_starters_in_schedule(today_str, args.dry)
         else:
             print("\n[3/4] 跳過賽程爬取")
     else:

@@ -767,22 +767,28 @@ def fetch_npb_official_schedule(game_date: date) -> list[dict]:
         for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
             tag.decompose()
 
-        # ── team Phase 1: text nodes ──────────────────────────────────────
-        # npb.jp is server-rendered (not SPA); team names appear in static HTML.
-        # Narrow the scan to the target date's section using a kanji date anchor.
+        # ── team Phase 1: text nodes（日期過濾）─────────────────────────────
+        # npb.jp 月賽程頁面按日期分段。只收集目標日期段落內的隊名，
+        # 避免把整個月的比賽全部歸入同一天。
+        # 重要：codes_in_order 不從 script 掃描結果初始化（script 無日期上下文）
         target_day_jp = f"{game_date.month}月{game_date.day}日"
         in_target_section = False
-        codes_in_order: list[str] = list(team_codes_scripts)
+        codes_in_order: list[str] = []
+        date_re_jp = re.compile(r'\d+月\d+日')
         for node in soup.find_all(string=True):
             text = node.strip()
             if not text:
                 continue
-            # Detect date section header (e.g. "6月5日" or "6月5日（木）")
+            # 偵測目標日期的段落標題
             if target_day_jp in text:
                 in_target_section = True
-            # Stop when we hit the NEXT date section
-            elif in_target_section and re.search(r'\d+月\d+日', text) and target_day_jp not in text:
+                continue  # 日期文字本身不含隊名，跳過
+            # 遇到下一個不同日期就停止
+            if in_target_section and date_re_jp.search(text) and target_day_jp not in text:
                 break
+            # 只處理目標日期段落內的節點
+            if not in_target_section:
+                continue
             if len(text) > 50:
                 continue
             for m in team_pat.finditer(text):
@@ -1789,3 +1795,327 @@ def fetch_cpbl_pitcher_stats(year: int) -> dict[str, dict]:
     """廢棄 — CPBL 官網已被 WAF 封鎖。回傳空 dict。"""
     log.debug("fetch_cpbl_pitcher_stats: CPBL site removed, returning empty")
     return {}
+
+
+# ── Yahoo Japan 予告先発 (dedicated starter page) ────────────────────────────
+
+def fetch_yahoo_npb_starter_page(game_date: date) -> list[dict]:
+    """
+    Yahoo Japan 予告先発ページ (baseball.yahoo.co.jp/npb/starter/) から
+    本日の先発投手を取得する。
+
+    スケジュールページと異なり、このページは先発投手が主コンテンツなので
+    静的辞書なしで投手名を抽出できる。
+    Returns list of {away, home, away_pitcher_jp, home_pitcher_jp, date}
+    """
+    urls = [
+        "https://baseball.yahoo.co.jp/npb/starter/",
+        f"https://baseball.yahoo.co.jp/npb/starter/?date={game_date.year:04d}{game_date.month:02d}{game_date.day:02d}",
+    ]
+    for url in urls:
+        try:
+            time.sleep(random.uniform(0.5, 1.5))
+            resp = requests.get(url, headers=_YAHOO_JP_HEADERS, timeout=15)
+            if resp.status_code != 200:
+                log.debug("Yahoo starter page HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            results = _parse_yahoo_starter_html(resp.text, game_date)
+            if results:
+                log.info("Yahoo starter page: %d pitcher pairs for %s", len(results), game_date)
+                return results
+        except Exception as e:
+            log.debug("Yahoo starter page %s: %s", url, e)
+    return []
+
+
+def _parse_yahoo_starter_html(html: str, game_date: date) -> list[dict]:
+    """
+    Parse the Yahoo Japan 予告先発 (announced starters) page.
+
+    Strategy: Find game-card elements containing two team names and two pitcher
+    name slots. Extract pitcher names WITHOUT relying on a static name dictionary
+    — any name found in the pitcher slot is stored as-is (in Japanese).
+    """
+    date_str = game_date.isoformat()
+    soup = BeautifulSoup(html, "html.parser")
+    results: list[dict] = []
+
+    # Strategy A: JSON data embedded in <script> tags (Next.js / React hydration)
+    for script in soup.find_all("script"):
+        text = script.string or ""
+        # Look for JSON structures with starter/pitcher fields
+        # Pattern: "starter":{"away":"PitcherName","home":"PitcherName"}
+        starter_re = re.compile(
+            r'"(?:starter|予告先発|startingPitcher)"'
+            r'\s*:\s*\{'
+            r'[^}]*?"(?:away|visitor|client)\s*"\s*:\s*"([^"]+)"'
+            r'[^}]*?"home\s*"\s*:\s*"([^"]+)"',
+            re.IGNORECASE,
+        )
+        for m in starter_re.finditer(text):
+            log.debug("Yahoo starter JSON found: %s / %s", m.group(1), m.group(2))
+
+    # Strategy B: Structured HTML — look for game card pattern
+    # Each game card should contain team names (mappable via _YAHOO_NPB_TEAM_MAP)
+    # and associated pitcher names
+    team_keys_sorted = sorted(_YAHOO_NPB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pat = re.compile("(" + "|".join(re.escape(k) for k in team_keys_sorted) + ")")
+
+    # Japanese name pattern: 2-6 kanji/kana characters (covers most pitcher names)
+    # This catches names like 菅野智之, 才木浩人, サイスニード, etc.
+    jp_name_pat = re.compile(r'[一-鿿぀-ゟ゠-ヿ＀-￯]{2,8}')
+
+    # Remove non-content tags first
+    for tag in soup.find_all(["script", "style", "noscript", "head", "nav", "footer"]):
+        tag.decompose()
+
+    # Try to find card-like containers that hold both team info and pitcher info
+    # Common patterns: <li>, <div class=*game*>, <section class=*match*>, <tr>
+    candidate_containers = (
+        soup.find_all("li", class_=re.compile(r"game|match|card|starter", re.I))
+        or soup.find_all("div", class_=re.compile(r"game|match|card|starter", re.I))
+        or soup.find_all("tr", class_=re.compile(r"game|match|starter", re.I))
+    )
+
+    for container in candidate_containers:
+        text = container.get_text(" ", strip=True)
+        teams = team_pat.findall(text)
+        if len(teams) < 2:
+            continue
+        away_code = _YAHOO_NPB_TEAM_MAP.get(teams[0], "")
+        home_code = _YAHOO_NPB_TEAM_MAP.get(teams[-1], "")
+        if not away_code or not home_code or away_code == home_code:
+            continue
+
+        # Look for pitcher name in adjacent elements (span, td, etc.)
+        # Typically: child elements after the team name element
+        all_jp = jp_name_pat.findall(text)
+        # Remove team name tokens from the list
+        pitcher_candidates = [n for n in all_jp if not team_pat.match(n) and len(n) >= 2]
+
+        away_pitcher = pitcher_candidates[0] if len(pitcher_candidates) > 0 else ""
+        home_pitcher = pitcher_candidates[1] if len(pitcher_candidates) > 1 else ""
+
+        results.append({
+            "date":             date_str,
+            "away":             away_code,
+            "home":             home_code,
+            "away_pitcher_jp":  away_pitcher,
+            "home_pitcher_jp":  home_pitcher,
+        })
+
+    if results:
+        return results
+
+    # Strategy C: simple text-scan fallback
+    # Walk all text, collect (team_code, next_word) pairs
+    text_nodes = [n.strip() for n in soup.find_all(string=True) if n.strip()]
+    i = 0
+    gathered: list[tuple[str, str]] = []  # (team_code, pitcher_name)
+    while i < len(text_nodes):
+        node = text_nodes[i]
+        m = team_pat.search(node)
+        if m:
+            code = _YAHOO_NPB_TEAM_MAP[m.group()]
+            # The pitcher name is often in the next 1–3 text nodes
+            pitcher = ""
+            for j in range(i + 1, min(i + 4, len(text_nodes))):
+                candidate = text_nodes[j].strip()
+                if team_pat.search(candidate):
+                    break  # hit next team name — no pitcher announced
+                if (jp_name_pat.match(candidate) and len(candidate) <= 8
+                        and not re.search(r'\d', candidate)):
+                    pitcher = candidate
+                    break
+            gathered.append((code, pitcher))
+        i += 1
+
+    # Pair consecutive teams into games
+    j = 0
+    while j + 1 < len(gathered):
+        away_code, away_pitcher = gathered[j]
+        home_code, home_pitcher = gathered[j + 1]
+        if away_code != home_code:
+            results.append({
+                "date":             date_str,
+                "away":             away_code,
+                "home":             home_code,
+                "away_pitcher_jp":  away_pitcher,
+                "home_pitcher_jp":  home_pitcher,
+            })
+            j += 2
+        else:
+            j += 1
+
+    return results
+
+
+def enrich_schedule_with_starters(
+    game_date: date,
+    games: list[dict],
+) -> None:
+    """
+    Use the Yahoo Japan 予告先発 page to fill in pitcher names for games
+    that currently have no away_pitcher / home_pitcher set.
+    Modifies games in-place.
+    """
+    if not games:
+        return
+    starters = fetch_yahoo_npb_starter_page(game_date)
+    if not starters:
+        log.info("enrich_schedule_with_starters: no starters found for %s", game_date)
+        return
+
+    # Index starter info by (away, home) pair
+    starter_map = {(s["away"], s["home"]): s for s in starters}
+
+    enriched = 0
+    for g in games:
+        if g.get("league") != "NPB":
+            continue
+        key = (g.get("away", ""), g.get("home", ""))
+        s = starter_map.get(key)
+        if not s:
+            continue
+        if s.get("away_pitcher_jp") and not g.get("away_pitcher"):
+            # Translate JP name → Chinese if available, else keep JP
+            g["away_pitcher"] = _translate_jp_pitcher(s["away_pitcher_jp"])
+            enriched += 1
+        if s.get("home_pitcher_jp") and not g.get("home_pitcher"):
+            g["home_pitcher"] = _translate_jp_pitcher(s["home_pitcher_jp"])
+            enriched += 1
+
+    if enriched:
+        log.info("enrich_schedule_with_starters: filled %d pitcher slots for %s",
+                 enriched, game_date)
+
+
+# ── KBO official starter page ────────────────────────────────────────────────
+
+def fetch_koreabaseball_starters(game_date: date) -> list[dict]:
+    """
+    koreabaseball.com 예고선발 (announced KBO starters).
+    URL: https://www.koreabaseball.com/Game/Starter.aspx
+    Returns list of {away, home, away_pitcher_kr, home_pitcher_kr, date}
+    """
+    url = "https://www.koreabaseball.com/Game/Starter.aspx"
+    _kb_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.5",
+        "Referer": "https://www.koreabaseball.com/",
+    }
+    date_str = game_date.isoformat()
+    try:
+        time.sleep(random.uniform(0.5, 1.5))
+        resp = requests.get(url, headers=_kb_headers, timeout=15)
+        if resp.status_code != 200:
+            log.debug("koreabaseball starter page HTTP %s", resp.status_code)
+            return []
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        return _parse_koreabaseball_starter_html(resp.text, date_str)
+    except Exception as e:
+        log.debug("koreabaseball starter page: %s", e)
+        return []
+
+
+def _parse_koreabaseball_starter_html(html: str, date_str: str) -> list[dict]:
+    """
+    Parse koreabaseball.com 예고선발 page.
+    The page has a table with columns: 원정팀 투수 / 원정팀 / 홈팀 / 홈팀 투수
+    (away pitcher / away team / home team / home pitcher)
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    results: list[dict] = []
+
+    # KBO team map (Korean → internal code)
+    _KB_TEAM_MAP = {
+        "삼성":    "SSL", "라이온즈": "SSL",
+        "LG":      "LGT", "트윈스":  "LGT",
+        "두산":    "DSB", "베어스":  "DSB",
+        "KT":      "KTW", "위즈":    "KTW",
+        "SSG":     "SSG", "랜더스":  "SSG",
+        "NC":      "NCD", "다이노스": "NCD",
+        "KIA":     "KIA", "타이거즈": "KIA",
+        "롯데":    "LTG", "자이언츠": "LTG",
+        "한화":    "HWE", "이글스":  "HWE",
+        "키움":    "KWH", "히어로즈": "KWH",
+    }
+    team_keys = sorted(_KB_TEAM_MAP.keys(), key=len, reverse=True)
+    team_pat = re.compile("(" + "|".join(re.escape(k) for k in team_keys) + ")")
+
+    # Try to find the starter table
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        for row in rows[1:]:  # skip header
+            cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if len(cells) < 4:
+                continue
+            # Typical layout: [away_pitcher, away_team, home_team, home_pitcher]
+            # or: [away_team, away_pitcher, home_team, home_pitcher]
+            # Try to identify which cells contain team names
+            team_cells = [(i, _KB_TEAM_MAP.get(c, "")) for i, c in enumerate(cells)
+                          if team_pat.search(c)]
+            if len(team_cells) < 2:
+                continue
+            away_idx, away_code = team_cells[0]
+            home_idx, home_code = team_cells[-1]
+            if not away_code or not home_code or away_code == home_code:
+                continue
+            # Pitcher is typically adjacent to the team name
+            away_pitcher = cells[away_idx - 1] if away_idx > 0 else ""
+            home_pitcher = cells[home_idx + 1] if home_idx + 1 < len(cells) else ""
+            # Fallback: pitcher immediately after team cell
+            if not away_pitcher and away_idx + 1 < len(cells):
+                away_pitcher = cells[away_idx + 1]
+            if not home_pitcher and home_idx > 0:
+                home_pitcher = cells[home_idx - 1]
+
+            results.append({
+                "date":              date_str,
+                "away":              away_code,
+                "home":              home_code,
+                "away_pitcher_kr":   away_pitcher,
+                "home_pitcher_kr":   home_pitcher,
+            })
+
+    return results
+
+
+def enrich_kbo_with_starters(game_date: date, games: list[dict]) -> None:
+    """
+    Use koreabaseball.com 예고선발 page to fill in KBO pitcher names.
+    Modifies games in-place.
+    """
+    if not games:
+        return
+    starters = fetch_koreabaseball_starters(game_date)
+    if not starters:
+        log.debug("enrich_kbo_with_starters: no starters for %s", game_date)
+        return
+
+    starter_map = {(s["away"], s["home"]): s for s in starters}
+    enriched = 0
+    for g in games:
+        if g.get("league") != "KBO":
+            continue
+        key = (g.get("away", ""), g.get("home", ""))
+        s = starter_map.get(key)
+        if not s:
+            continue
+        if s.get("away_pitcher_kr") and not g.get("away_pitcher"):
+            zh = _KBO_PITCHER_KR_MAP.get(s["away_pitcher_kr"], s["away_pitcher_kr"])
+            g["away_pitcher"] = zh
+            enriched += 1
+        if s.get("home_pitcher_kr") and not g.get("home_pitcher"):
+            zh = _KBO_PITCHER_KR_MAP.get(s["home_pitcher_kr"], s["home_pitcher_kr"])
+            g["home_pitcher"] = zh
+            enriched += 1
+
+    if enriched:
+        log.info("enrich_kbo_with_starters: filled %d KBO pitcher slots for %s",
+                 enriched, game_date)

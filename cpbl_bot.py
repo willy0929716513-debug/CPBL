@@ -8,7 +8,7 @@ from cpbl.elo import ELOSystem
 from cpbl.predictor import PredictionModel
 from cpbl.odds import OddsFetcher, MOCK_ODDS
 import cpbl.mock_data as mock
-from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP, TEAM_INFO, get_rotation_starter
+from cpbl.mock_data import PITCHERS, VENUE_FACTORS, TEAM_DEFAULT_SP, TEAM_INFO
 import cpbl.memory        as mem_module
 import cpbl.agent         as agent_module
 import cpbl.simulator     as simulator
@@ -29,20 +29,28 @@ TW = datetime.timezone(datetime.timedelta(hours=8))
 def _game_ended(game: dict, now_tw: datetime.datetime) -> bool:
     """Returns True if this game has very likely ended (start + 3h30m elapsed)."""
     date_str = (game.get("date") or "").strip()
-    time_str = (game.get("time") or "").strip()
     if not date_str:
         return False
     try:
-        y, mo, d = map(int, date_str.split("-"))
+        game_date = datetime.date.fromisoformat(date_str)
+        # 日期比今天早 → 一定結束了
+        if game_date < now_tw.date():
+            return True
+        # 今天的比賽：依開始時間判斷（NPB 18:00 JST = 17:00 TW，KBO 약 16:00 TW）
+        time_str = (game.get("time") or "").strip()
         if time_str and ":" in time_str:
             parts = time_str.split(":")
             h, m = int(parts[0]), int(parts[1])
         else:
-            h, m = 18, 0  # 假設下午六點開打
-        start = datetime.datetime(y, mo, d, h, m, tzinfo=TW)
+            # 無時間資料：用最保守估計（17:00 TW = 18:00 JST/KST）
+            # 讓比賽在 20:30 TW 之後自動過濾
+            h, m = 17, 0
+        start = datetime.datetime(
+            game_date.year, game_date.month, game_date.day, h, m, tzinfo=TW
+        )
         return now_tw >= start + datetime.timedelta(hours=3, minutes=30)
     except (ValueError, TypeError):
-        return now_tw.hour >= 23
+        return now_tw.hour >= 22
 
 
 # ── Config ─────────────────────────────────────────────────────────────────
@@ -497,15 +505,9 @@ def main():
 
         ap_confirmed = bool(g.get("away_pitcher"))
         hp_confirmed = bool(g.get("home_pitcher"))
-        # 輪值預測：無確認先發時，依日期推算今日輪值（每 4 天循環）
-        _game_date = None
-        try:
-            from datetime import date as _date
-            _game_date = _date.fromisoformat(g.get("date", today_str))
-        except Exception:
-            pass
-        ap_name = g.get("away_pitcher") or get_rotation_starter(away, _game_date)
-        hp_name = g.get("home_pitcher") or get_rotation_starter(home, _game_date)
+        # 只使用已確認的先發投手；未確認則保留空字串（Discord 顯示「未定」）
+        ap_name = g.get("away_pitcher") or ""
+        hp_name = g.get("home_pitcher") or ""
         # 用中文隊名覆蓋 g 裡的英文名，讓 bet_label 直接顯示中文
         away_cn_name = TEAM_INFO.get(away, {}).get("name", g.get("away_name", away))
         home_cn_name = TEAM_INFO.get(home, {}).get("name", g.get("home_name", home))
