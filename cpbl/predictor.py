@@ -61,6 +61,14 @@ class PredictionModel:
         hp = pitcher_db.get(hp_name, {})
         ap = pitcher_db.get(ap_name, {})
 
+        # Fallback: when no specific starter announced, use team rotation average.
+        # This gives the model real team pitching quality data instead of league avg (50).
+        # Discord display still shows '未定' — only the model score benefits from this.
+        if not hp and ht:
+            hp = _team_rotation_avg(ht, pitcher_db)
+        if not ap and at:
+            ap = _team_rotation_avg(at, pitcher_db)
+
         factors: dict[str, dict] = {}
 
         # ── 1. 先發投手 (35%) ──────────────────────────
@@ -161,19 +169,19 @@ class PredictionModel:
         }
 
         # ── 整合勝率（ELO 為基底，各因子加權調整）────
+        # ⚠️  重要：勝率計算完全不混入賠率，確保模型獨立性。
+        # 賠率只用於最後 edge 比較，不作為概率輸入。
         elo_base = self.elo.win_probability(
             ht, at,
             hp.get("era"),
             ap.get("era"),
         )
 
-        # RL 記憶權重乘數（V7 新增）
         _MEM_KEY = {
             "starter":     "pitcher_weight",
             "lineup":      "lineup_weight",
             "bullpen":     "bullpen_weight",
             "recent_form": "form_weight",
-            "odds":        "market_weight",
         }
         home_prob = elo_base
         for key, w in WEIGHTS.items():
@@ -187,19 +195,14 @@ class PredictionModel:
             home_prob += float(memory.get("bias", 0.0))
         home_prob = max(0.05, min(0.95, home_prob))
 
-        # ── 盤口資料 (passthrough + 輕微校正) ──────────
+        # ── 盤口資料（純比較用，不修改 home_prob）──────
+        # 只記錄市場隱含勝率和賠率，供 Discord 顯示 edge 用。
         odds_key = f"{at}-{ht}"
         if odds_data is None:
             odds_data = odds_module.MOCK_ODDS.get(odds_key, {})
 
         if odds_data:
             o_analysis = odds_module.analyze(odds_data, home_prob)
-            # 盤口校正：市場權重由 RL 記憶動態調整 (預設 85/15)
-            mw = float(memory.get("market_weight", 1.0)) if memory else 1.0
-            market_blend = min(0.35, 0.15 * mw)   # 15%~35%，依市場權重調整
-            market_hp = o_analysis.get("market_home_prob", home_prob * 100) / 100.0
-            home_prob  = home_prob * (1 - market_blend) + market_hp * market_blend
-            home_prob  = max(0.05, min(0.95, home_prob))
             factors["odds"] = {
                 "label": "盤口 / 賠率",
                 "home_score": 50 + o_analysis["advantage"],
@@ -246,6 +249,36 @@ class PredictionModel:
 # ──────────────────────────────────────────────────────────────────
 # 各因子評分函式（0~100，50=聯盟平均）
 # ──────────────────────────────────────────────────────────────────
+
+def _team_rotation_avg(team: str, pitcher_db: dict) -> dict:
+    """
+    Returns the average stats of all known starters for a team.
+    Called when no individual starter is confirmed for a game.
+    The result gives the model real team-level pitching quality data,
+    rather than defaulting to the league average (score=50) for both teams.
+    """
+    rotation = [
+        p for p in pitcher_db.values()
+        if isinstance(p, dict)
+        and p.get("team") == team
+        and p.get("era") is not None
+        and p.get("gs", p.get("g", 0)) >= 2  # started at least 2 games
+    ]
+    if not rotation:
+        return {}
+    avg: dict = {"team": team, "_is_team_avg": True}
+    for key in ("era", "whip", "fip", "xfip", "k9", "bb9",
+                "k_pct", "bb_pct", "babip", "lob_pct", "hr9",
+                "recent_3_era", "recent_5_era", "recent_10_era"):
+        vals = [p[key] for p in rotation if key in p and p[key] is not None]
+        if vals:
+            avg[key] = round(sum(vals) / len(vals), 3)
+    # Propagate foreign flag if majority are foreign pitchers
+    foreign_count = sum(1 for p in rotation if p.get("foreign"))
+    if foreign_count > len(rotation) / 2:
+        avg["foreign"] = True
+    return avg
+
 
 def _pitcher_score(p: dict) -> float:
     """
@@ -320,7 +353,13 @@ def _pitcher_detail(hp: dict, ap: dict) -> str:
     lines = []
     for label, p in [("主隊", hp), ("客隊", ap)]:
         if not p:
-            lines.append(f"{label} 無資料")
+            lines.append(f"{label} 未定（無資料，用聯盟平均）")
+            continue
+        if p.get("_is_team_avg"):
+            lines.append(
+                f"{label} 未定（輪值平均 ERA {p.get('era','-')} "
+                f"FIP {p.get('fip','-')} K/9 {p.get('k9','-')}）"
+            )
             continue
         foreign_tag = "🌏" if p.get("foreign") else ""
         trend = _trend_label(p.get("era", LEAGUE_AVG_ERA),

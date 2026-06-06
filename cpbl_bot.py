@@ -184,20 +184,41 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         name = sp.get("name", "")
         if not name:
             return "未定"
-        confirmed = sp.get("confirmed", False)
-        if confirmed:
-            era = sp.get("era")
-            k9  = sp.get("k9")
-            if era is not None and k9 is not None:
-                return f"{name} (ERA {era:.2f} K/9 {k9:.1f})"
-            if era is not None:
-                return f"{name} (ERA {era:.2f})"
-            return name
-        else:
-            # Rotation prediction: show name only — stats omitted since pitcher slot is unconfirmed
-            return f"🔮{name}"
+        era = sp.get("era")
+        k9  = sp.get("k9")
+        fip = sp.get("fip")
+        stats_parts = []
+        if era is not None:
+            stats_parts.append(f"ERA {era:.2f}")
+        if k9 is not None:
+            stats_parts.append(f"K/9 {k9:.1f}")
+        if fip is not None and era is not None and abs(fip - era) > 0.3:
+            stats_parts.append(f"FIP {fip:.2f}")
+        return f"{name} ({' '.join(stats_parts)})" if stats_parts else name
 
-    # Pre-compute a short date tag (MM/DD) for all game cards
+    def factor_tags(pr: dict) -> str:
+        """從各因子生成優劣標籤，如 先發▲客 | 打線▲主 | 牛棚▲客"""
+        factors = pr.get("factors", {})
+        away_cn = pr.get("away_cn", pr.get("away", "客"))
+        home_cn = pr.get("home_cn", pr.get("home", "主"))
+        tags = []
+        FACTOR_MAP = [
+            ("starter",     "先發"),
+            ("lineup",      "打線"),
+            ("bullpen",     "牛棚"),
+            ("recent_form", "近況"),
+            ("home_away",   "主客場"),
+            ("h2h",         "對戰"),
+        ]
+        for key, label in FACTOR_MAP:
+            f = factors.get(key, {})
+            adv = f.get("advantage", 0)
+            if adv > 3:
+                tags.append(f"{label}▲{home_cn}")
+            elif adv < -3:
+                tags.append(f"{label}▲{away_cn}")
+        return " | ".join(tags) if tags else "各項相近"
+
     try:
         _gd = datetime.date.fromisoformat(str(game_date))
         _date_tag = f"📅 {_gd.month:02d}/{_gd.day:02d}"
@@ -214,41 +235,68 @@ def send_discord(picks, all_preds, game_date, history=None, memory=None):
         g_time  = pr.get("game_time", pr.get("time", ""))
         league  = pr.get("league", TEAM_INFO.get(home, {}).get("league", ""))
         flag    = "🇯🇵" if league == "NPB" else "🇰🇷" if league == "KBO" else "⚾"
-        time_tag = f"  {_date_tag}" + (f" 🕐 {g_time}" if g_time else "")
+        time_tag = (_date_tag + (f" 🕐 {g_time}" if g_time else ""))
 
+        # ── 先發投手 ──
         asp = pr.get("away_sp") or {}
         hsp = pr.get("home_sp") or {}
-        pitcher_line = f"  ⚾ 先發：{fmt_sp(asp)} vs {fmt_sp(hsp)}"
+        asp_str = fmt_sp(asp)
+        hsp_str = fmt_sp(hsp)
+
+        # ── 市場賠率與 edge ──
+        of        = pr.get("factors", {}).get("odds", {})
+        h_odds    = float(of.get("curr_home_odds") or pr.get("curr_home_odds") or 0)
+        a_odds    = float(of.get("curr_away_odds") or pr.get("curr_away_odds") or 0)
+        mkt_home  = float(of.get("market_home_prob") or 0)  # 已是 % 值
+
+        # Edge = 模型勝率 − 市場隱含勝率（完全獨立計算）
+        edge_home = hw - mkt_home  # + 表示模型比市場更看好主隊
+        edge_away = aw - (100.0 - mkt_home)
+
+        def odds_fmt(o: float) -> str:
+            return f"{o:.2f}" if o > 1 else "–"
+
+        def mkt_str() -> str:
+            if mkt_home > 0:
+                return f"市場：主 {mkt_home:.1f}% ({odds_fmt(h_odds)}) / 客 {100-mkt_home:.1f}% ({odds_fmt(a_odds)})"
+            return "市場：無賠率"
+
+        ftags = factor_tags(pr)
 
         if (away, home) in pick_map:
             p    = pick_map[(away, home)]
             tier = TIER_LABEL.get(p["tier"], "⭐ 穩定")
             be   = round(100.0 / p["bp"], 1) if p.get("bp", 0) > 1 else "?"
+            side_cn = home_cn if p["side"] == "home" else away_cn
+            edge_val = p["edge"] * 100
+
             lines += [
-                f"{flag} **{away_cn} @ {home_cn}**{time_tag}",
-                pitcher_line,
-                f"  客 {aw}% vs 主 {hw}%",
-                f"  {tier}  💰 `{p['bet_label']}` @ **{p['bp']}**  "
-                f"Edge {p['edge']*100:+.1f}%  BEP {be}%",
+                f"{flag} **{away_cn} @ {home_cn}**  {time_tag}",
+                f"  先發：客 {asp_str}  vs  主 {hsp_str}",
+                f"  優勢：{ftags}",
+                f"  🎯 模型：客 **{aw}%** / 主 **{hw}%**",
+                f"  📊 {mkt_str()}",
+                f"  ⚡ Edge：{side_cn} `{edge_val:+.1f}%`  →  {tier} 💰 `{p['bet_label']}` @ **{p['bp']}**  BEP {be}%",
                 "",
             ]
         else:
-            h_odds = pr.get("curr_home_odds", 0)
-            a_odds = pr.get("curr_away_odds", 0)
-            def odds_tag(o):
-                return f" [{o:.2f}]" if o and o > 1 else ""
+            # 無推薦：仍顯示完整分析
             if hw >= aw:
-                adv = f"主 {home_cn} {hw}%{odds_tag(h_odds)} > 客 {away_cn} {aw}%{odds_tag(a_odds)}"
+                model_verdict = f"主 **{home_cn}** {hw}%  >  客 {away_cn} {aw}%"
+                edge_show = f"主隊 {edge_home:+.1f}%"
             else:
-                adv = f"客 {away_cn} {aw}%{odds_tag(a_odds)} > 主 {home_cn} {hw}%{odds_tag(h_odds)}"
+                model_verdict = f"客 **{away_cn}** {aw}%  >  主 {home_cn} {hw}%"
+                edge_show = f"客隊 {edge_away:+.1f}%"
+
             lines += [
-                f"{flag} {away_cn} @ {home_cn}{time_tag}",
-                pitcher_line,
-                f"  {adv}（不推薦下注）",
+                f"{flag} {away_cn} @ {home_cn}  {time_tag}",
+                f"  先發：客 {asp_str}  vs  主 {hsp_str}",
+                f"  優勢：{ftags}",
+                f"  🎯 模型：{model_verdict}",
+                f"  📊 {mkt_str()}  Edge {edge_show}（不推薦）",
                 "",
             ]
 
-    # 歷史摘要（有才顯示）
     if history:
         settled = [h for h in history if h.get("result") is not None]
         if settled:
