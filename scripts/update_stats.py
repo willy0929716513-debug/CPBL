@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import requests
 from bs4 import BeautifulSoup
 from cpbl.mock_data import PITCHERS
-from cpbl.stats_scraper import enrich_pitcher, calc_fip, fetch_pitcher_stats_nk, fetch_team_stats_nk
+from cpbl.stats_scraper import enrich_pitcher, calc_fip, fetch_pitcher_stats_nk, fetch_team_stats_nk, fetch_fangraphs_npb_kbo, fetch_baseballdata_jp
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
@@ -1282,8 +1282,36 @@ def main():
         else:
             print("  ⚠️ nk-datasets 球隊成績失敗")
 
-        # ── [1c] npb.jp 補充（若在個人電腦，可能有更新的數據）──
-        print("\n     補充 NPB 投手成績（npb.jp）...")
+        # ── [1c] FanGraphs NPB/KBO ──
+        print("\n[1c/5] 抓取 NPB/KBO 投手成績（FanGraphs International）...")
+        fg_stats = fetch_fangraphs_npb_kbo(args.year)
+        if fg_stats:
+            for name, p in fg_stats.items():
+                if name not in live_stats:
+                    live_stats[name] = p
+                else:
+                    live_stats[name].update({k: v for k, v in p.items() if isinstance(v, (int, float))})
+            npb_cnt = sum(1 for v in fg_stats.values() if v.get('league') == 'NPB')
+            kbo_cnt = sum(1 for v in fg_stats.values() if v.get('league') == 'KBO')
+            print(f"  ✅ FanGraphs: {len(fg_stats)} 名投手 (NPB={npb_cnt}, KBO={kbo_cnt}) (ERA/FIP/xFIP/WHIP/K9/BB9/K%/BB%)")
+        else:
+            print("  ⚠️ FanGraphs 失敗（Cloudflare 防護？將使用 nk-datasets）")
+
+        # ── [1d] baseballdata.jp NPB ──
+        print("\n[1d/5] 抓取 NPB 投手成績（baseballdata.jp）...")
+        bd_stats = fetch_baseballdata_jp(args.year)
+        if bd_stats:
+            for name, p in bd_stats.items():
+                if name not in live_stats:
+                    live_stats[name] = p
+                else:
+                    live_stats[name].update({k: v for k, v in p.items() if isinstance(v, (int, float))})
+            print(f"  ✅ baseballdata.jp: {len(bd_stats)} 名 NPB 投手")
+        else:
+            print("  ⚠️ baseballdata.jp 失敗")
+
+        # ── [1e] npb.jp 補充（若在個人電腦，可能有更新的數據）──
+        print("\n[1e/5] 補充 NPB 投手成績（npb.jp）...")
         npb_stats = scrape_npb_pitchers(args.year, session)
         npb_ok = bool(npb_stats)
         if npb_ok:
@@ -1298,8 +1326,8 @@ def main():
         else:
             print("  ⚠️ npb.jp 失敗（GH Actions 環境正常，個人電腦可能被擋）")
 
-        # ── [1d] koreabaseball.com + statiz.co.kr 補充 KBO ──
-        print("\n     補充 KBO 投手成績（koreabaseball.com）...")
+        # ── [1f] koreabaseball.com + statiz.co.kr 補充 KBO ──
+        print("\n[1f/5] 補充 KBO 投手成績（koreabaseball.com）...")
         kbo_stats = scrape_kbo_pitchers(args.year, session)
         kbo_ok = bool(kbo_stats)
         if kbo_ok:
@@ -1313,9 +1341,9 @@ def main():
         else:
             print("  ⚠️ koreabaseball.com 失敗（GH Actions 環境正常，個人電腦可能被擋）")
 
-        # ── [1e] 若 nk-datasets 也失敗，用 baseball-reference 當最後備援 ──
+        # ── [1g] 若 nk-datasets 也失敗，用 baseball-reference 當最後備援 ──
         if not nk_ok and not npb_ok and not kbo_ok:
-            print("\n     baseball-reference 備援（所有主要來源失敗）...")
+            print("\n[1g/5] baseball-reference 備援（所有主要來源失敗）...")
             bbref_stats = scrape_bbref(args.year, session)
             if bbref_stats:
                 live_stats.update(bbref_stats)
@@ -1344,13 +1372,13 @@ def main():
             print(f"\n[3b/5] 今明先發投手補強（Yahoo Japan 予告先発 + koreabaseball.com）...")
             _enrich_starters_in_schedule(today_str, args.dry)
         else:
-            print("\n[3/5] 跳過賽程爬取")
+            print("\n[3/5] 跳過賽程爬取（--skip-schedule）")
     else:
         print("\n[--odds-only] 跳過投手成績與賽程爬取")
 
     # ── 賠率 ──
-    step = "4/5" if not args.odds_only else "1/1"
-    step_save = "5/5" if not args.odds_only else "1/1"
+    step = "4/5" if not args.odds_only else "1/2"
+    step_save = "5/5" if not args.odds_only else "2/2"
     if not args.skip_odds:
         print(f"\n[{step}] 抓取今日賠率（{today_str}）...")
         use_pw = not args.no_playwright

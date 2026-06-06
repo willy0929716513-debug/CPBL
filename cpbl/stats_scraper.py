@@ -2447,3 +2447,260 @@ def fetch_team_stats_nk(year: int | None = None) -> dict:
 
     log.info("nk-datasets team stats: %d teams", len(result))
     return result
+
+
+# ── FanGraphs International (NPB / KBO only — never MLB) ─────────────────────
+
+# FanGraphs column name → internal field name
+_FG_COL_MAP = {
+    "ERA":   "era",   "FIP":   "fip",   "xFIP":  "xfip",
+    "WHIP":  "whip",  "K/9":   "k9",    "BB/9":  "bb9",
+    "K%":    "k_pct", "BB%":   "bb_pct","BABIP": "babip",
+    "LOB%":  "lob_pct","IP":   "innings","W":     "wins",
+    "L":     "losses","G":     "g",     "GS":    "gs",
+}
+
+# FanGraphs team name → internal code (NPB)
+_FG_NPB_TEAM_MAP = {
+    "Giants":    "GNT", "Tigers":    "HNS", "Carp":      "HRC",
+    "BayStars":  "YDB", "Swallows":  "YKL", "Dragons":   "CND",
+    "Hawks":     "SBH", "Buffaloes": "ORX", "Eagles":    "RKT",
+    "Marines":   "LTT", "Lions":     "SEI", "Fighters":  "HAM",
+}
+
+# FanGraphs team name → internal code (KBO)
+_FG_KBO_TEAM_MAP = {
+    "Samsung": "SSL", "LG":      "LGT", "Doosan": "DSB",
+    "KT":      "KTW", "SSG":     "SSG", "NC":     "NCD",
+    "KIA":     "KIA", "Lotte":   "LTG", "Hanwha": "HWE",
+    "Kiwoom":  "KWH",
+}
+
+
+def _parse_fangraphs_intl(data, league: str) -> dict:
+    """
+    Parse FanGraphs international leaders JSON response.
+    league must be 'NPB' or 'KBO' (never MLB).
+    """
+    team_map = _FG_NPB_TEAM_MAP if league == "NPB" else _FG_KBO_TEAM_MAP
+
+    # FanGraphs API returns either {"data": [...]} or a list directly
+    rows = data if isinstance(data, list) else data.get("data", [])
+    if not rows:
+        return {}
+
+    result: dict = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        # Possible player name keys
+        name = (row.get("PlayerName") or row.get("playerName")
+                or row.get("Name") or row.get("name") or "").strip()
+        if not name:
+            continue
+
+        p: dict = {"league": league}
+
+        # Map numeric stat columns
+        for fg_col, our_key in _FG_COL_MAP.items():
+            raw = row.get(fg_col)
+            if raw is None:
+                continue
+            val_str = str(raw).replace("%", "").strip()
+            try:
+                p[our_key] = float(val_str)
+            except (ValueError, TypeError):
+                pass
+
+        if "era" not in p:
+            continue
+
+        # Map team name
+        team_raw = (row.get("Team") or row.get("team") or "").strip()
+        team_code = team_map.get(team_raw, "")
+        if not team_code:
+            # Fuzzy match
+            for k, v in team_map.items():
+                if k.lower() in team_raw.lower() or team_raw.lower() in k.lower():
+                    team_code = v
+                    break
+        if team_code:
+            p["team"] = team_code
+
+        enrich_pitcher(p)
+        result[name] = p
+
+    log.info("FanGraphs %s: parsed %d pitchers", league, len(result))
+    return result
+
+
+def fetch_fangraphs_international(year: int | None = None, league: str = "NPB") -> dict:
+    """
+    FanGraphs international pitcher stats — NPB or KBO ONLY (never MLB).
+    Tries the internal /api/leaders/international/data endpoint first (returns JSON).
+    league: 'NPB' or 'KBO'
+    """
+    _year = year or date.today().year
+    # FanGraphs internal API — returns JSON without JS rendering
+    api_url = (
+        f"https://www.fangraphs.com/api/leaders/international/data"
+        f"?pos=P&stats=pit&lg={league}&qual=0&season={_year}&type=8"
+        f"&month=0&ind=0&team=0&pageitems=500&pagenum=1"
+    )
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9,ja;q=0.8,ko;q=0.7",
+        "Referer": f"https://www.fangraphs.com/leaders/international?lg={league}&stats=pit&pos=P",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    try:
+        resp = requests.get(api_url, headers=headers, timeout=15)
+        if resp.status_code in (403, 429):
+            log.debug("FanGraphs %s API: HTTP %s", league, resp.status_code)
+            return {}
+        resp.raise_for_status()
+        data = resp.json()
+        return _parse_fangraphs_intl(data, league)
+    except Exception as e:
+        log.debug("FanGraphs %s: %s", league, e)
+        return {}
+
+
+def fetch_fangraphs_npb_kbo(year: int | None = None) -> dict:
+    """Fetch both NPB and KBO from FanGraphs (NO MLB)."""
+    result = {}
+    for lg in ("NPB", "KBO"):
+        result.update(fetch_fangraphs_international(year, lg))
+    return result
+
+
+# ── baseballdata.jp — NPB pitcher stats (static HTML tables) ─────────────────
+
+# baseballdata.jp team abbreviation → internal code
+_BD_NPB_TEAM_MAP = {
+    "G": "GNT", "T": "HNS", "C": "HRC", "DB": "YDB",
+    "S": "YKL", "D": "CND", "H": "SBH", "B":  "ORX",
+    "E": "RKT", "M": "LTT", "L": "SEI", "F":  "HAM",
+}
+
+_BD_COL_MAP = {
+    "Name":    "name",  "Player":  "name",  "選手":   "name",
+    "Team":    "team",  "球団":    "team",
+    "ERA":     "era",   "防御率":  "era",
+    "FIP":     "fip",   "xFIP":   "xfip",
+    "WHIP":    "whip",
+    "K/9":     "k9",    "BB/9":   "bb9",
+    "K%":      "k_pct", "BB%":    "bb_pct",
+    "BABIP":   "babip", "LOB%":   "lob_pct",
+    "IP":      "innings","W":      "wins",
+    "L":       "losses","G":      "g",     "GS":    "gs",
+}
+
+_BD_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+}
+
+
+def fetch_baseballdata_jp(year: int | None = None) -> dict:
+    """
+    baseballdata.jp — NPB pitcher stats, static HTML tables.
+    """
+    _year = year or date.today().year
+    urls = [
+        f"https://baseballdata.jp/en/pitching/{_year}/",
+        f"https://baseballdata.jp/en/pitching/?year={_year}",
+        "https://baseballdata.jp/en/pitching/",
+    ]
+
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=_BD_HEADERS, timeout=15)
+            if resp.status_code == 403:
+                log.debug("baseballdata.jp 403 for %s", url)
+                return {}
+            if resp.status_code != 200:
+                log.debug("baseballdata.jp HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            stats = _parse_baseballdata_jp_html(resp.text)
+            if stats:
+                log.info("baseballdata.jp: %d NPB pitchers from %s", len(stats), url)
+                return stats
+        except Exception as e:
+            log.debug("baseballdata.jp %s: %s", url, e)
+
+    return {}
+
+
+def _parse_baseballdata_jp_html(html: str) -> dict:
+    """Parse baseballdata.jp HTML pitcher stats table."""
+    soup = BeautifulSoup(html, "html.parser")
+    result: dict = {}
+
+    for table in soup.find_all("table"):
+        thead = table.find("thead")
+        header_row = thead.find("tr") if thead else (table.find_all("tr") or [None])[0]
+        if not header_row:
+            continue
+
+        raw_hdrs = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+        hdrs = [_BD_COL_MAP.get(h, h.lower()) for h in raw_hdrs]
+
+        if "name" not in hdrs or "era" not in hdrs:
+            continue
+
+        data_rows = table.select("tbody tr") or table.find_all("tr")[1:]
+        for row in data_rows:
+            tds = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if not tds or len(tds) < 3:
+                continue
+            try:
+                name = tds[hdrs.index("name")].strip()
+            except (ValueError, IndexError):
+                continue
+            if not name or name in ("Total", "合計", "平均", ""):
+                continue
+
+            p: dict = {"league": "NPB"}
+
+            # Team mapping
+            if "team" in hdrs:
+                try:
+                    raw_team = tds[hdrs.index("team")].strip()
+                    team_code = _BD_NPB_TEAM_MAP.get(raw_team, "")
+                    if not team_code:
+                        # Try full name fallback
+                        for k, v in _NPB_TEAM_MAP.items():
+                            if k.lower() in raw_team.lower():
+                                team_code = v
+                                break
+                    if team_code:
+                        p["team"] = team_code
+                except Exception:
+                    pass
+
+            for field in ("era", "fip", "xfip", "whip", "k9", "bb9",
+                          "k_pct", "bb_pct", "babip", "lob_pct",
+                          "innings", "wins", "losses", "g", "gs"):
+                if field not in hdrs:
+                    continue
+                raw_val = tds[hdrs.index(field)]
+                raw_val = raw_val.replace("%", "").replace(",", "").strip()
+                try:
+                    p[field] = float(raw_val)
+                except (ValueError, TypeError):
+                    pass
+
+            if "era" not in p:
+                continue
+
+            enrich_pitcher(p)
+            result[name] = p
+
+    return result
