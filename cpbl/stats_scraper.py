@@ -531,13 +531,24 @@ def _kbo_official_team_code(text: str) -> str:
 def fetch_kbo_schedule(game_date: date) -> list[dict]:
     """
     KBO 賽程抓取 — 只使用韓國本地資料來源，不依賴 MLB API。
-    嘗試順序：koreabaseball.com → Naver Sports KBO → 空列表
+    嘗試順序：mykbostats.com（日期特定）→ koreabaseball.com → Naver Sports KBO → 空列表
     先發投手若頁面有則抓，無則留空（由 rotation 補漏）。
+    mykbostats.com 排第一是因為它提供日期特定 URL，不會把整個月的賽事重複回傳。
     """
     date_str = game_date.isoformat()
     y, m, d  = game_date.year, game_date.month, game_date.day
 
-    # 1. koreabaseball.com 官方網站（只用帶日期的 URL，避免無日期版本永遠回傳今天賽程）
+    # 1. mykbostats.com — 日期特定 URL，最可靠，含 Probable Pitchers
+    try:
+        time.sleep(random.uniform(0.5, 1.5))
+        mykbo_games = fetch_mykbo_schedule(game_date)
+        if mykbo_games:
+            log.info("KBO schedule from MyKBO Stats: %d games (with pitchers)", len(mykbo_games))
+            return mykbo_games
+    except Exception as e:
+        log.debug("MyKBO Stats failed: %s", e)
+
+    # 2. koreabaseball.com 官方網站（只用帶日期的 URL，避免無日期版本永遠回傳今天賽程）
     kbo_urls = [
         f"https://www.koreabaseball.com/Schedule/Schedule.aspx?leId=1&srId=0&date={y:04d}{m:02d}{d:02d}",
     ]
@@ -558,7 +569,7 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
         except Exception as e:
             log.debug("koreabaseball.com %s: %s", url, e)
 
-    # 2. Naver Sports KBO 賽程
+    # 3. Naver Sports KBO 賽程
     naver_urls = [
         f"https://sports.news.naver.com/kbaseball/schedule/index.nhn?year={y}&month={m:02d}",
         "https://sports.news.naver.com/kbaseball/schedule/index.nhn",
@@ -576,16 +587,6 @@ def fetch_kbo_schedule(game_date: date) -> list[dict]:
                 return games
         except Exception as e:
             log.debug("Naver KBO %s: %s", url, e)
-
-    # 3. MyKBO Stats — 英文愛好者站點，靜態 HTML，附帶 Probable Pitchers
-    try:
-        time.sleep(random.uniform(0.5, 1.5))
-        mykbo_games = fetch_mykbo_schedule(game_date)
-        if mykbo_games:
-            log.info("KBO schedule from MyKBO Stats: %d games (with pitchers)", len(mykbo_games))
-            return mykbo_games
-    except Exception as e:
-        log.debug("MyKBO Stats failed: %s", e)
 
     return []
 
@@ -1295,11 +1296,62 @@ def fetch_mykbo_schedule(game_date: date) -> list[dict]:
 
 
 def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
-    """解析 mykbostats.com 賽程頁面，提取先發投手。"""
+    """
+    解析 mykbostats.com 賽程頁面，提取先發投手。
+    使用多策略方法：先試 CSS 選取器，再試文字掃描，確保在 HTML 結構變動時仍能工作。
+    """
     soup  = BeautifulSoup(html, "html.parser")
     games = []
+    seen_pairs: set[tuple] = set()
 
-    # 嘗試各種可能的 CSS 結構
+    # Build team-code lookup (case-insensitive) from _MYKBO_TEAM_MAP
+    # Also build a set of all known team name tokens for text scan
+    _all_team_tokens = sorted(_MYKBO_TEAM_MAP.keys(), key=len, reverse=True)
+    _team_text_re = re.compile(
+        r'\b(' + '|'.join(re.escape(k) for k in _all_team_tokens) + r')\b',
+        re.IGNORECASE,
+    )
+
+    def _find_two_teams_in_text(text: str):
+        """Return (away_code, home_code) if 2+ distinct team codes found, else (None, None)."""
+        found = []
+        for m in _team_text_re.finditer(text):
+            code = _mykbo_team_code(m.group())
+            if code and (not found or found[-1] != code):
+                found.append(code)
+        # Return first two distinct codes
+        unique = []
+        for c in found:
+            if c not in unique:
+                unique.append(c)
+            if len(unique) == 2:
+                return unique[0], unique[1]
+        return None, None
+
+    def _add_game(away_code, home_code, away_name="", home_name="",
+                  away_pitcher="", home_pitcher="", game_time="", source="mykbo"):
+        key = tuple(sorted((away_code, home_code)))
+        if key in seen_pairs:
+            return
+        seen_pairs.add(key)
+        games.append({
+            "game_id":      f"{date_str}-{away_code}-{home_code}",
+            "date":         date_str,
+            "time":         game_time,
+            "away":         away_code,
+            "away_name":    away_name,
+            "home":         home_code,
+            "home_name":    home_name,
+            "venue":        "",
+            "league":       "KBO",
+            "status":       "預定",
+            "away_score":   None,
+            "home_score":   None,
+            "away_pitcher": away_pitcher,
+            "home_pitcher": home_pitcher,
+            "_source":      source,
+        })
+
     # Pattern A: game cards / rows with team and pitcher info
     for container in soup.select(
         ".game-card, .schedule-game, .game-row, "
@@ -1311,13 +1363,19 @@ def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
             ".team-name, .team, [class*='team'], "
             "a[href*='/teams/'], span[class*='name']"
         )
-        teams = [el.get_text(strip=True) for el in team_els if el.get_text(strip=True)]
-        if len(teams) < 2:
-            continue
-        away_code = _mykbo_team_code(teams[0])
-        home_code = _mykbo_team_code(teams[-1])
+        teams_raw = [el.get_text(strip=True) for el in team_els if el.get_text(strip=True)]
+        away_code = home_code = ""
+        away_name = home_name = ""
+        if len(teams_raw) >= 2:
+            away_code = _mykbo_team_code(teams_raw[0])
+            home_code = _mykbo_team_code(teams_raw[-1])
+            away_name = teams_raw[0]
+            home_name = teams_raw[-1]
+        # Fallback: scan the whole container text
         if not away_code or not home_code or away_code == home_code:
-            continue
+            away_code, home_code = _find_two_teams_in_text(text)
+            if not away_code or not home_code:
+                continue
 
         # 找先發投手
         pitcher_els = container.select(
@@ -1337,62 +1395,57 @@ def _parse_mykbo_html(html: str, date_str: str) -> list[dict]:
         game_time = ""
         if time_el:
             t = time_el.get_text(strip=True)
-            m = re.search(r"(\d{1,2}:\d{2})", t)
-            if m:
-                game_time = m.group(1)
+            tm = re.search(r"(\d{1,2}:\d{2})", t)
+            if tm:
+                game_time = tm.group(1)
 
-        games.append({
-            "game_id":      f"{date_str}-{away_code}-{home_code}",
-            "date":         date_str,
-            "time":         game_time,
-            "away":         away_code,
-            "away_name":    teams[0],
-            "home":         home_code,
-            "home_name":    teams[-1],
-            "venue":        "",
-            "league":       "KBO",
-            "status":       "預定",
-            "away_score":   None,
-            "home_score":   None,
-            "away_pitcher": away_pitcher,
-            "home_pitcher": home_pitcher,
-            "_source":      "mykbo",
-        })
+        _add_game(away_code, home_code, away_name, home_name,
+                  away_pitcher, home_pitcher, game_time, "mykbo")
 
     # Pattern B: 表格結構（行 = 一場比賽）
     if not games:
         for row in soup.select("table tr, tbody tr"):
             cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
-            if len(cells) < 4:
+            if len(cells) < 2:
                 continue
-            # 嘗試找隊名欄位
-            away_code = home_code = ""
-            for c in cells:
-                code = _mykbo_team_code(c)
-                if code and not away_code:
-                    away_code = code
-                elif code and code != away_code:
-                    home_code = code
-                    break
+            row_text = " ".join(cells)
+            away_code, home_code = _find_two_teams_in_text(row_text)
             if not away_code or not home_code:
                 continue
-            games.append({
-                "game_id":      f"{date_str}-{away_code}-{home_code}",
-                "date":         date_str,
-                "time":         "",
-                "away":         away_code,
-                "away_name":    "",
-                "home":         home_code,
-                "home_name":    "",
-                "venue":        "",
-                "league":       "KBO",
-                "status":       "預定",
-                "away_score":   None,
-                "home_score":   None,
-                "away_pitcher": "",
-                "home_pitcher": "",
-                "_source":      "mykbo_table",
-            })
+            _add_game(away_code, home_code, source="mykbo_table")
+
+    # Pattern C: aggressive text-scan — look for any element containing 2+ known team names
+    # (links, spans, divs that mykbostats.com uses for matchup display)
+    if not games:
+        # Try links that contain team names (e.g. /teams/samsung-lions/)
+        for a_tag in soup.find_all("a", href=re.compile(r'/teams?/', re.I)):
+            href = a_tag.get("href", "")
+            text = a_tag.get_text(strip=True)
+            code = _mykbo_team_code(text) or _mykbo_team_code(href)
+            if code:
+                log.debug("mykbo link team: %s → %s", text or href, code)
+
+        # Walk all visible text and collect consecutive team codes
+        codes_in_order: list[str] = []
+        for node in soup.find_all(string=True):
+            if node.parent and node.parent.name in ('script', 'style', 'noscript', 'head'):
+                continue
+            text = node.strip()
+            if not text:
+                continue
+            for m in _team_text_re.finditer(text):
+                code = _mykbo_team_code(m.group())
+                if code and (not codes_in_order or codes_in_order[-1] != code):
+                    codes_in_order.append(code)
+
+        i = 0
+        while i < len(codes_in_order) - 1:
+            c1, c2 = codes_in_order[i], codes_in_order[i + 1]
+            if c1 != c2:
+                _add_game(c1, c2, source="mykbo_scan")
+                i += 2
+            else:
+                i += 1
 
     return games
 
@@ -2393,4 +2446,261 @@ def fetch_team_stats_nk(year: int | None = None) -> dict:
         log.warning("nk-datasets KBO team stats failed: %s", e)
 
     log.info("nk-datasets team stats: %d teams", len(result))
+    return result
+
+
+# ── FanGraphs International (NPB / KBO only — never MLB) ─────────────────────
+
+# FanGraphs column name → internal field name
+_FG_COL_MAP = {
+    "ERA":   "era",   "FIP":   "fip",   "xFIP":  "xfip",
+    "WHIP":  "whip",  "K/9":   "k9",    "BB/9":  "bb9",
+    "K%":    "k_pct", "BB%":   "bb_pct","BABIP": "babip",
+    "LOB%":  "lob_pct","IP":   "innings","W":     "wins",
+    "L":     "losses","G":     "g",     "GS":    "gs",
+}
+
+# FanGraphs team name → internal code (NPB)
+_FG_NPB_TEAM_MAP = {
+    "Giants":    "GNT", "Tigers":    "HNS", "Carp":      "HRC",
+    "BayStars":  "YDB", "Swallows":  "YKL", "Dragons":   "CND",
+    "Hawks":     "SBH", "Buffaloes": "ORX", "Eagles":    "RKT",
+    "Marines":   "LTT", "Lions":     "SEI", "Fighters":  "HAM",
+}
+
+# FanGraphs team name → internal code (KBO)
+_FG_KBO_TEAM_MAP = {
+    "Samsung": "SSL", "LG":      "LGT", "Doosan": "DSB",
+    "KT":      "KTW", "SSG":     "SSG", "NC":     "NCD",
+    "KIA":     "KIA", "Lotte":   "LTG", "Hanwha": "HWE",
+    "Kiwoom":  "KWH",
+}
+
+
+def _parse_fangraphs_intl(data, league: str) -> dict:
+    """
+    Parse FanGraphs international leaders JSON response.
+    league must be 'NPB' or 'KBO' (never MLB).
+    """
+    team_map = _FG_NPB_TEAM_MAP if league == "NPB" else _FG_KBO_TEAM_MAP
+
+    # FanGraphs API returns either {"data": [...]} or a list directly
+    rows = data if isinstance(data, list) else data.get("data", [])
+    if not rows:
+        return {}
+
+    result: dict = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        # Possible player name keys
+        name = (row.get("PlayerName") or row.get("playerName")
+                or row.get("Name") or row.get("name") or "").strip()
+        if not name:
+            continue
+
+        p: dict = {"league": league}
+
+        # Map numeric stat columns
+        for fg_col, our_key in _FG_COL_MAP.items():
+            raw = row.get(fg_col)
+            if raw is None:
+                continue
+            val_str = str(raw).replace("%", "").strip()
+            try:
+                p[our_key] = float(val_str)
+            except (ValueError, TypeError):
+                pass
+
+        if "era" not in p:
+            continue
+
+        # Map team name
+        team_raw = (row.get("Team") or row.get("team") or "").strip()
+        team_code = team_map.get(team_raw, "")
+        if not team_code:
+            # Fuzzy match
+            for k, v in team_map.items():
+                if k.lower() in team_raw.lower() or team_raw.lower() in k.lower():
+                    team_code = v
+                    break
+        if team_code:
+            p["team"] = team_code
+
+        enrich_pitcher(p)
+        result[name] = p
+
+    log.info("FanGraphs %s: parsed %d pitchers", league, len(result))
+    return result
+
+
+def fetch_fangraphs_international(year: int | None = None, league: str = "NPB") -> dict:
+    """
+    FanGraphs international pitcher stats — NPB or KBO ONLY (never MLB).
+    Tries the internal /api/leaders/international/data endpoint first (returns JSON).
+    league: 'NPB' or 'KBO'
+    """
+    _year = year or date.today().year
+    # FanGraphs internal API — returns JSON without JS rendering
+    api_url = (
+        f"https://www.fangraphs.com/api/leaders/international/data"
+        f"?pos=P&stats=pit&lg={league}&qual=0&season={_year}&type=8"
+        f"&month=0&ind=0&team=0&pageitems=500&pagenum=1"
+    )
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9,ja;q=0.8,ko;q=0.7",
+        "Referer": f"https://www.fangraphs.com/leaders/international?lg={league}&stats=pit&pos=P",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    try:
+        resp = requests.get(api_url, headers=headers, timeout=15)
+        if resp.status_code in (403, 429):
+            log.debug("FanGraphs %s API: HTTP %s", league, resp.status_code)
+            return {}
+        resp.raise_for_status()
+        data = resp.json()
+        return _parse_fangraphs_intl(data, league)
+    except Exception as e:
+        log.debug("FanGraphs %s: %s", league, e)
+        return {}
+
+
+def fetch_fangraphs_npb_kbo(year: int | None = None) -> dict:
+    """Fetch both NPB and KBO from FanGraphs (NO MLB)."""
+    result = {}
+    for lg in ("NPB", "KBO"):
+        result.update(fetch_fangraphs_international(year, lg))
+    return result
+
+
+# ── baseballdata.jp — NPB pitcher stats (static HTML tables) ─────────────────
+
+# baseballdata.jp team abbreviation → internal code
+_BD_NPB_TEAM_MAP = {
+    "G": "GNT", "T": "HNS", "C": "HRC", "DB": "YDB",
+    "S": "YKL", "D": "CND", "H": "SBH", "B":  "ORX",
+    "E": "RKT", "M": "LTT", "L": "SEI", "F":  "HAM",
+}
+
+_BD_COL_MAP = {
+    "Name":    "name",  "Player":  "name",  "選手":   "name",
+    "Team":    "team",  "球団":    "team",
+    "ERA":     "era",   "防御率":  "era",
+    "FIP":     "fip",   "xFIP":   "xfip",
+    "WHIP":    "whip",
+    "K/9":     "k9",    "BB/9":   "bb9",
+    "K%":      "k_pct", "BB%":    "bb_pct",
+    "BABIP":   "babip", "LOB%":   "lob_pct",
+    "IP":      "innings","W":      "wins",
+    "L":       "losses","G":      "g",     "GS":    "gs",
+}
+
+_BD_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+}
+
+
+def fetch_baseballdata_jp(year: int | None = None) -> dict:
+    """
+    baseballdata.jp — NPB pitcher stats, static HTML tables.
+    """
+    _year = year or date.today().year
+    urls = [
+        f"https://baseballdata.jp/en/pitching/{_year}/",
+        f"https://baseballdata.jp/en/pitching/?year={_year}",
+        "https://baseballdata.jp/en/pitching/",
+    ]
+
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=_BD_HEADERS, timeout=15)
+            if resp.status_code == 403:
+                log.debug("baseballdata.jp 403 for %s", url)
+                return {}
+            if resp.status_code != 200:
+                log.debug("baseballdata.jp HTTP %s for %s", resp.status_code, url)
+                continue
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            stats = _parse_baseballdata_jp_html(resp.text)
+            if stats:
+                log.info("baseballdata.jp: %d NPB pitchers from %s", len(stats), url)
+                return stats
+        except Exception as e:
+            log.debug("baseballdata.jp %s: %s", url, e)
+
+    return {}
+
+
+def _parse_baseballdata_jp_html(html: str) -> dict:
+    """Parse baseballdata.jp HTML pitcher stats table."""
+    soup = BeautifulSoup(html, "html.parser")
+    result: dict = {}
+
+    for table in soup.find_all("table"):
+        thead = table.find("thead")
+        header_row = thead.find("tr") if thead else (table.find_all("tr") or [None])[0]
+        if not header_row:
+            continue
+
+        raw_hdrs = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+        hdrs = [_BD_COL_MAP.get(h, h.lower()) for h in raw_hdrs]
+
+        if "name" not in hdrs or "era" not in hdrs:
+            continue
+
+        data_rows = table.select("tbody tr") or table.find_all("tr")[1:]
+        for row in data_rows:
+            tds = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if not tds or len(tds) < 3:
+                continue
+            try:
+                name = tds[hdrs.index("name")].strip()
+            except (ValueError, IndexError):
+                continue
+            if not name or name in ("Total", "合計", "平均", ""):
+                continue
+
+            p: dict = {"league": "NPB"}
+
+            # Team mapping
+            if "team" in hdrs:
+                try:
+                    raw_team = tds[hdrs.index("team")].strip()
+                    team_code = _BD_NPB_TEAM_MAP.get(raw_team, "")
+                    if not team_code:
+                        # Try full name fallback
+                        for k, v in _NPB_TEAM_MAP.items():
+                            if k.lower() in raw_team.lower():
+                                team_code = v
+                                break
+                    if team_code:
+                        p["team"] = team_code
+                except Exception:
+                    pass
+
+            for field in ("era", "fip", "xfip", "whip", "k9", "bb9",
+                          "k_pct", "bb_pct", "babip", "lob_pct",
+                          "innings", "wins", "losses", "g", "gs"):
+                if field not in hdrs:
+                    continue
+                raw_val = tds[hdrs.index(field)]
+                raw_val = raw_val.replace("%", "").replace(",", "").strip()
+                try:
+                    p[field] = float(raw_val)
+                except (ValueError, TypeError):
+                    pass
+
+            if "era" not in p:
+                continue
+
+            enrich_pitcher(p)
+            result[name] = p
+
     return result
