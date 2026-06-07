@@ -1764,9 +1764,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "yahoo_jp"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "yahoo_jp",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-GNT-ORX",
@@ -1781,9 +1794,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YKL-LTT",
@@ -1798,9 +1818,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YDB-RKT",
@@ -1816,8 +1849,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "傑克森",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-CND-SBH",
@@ -1832,9 +1872,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HNS-SEI",
@@ -1849,9 +1896,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-HAM",
@@ -1866,9 +1926,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-GNT-LTT",
@@ -1883,9 +1956,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YKL-HAM",
@@ -1900,9 +1986,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YDB-SBH",
@@ -1919,7 +2018,8 @@
       "home_score": null,
       "away_pitcher": "傑克森",
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-CND-SEI",
@@ -1934,9 +2034,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HNS-RKT",
@@ -1951,9 +2064,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-ORX",
@@ -1968,9 +2094,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HAM-YDB",
@@ -1985,9 +2118,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-RKT-GNT",
@@ -2002,9 +2142,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-RKT-SEI",
@@ -2019,9 +2172,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-LTT",
@@ -2036,9 +2202,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-CND-ORX",
@@ -2053,9 +2232,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YKL-SBH",
@@ -2070,9 +2256,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HNS-HAM",
@@ -2087,9 +2280,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SEI-HRC",
@@ -2104,9 +2310,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-LTT-CND",
@@ -2121,9 +2340,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-ORX-YKL",
@@ -2139,8 +2371,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SBH-HNS",
@@ -2156,8 +2395,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "史都華特二世",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-CND-RKT",
@@ -2172,9 +2418,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-RKT",
@@ -2189,9 +2448,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SEI-GNT",
@@ -2206,9 +2478,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-LTT-YDB",
@@ -2223,9 +2508,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-ORX-HNS",
@@ -2241,8 +2533,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HAM-CND",
@@ -2257,9 +2556,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YDB-ORX",
@@ -2276,7 +2588,8 @@
       "home_score": null,
       "away_pitcher": "傑克森",
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-GNT-CND",
@@ -2291,9 +2604,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YKL-HRC",
@@ -2308,9 +2634,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YDB-HNS",
@@ -2326,8 +2665,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "傑克森",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HAM-SBH",
@@ -2342,9 +2688,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-LTT-RKT",
@@ -2359,9 +2712,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-ORX-SEI",
@@ -2377,8 +2743,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-CND-YDB",
@@ -2393,9 +2766,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HNS-YKL",
@@ -2410,9 +2790,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-GNT",
@@ -2427,9 +2820,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HAM-LTT",
@@ -2444,9 +2850,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SBH-ORX",
@@ -2463,7 +2882,8 @@
       "home_score": null,
       "away_pitcher": "史都華特二世",
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-RKT-SBH",
@@ -2478,9 +2898,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-RKT-YKL",
@@ -2495,9 +2922,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-YKL-YDB",
@@ -2512,9 +2952,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HRC-HNS",
@@ -2529,9 +2976,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-ORX-RKT",
@@ -2547,8 +3007,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SBH-SEI",
@@ -2564,8 +3031,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "史都華特二世",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SEI-CND",
@@ -2580,9 +3054,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-ORX-HRC",
@@ -2597,9 +3084,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-LTT-GNT",
@@ -2614,9 +3114,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-SBH-YDB",
@@ -2631,9 +3144,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-RKT-HNS",
@@ -2648,9 +3174,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-07-HAM-YKL",
@@ -2665,9 +3204,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "odds_api_events"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "odds_api_events",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-GNT-YKL",
@@ -2682,9 +3234,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "yahoo_jp"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "yahoo_jp",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-GNT-ORX",
@@ -2699,9 +3264,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YKL-LTT",
@@ -2716,9 +3288,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YDB-RKT",
@@ -2734,8 +3319,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "傑克森",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-CND-SBH",
@@ -2750,9 +3342,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HNS-SEI",
@@ -2767,9 +3366,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-HAM",
@@ -2784,9 +3396,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-GNT-LTT",
@@ -2801,9 +3426,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YKL-HAM",
@@ -2818,9 +3456,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YDB-SBH",
@@ -2837,7 +3488,8 @@
       "home_score": null,
       "away_pitcher": "傑克森",
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-CND-SEI",
@@ -2852,9 +3504,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HNS-RKT",
@@ -2869,9 +3534,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-ORX",
@@ -2886,9 +3564,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HAM-YDB",
@@ -2903,9 +3588,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-RKT-GNT",
@@ -2920,9 +3612,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-RKT-SEI",
@@ -2937,9 +3642,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-LTT",
@@ -2954,9 +3672,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-CND-ORX",
@@ -2971,9 +3702,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YKL-SBH",
@@ -2988,9 +3726,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HNS-HAM",
@@ -3005,9 +3750,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-SEI-HRC",
@@ -3022,9 +3780,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-LTT-CND",
@@ -3039,9 +3810,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-ORX-YKL",
@@ -3057,8 +3841,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-SBH-HNS",
@@ -3074,8 +3865,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "史都華特二世",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-CND-RKT",
@@ -3090,9 +3888,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-RKT",
@@ -3107,9 +3918,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-SEI-GNT",
@@ -3124,9 +3948,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-LTT-YDB",
@@ -3141,9 +3978,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-ORX-HNS",
@@ -3159,8 +4003,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HAM-CND",
@@ -3175,9 +4026,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YDB-ORX",
@@ -3194,7 +4058,8 @@
       "home_score": null,
       "away_pitcher": "傑克森",
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-GNT-CND",
@@ -3209,9 +4074,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YKL-HRC",
@@ -3226,9 +4104,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YDB-HNS",
@@ -3244,8 +4135,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "傑克森",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HAM-SBH",
@@ -3260,9 +4158,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-LTT-RKT",
@@ -3277,9 +4182,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-ORX-SEI",
@@ -3295,8 +4213,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-CND-YDB",
@@ -3311,9 +4236,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HNS-YKL",
@@ -3328,9 +4260,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-GNT",
@@ -3345,9 +4290,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HAM-LTT",
@@ -3362,9 +4320,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-SBH-ORX",
@@ -3381,7 +4352,8 @@
       "home_score": null,
       "away_pitcher": "史都華特二世",
       "home_pitcher": "艾斯皮諾薩",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-RKT-SBH",
@@ -3396,9 +4368,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "史都華特二世",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-RKT-YKL",
@@ -3413,9 +4392,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-YKL-YDB",
@@ -3430,9 +4422,16 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
       "home_pitcher": "傑克森",
-      "_source": "npb_official"
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-HRC-HNS",
@@ -3447,9 +4446,22 @@
       "status": "預定",
       "away_score": null,
       "home_score": null,
-      "away_pitcher": "",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "away_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-ORX-RKT",
@@ -3465,8 +4477,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "艾斯皮諾薩",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-08-SBH-SEI",
@@ -3482,8 +4501,15 @@
       "away_score": null,
       "home_score": null,
       "away_pitcher": "史都華特二世",
-      "home_pitcher": "",
-      "_source": "npb_official"
+      "home_pitcher": {
+        "name": "",
+        "era": null,
+        "k9": null,
+        "fip": null,
+        "source": "fallback"
+      },
+      "_source": "npb_official",
+      "starter_source": "scraper"
     },
     {
       "game_id": "2026-06-09-GNT-YKL",

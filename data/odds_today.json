@@ -1,70 +1,59 @@
 {
-  "updated_at": "2026-06-07 04:45",
+  "updated_at": "2026-06-07 05:49",
   "game_date": "2026-06-07",
   "source": "The Odds API (NPB)",
   "odds": {
     "SEI-CND": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 1.68,
-      "curr_home_odds": 2.16,
-      "open_away_odds": 1.68,
-      "open_home_odds": 2.16,
-      "vig_pct": 5.82,
-      "bookmakers": [
-        "The Odds API"
-      ]
-    },
-    "LTT-GNT": {
-      "source": "The Odds API (NPB)",
-      "curr_away_odds": 2.21,
-      "curr_home_odds": 1.73,
-      "open_away_odds": 2.21,
-      "open_home_odds": 1.73,
-      "vig_pct": 3.05,
+      "curr_away_odds": 1.35,
+      "curr_home_odds": 3.07,
+      "open_away_odds": 1.35,
+      "open_home_odds": 3.07,
+      "vig_pct": 6.65,
       "bookmakers": [
         "The Odds API"
       ]
     },
     "SBH-YDB": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 1.98,
-      "curr_home_odds": 1.91,
-      "open_away_odds": 1.98,
-      "open_home_odds": 1.91,
-      "vig_pct": 2.86,
-      "bookmakers": [
-        "The Odds API"
-      ]
-    },
-    "RKT-HNS": {
-      "source": "The Odds API (NPB)",
-      "curr_away_odds": 2.74,
-      "curr_home_odds": 1.5,
-      "open_away_odds": 2.74,
-      "open_home_odds": 1.5,
-      "vig_pct": 3.16,
+      "curr_away_odds": 2.08,
+      "curr_home_odds": 1.74,
+      "open_away_odds": 2.08,
+      "open_home_odds": 1.74,
+      "vig_pct": 5.55,
       "bookmakers": [
         "The Odds API"
       ]
     },
     "HAM-YKL": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 1.56,
-      "curr_home_odds": 2.56,
-      "open_away_odds": 1.56,
-      "open_home_odds": 2.56,
-      "vig_pct": 3.17,
+      "curr_away_odds": 1.21,
+      "curr_home_odds": 4.29,
+      "open_away_odds": 1.21,
+      "open_home_odds": 4.29,
+      "vig_pct": 5.95,
+      "bookmakers": [
+        "The Odds API"
+      ]
+    },
+    "LTT-GNT": {
+      "source": "The Odds API (NPB)",
+      "curr_away_odds": 3.82,
+      "curr_home_odds": 1.24,
+      "open_away_odds": 3.82,
+      "open_home_odds": 1.24,
+      "vig_pct": 6.82,
       "bookmakers": [
         "The Odds API"
       ]
     },
     "ORX-HRC": {
       "source": "The Odds API (NPB)",
-      "curr_away_odds": 1.85,
-      "curr_home_odds": 1.96,
-      "open_away_odds": 1.85,
-      "open_home_odds": 1.96,
-      "vig_pct": 5.07,
+      "curr_away_odds": 2.07,
+      "curr_home_odds": 1.74,
+      "open_away_odds": 2.07,
+      "open_home_odds": 1.74,
+      "vig_pct": 5.78,
       "bookmakers": [
         "The Odds API"
       ]
