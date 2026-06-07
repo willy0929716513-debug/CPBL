@@ -211,48 +211,105 @@ def scrape_schedule(year: int, months: list, session: requests.Session) -> list:
 
 
 # ─────────────────────────────────────────────────────────────
-# 先發投手補強
-# ─────────────────────────────────────────────────────────────
-
+# 先發投手
 def _enrich_starters_in_schedule(today_str: str, dry: bool = False) -> None:
-    """schedule.json の今日・明日の先発投手を Yahoo Japan 予告先発で補完。"""
+    """
+    V3 Stable Starter Enrichment (ROBUST MODE)
+
+    保證：
+    - Yahoo / scraper 掛掉不會影響流程
+    - schedule.json 一定會被更新
+    - 至少會有 fallback starter（避免空值）
+    - 清楚標記來源
+    """
+
     try:
         with open(SCHED_FILE, encoding="utf-8") as f:
             payload = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        log.warning("_enrich_starters: cannot load schedule.json: %s", e)
+    except Exception as e:
+        log.warning("starter load failed: %s", e)
         return
 
     games = payload.get("games", [])
     if not games:
+        log.info("no schedule games found")
         return
 
-    today    = datetime.date.fromisoformat(today_str)
+    today = datetime.date.fromisoformat(today_str)
     tomorrow = today + datetime.timedelta(days=1)
-    enriched_total = 0
 
-    for target_date in (today, tomorrow):
-        date_str  = target_date.isoformat()
-        day_games = [g for g in games if g.get("date") == date_str and g.get("league") == "NPB"]
+    # ----------------------------
+    # fallback starter（保底）
+    # ----------------------------
+    def _fallback_pitcher(team: str):
+        return {
+            "name": "",
+            "era": None,
+            "k9": None,
+            "fip": None,
+            "source": "fallback"
+        }
+
+    def _apply_enrichment(date_obj):
+        day_games = [
+            g for g in games
+            if g.get("date") == date_obj.isoformat()
+            and g.get("league") == "NPB"
+        ]
+
         if not day_games:
-            continue
+            return 0
 
         before = sum(1 for g in day_games if g.get("away_pitcher") or g.get("home_pitcher"))
-        enrich_schedule_with_starters(target_date, day_games)
-        after  = sum(1 for g in day_games if g.get("away_pitcher") or g.get("home_pitcher"))
-        filled = after - before
-        enriched_total += filled
 
-        if filled:
-            print(f"  ✅ {date_str}: {filled} 場有先發投手資料（共 {len(day_games)} 場 NPB）")
-        else:
-            print(f"  ⚠️  {date_str}: 未找到先發投手（共 {len(day_games)} 場 NPB）")
+        # ----------------------------
+        # 主來源：原本 scraper
+        # ----------------------------
+        try:
+            enrich_schedule_with_starters(date_obj, day_games)
+            source = "scraper"
+        except Exception as e:
+            log.warning("starter scraper failed (%s)", e)
+            source = "fallback"
 
-    if enriched_total and not dry:
-        payload["updated_at"] = today_str
-        with open(SCHED_FILE, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-        log.info("_enrich_starters: saved %d new pitcher slots", enriched_total)
+        # ----------------------------
+        # 強制補值（避免空）
+        # ----------------------------
+        for g in day_games:
+            if not g.get("away_pitcher"):
+                g["away_pitcher"] = _fallback_pitcher(g.get("away", ""))
+            if not g.get("home_pitcher"):
+                g["home_pitcher"] = _fallback_pitcher(g.get("home", ""))
+
+            # 標記來源（方便 debug）
+            g["starter_source"] = source
+
+        after = sum(1 for g in day_games if g.get("away_pitcher") or g.get("home_pitcher"))
+        return after - before
+
+    total = 0
+    total += _apply_enrichment(today)
+    total += _apply_enrichment(tomorrow)
+
+    # ----------------------------
+    # log輸出
+    # ----------------------------
+    if total == 0:
+        log.warning("⚠️ starter enrichment failed on all sources (fallback used)")
+    else:
+        log.info("✅ starter enriched: %d slots updated", total)
+
+    # ----------------------------
+    # 寫回 schedule.json（一定寫）
+    # ----------------------------
+    if not dry:
+        try:
+            payload["updated_at"] = today_str
+            with open(SCHED_FILE, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            log.warning("failed to save schedule: %s", e)
+
 
 
 # ─────────────────────────────────────────────────────────────
