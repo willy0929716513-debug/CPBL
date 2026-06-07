@@ -1038,6 +1038,16 @@ def _parse_nikkansports_html(html: str, date_str: str) -> list[dict]:
     for tag in soup.find_all(['script', 'style', 'noscript', 'head', 'nav', 'footer']):
         tag.decompose()
 
+    # Phase 2: text nodes — Nikkansports is static HTML; pitcher names appear in regular text
+    for node in soup.find_all(string=True):
+        text = node.strip()
+        if not text or len(text) > 80:
+            continue
+        for m in pitcher_pat.finditer(text):
+            found_pitchers.add(_JP_PITCHER_NAME_MAP[m.group()])
+    if found_pitchers:
+        log.info("Nikkansports pitcher scan: %s", found_pitchers)
+
     in_section = False
     codes: list[str] = []
     date_re = re.compile(r'(\d{1,2})月(\d{1,2})日')

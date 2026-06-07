@@ -4,6 +4,8 @@ on:
   schedule:
     # 賽前更新：每天 06:00 JST (21:00 UTC 前一天)
     - cron: '0 21 * * *'
+    # 先發公告後更新：每天 11:00 JST (02:00 UTC)
+    - cron: '0 2 * * *'
     # 賽後更新：每天 22:30 JST (13:30 UTC)
     - cron: '30 13 * * *'
   workflow_dispatch:
@@ -52,7 +54,7 @@ jobs:
           ctx = ssl.create_default_context()
           sites = [
               ("npbdata.jp (pitcher)",     "https://npbdata.jp/stats/pitcher"),
-              ("npbdata.jp (batter)",      "https://npbdata.jp/stats/batter"),
+              ("npbdata.jp (fielder)",     "https://npbdata.jp/stats/fielder"),
               ("Yahoo Japan Baseball",     "https://baseball.yahoo.co.jp/npb/schedule/"),
               ("npb.jp official",          "https://npb.jp/games/"),
               ("Nikkansports NPB",         "https://www.nikkansports.com/baseball/professional/schedule/"),
