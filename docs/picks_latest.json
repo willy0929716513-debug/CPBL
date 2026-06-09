@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-09 07:04 (台灣時間)",
-  "game_date": "2026-06-09",
+  "generated_at": "2026-06-10 07:05 (台灣時間)",
+  "game_date": "2026-06-10",
   "picks": [],
   "predictions": [
     {
@@ -9,21 +9,21 @@
       "away_cn": "養樂多燕子",
       "home_cn": "歐力士水牛",
       "league": "NPB",
-      "game_date": "2026-06-09",
+      "game_date": "2026-06-10",
       "game_time": "17:00",
       "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.64,
-      "away_win_prob": 0.36,
+      "home_win_prob": 0.65,
+      "away_win_prob": 0.35,
       "away_sp": {},
       "home_sp": {},
-      "market_home_prob": 55.1,
-      "value_gap": 31.6,
-      "curr_home_odds": 1.77,
-      "curr_away_odds": 2.17,
+      "market_home_prob": 56.9,
+      "value_gap": 29.9,
+      "curr_home_odds": 1.71,
+      "curr_away_odds": 2.26,
       "market_total": 8.5,
       "signals": [
-        "📈 模型比市場高估主隊 32% (Value)"
+        "📈 模型比市場高估主隊 30% (Value)"
       ],
       "factors": {
         "starter": {
@@ -77,10 +77,10 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
         },
         "defense": {
           "label": "守備能力",
@@ -91,48 +91,48 @@
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 89.1,
-          "away_score": 10.899999999999999,
-          "advantage": 39.1,
-          "detail": "主隊賠率 1.77 (開 1.77) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports",
+          "home_score": 87.4,
+          "away_score": 12.600000000000001,
+          "advantage": 37.4,
+          "detail": "主隊賠率 1.71 (開 1.71) | 客隊賠率 2.26 (開 2.26) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports",
           "analysis": {
-            "market_home_prob": 55.1,
-            "value_gap": 31.6,
+            "market_home_prob": 56.9,
+            "value_gap": 29.9,
             "h_movement": 0.0,
             "a_movement": 0.0,
             "rlm_for_home": false,
             "rlm_against_home": false,
             "signals": [
-              "📈 模型比市場高估主隊 32% (Value)"
+              "📈 模型比市場高估主隊 30% (Value)"
             ],
-            "advantage": 39.1,
-            "detail": "主隊賠率 1.77 (開 1.77) | 客隊賠率 2.17 (開 2.17) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports"
+            "advantage": 37.4,
+            "detail": "主隊賠率 1.71 (開 1.71) | 客隊賠率 2.26 (開 2.26) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports"
           },
-          "curr_home_odds": 1.77,
-          "curr_away_odds": 2.17,
-          "open_home_odds": 1.77,
-          "open_away_odds": 2.17,
+          "curr_home_odds": 1.71,
+          "curr_away_odds": 2.26,
+          "open_home_odds": 1.71,
+          "open_away_odds": 2.26,
           "run_line": null,
           "total_line": null,
           "over_odds": null,
           "under_odds": null,
           "public_home_pct": 50,
           "public_away_pct": 50,
-          "market_home_prob": 55.1,
+          "market_home_prob": 56.9,
           "signals": [
-            "📈 模型比市場高估主隊 32% (Value)"
+            "📈 模型比市場高估主隊 30% (Value)"
           ]
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.6438,
-        "std_dev": 0.4396,
+        "mean_prob": 0.6577,
+        "std_dev": 0.4336,
         "ci_90": [
           0.0,
           1.0
         ],
-        "home_win_pct": 0.6438,
+        "home_win_pct": 0.6577,
         "norm_cdf_prob": 0.6324,
         "uncertain": true,
         "conf_boost": -0.05,
@@ -140,7 +140,7 @@
         "away_exp_runs": 2.86
       },
       "ensemble": {
-        "prob": 0.6404,
+        "prob": 0.6501,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -148,10 +148,10 @@
         },
         "model_probs": {
           "elo": 0.7912,
-          "ml": 0.8665,
-          "mc": 0.6438,
+          "ml": 0.8686,
+          "mc": 0.6577,
           "norm_cdf": 0.6324,
-          "market": 0.551
+          "market": 0.569
         },
         "bayesian_adj": 1.0
       },
@@ -176,167 +176,11 @@
         "away": 0.0
       },
       "ref_label": "歐力士水牛 勝算較高",
-      "ref_prob": 64.0,
-      "ref_odds": 1.77,
-      "ref_edge": 0.0754,
-      "conf": 0.683,
+      "ref_prob": 65.0,
+      "ref_odds": 1.71,
+      "ref_edge": 0.0653,
+      "conf": 0.687,
       "tier": 1,
-      "recommended": false
-    },
-    {
-      "away": "GNT",
-      "home": "RKT",
-      "away_cn": "讀賣巨人",
-      "home_cn": "東北樂天金鷹",
-      "league": "NPB",
-      "game_date": "2026-06-09",
-      "game_time": "17:00",
-      "time": "17:00",
-      "venue": "",
-      "home_win_prob": 0.468,
-      "away_win_prob": 0.532,
-      "away_sp": {},
-      "home_sp": {},
-      "market_home_prob": 44.0,
-      "value_gap": 0.0,
-      "curr_home_odds": 2.074,
-      "curr_away_odds": 1.761,
-      "market_total": 8.5,
-      "signals": [],
-      "factors": {
-        "starter": {
-          "label": "先發投手",
-          "home_score": 60.771449999999994,
-          "away_score": 69.69324999999998,
-          "advantage": -8.921799999999983,
-          "detail": "主隊 未定（輪值平均 ERA 3.65 FIP 3.815 K/9 7.55） | 客隊 未定（輪值平均 ERA 2.756 FIP 3.094 K/9 8.212）"
-        },
-        "lineup": {
-          "label": "打線強度",
-          "home_score": 52.205,
-          "away_score": 54.448499999999996,
-          "advantage": -2.2434999999999974,
-          "detail": "主隊 OPS 0.763 wOBA 0.325 wRC+ 101 近7OPS 0.778 | 客隊 OPS 0.767 wOBA 0.328 wRC+ 103 近7OPS 0.788"
-        },
-        "bullpen": {
-          "label": "牛棚戰力",
-          "home_score": 61.89,
-          "away_score": 61.6,
-          "advantage": 0.28999999999999915,
-          "detail": "主隊牛棚 ERA 3.15 WHIP 1.18 疲勞 32 終結者連出 0天 | 客隊牛棚 ERA 3.12 WHIP 1.18 疲勞 35 終結者連出 0天"
-        },
-        "home_away": {
-          "label": "主客場",
-          "home_score": 55.60526315789474,
-          "away_score": 44.39473684210526,
-          "advantage": 11.210526315789476,
-          "detail": "主隊主場 22勝18敗 | 客隊客場 20勝18敗 |  run_factor=1.0 "
-        },
-        "recent_form": {
-          "label": "近期狀態",
-          "home_score": 57.7,
-          "away_score": 70.8,
-          "advantage": -13.099999999999994,
-          "detail": "主隊近5場 ●○●●○ 近10場 ●●○●○●○●●○ 得失分差 +12 出賽密度 3/7天 | 客隊近5場 ●●○●● 近10場 ●●○●●○●○●● 得失分差 +38 出賽密度 2/7天"
-        },
-        "h2h": {
-          "label": "對戰紀錄",
-          "home_score": 53.0,
-          "away_score": 47.0,
-          "advantage": 5.999999999999998,
-          "detail": "本季對戰：客隊 4 勝 主隊 6 勝（主隊勝率 60%）"
-        },
-        "injuries": {
-          "label": "傷兵狀況",
-          "home_score": 50.0,
-          "away_score": 50.0,
-          "advantage": 0.0,
-          "detail": "主隊：無傷兵 | 客隊：無傷兵"
-        },
-        "weather": {
-          "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
-        },
-        "defense": {
-          "label": "守備能力",
-          "home_score": 55.4,
-          "away_score": 61.4,
-          "advantage": -6.0,
-          "detail": "主隊 守備率 0.981 DRS +4 UZR +2.8 失誤 30 | 客隊 守備率 0.982 DRS +8 UZR +5.2 失誤 28"
-        },
-        "odds": {
-          "label": "盤口 / 賠率",
-          "home_score": 50,
-          "away_score": 50,
-          "advantage": 0,
-          "detail": "無賠率資料",
-          "curr_home_odds": 0,
-          "curr_away_odds": 0,
-          "total_line": 8.5,
-          "signals": [],
-          "market_home_prob": 44.0
-        }
-      },
-      "mc": {
-        "n": 2000,
-        "mean_prob": 0.4675,
-        "std_dev": 0.4612,
-        "ci_90": [
-          0.0,
-          1.0
-        ],
-        "home_win_pct": 0.4675,
-        "norm_cdf_prob": 0.4694,
-        "uncertain": true,
-        "conf_boost": -0.05,
-        "home_exp_runs": 3.29,
-        "away_exp_runs": 3.52
-      },
-      "ensemble": {
-        "prob": 0.4681,
-        "weights": {
-          "mc": 0.7,
-          "norm_cdf": 0.3,
-          "ml": 0.0
-        },
-        "model_probs": {
-          "elo": 0.4593,
-          "ml": 0.4403,
-          "mc": 0.4675,
-          "norm_cdf": 0.4694,
-          "market": 0.44
-        },
-        "bayesian_adj": 1.0
-      },
-      "matchup": {
-        "label": "投打匹配",
-        "home_bat_adv": 0.0,
-        "away_bat_adv": 0.0,
-        "net_advantage": 0.0,
-        "home_pitcher_type": "unknown",
-        "away_pitcher_type": "unknown",
-        "detail": "主隊打線 vs 客隊先發: 投手未定 / 無法分析 | 客隊打線 vs 主隊先發: 投手未定 / 無法分析"
-      },
-      "market_signal": {
-        "sharp_signal": null,
-        "line_move": 0.0,
-        "public_home_pct": 50.0,
-        "signals": [],
-        "ev_boost": 0.0
-      },
-      "fatigue": {
-        "home": 0.0,
-        "away": 0.0
-      },
-      "ref_label": "讀賣巨人 勝算較高",
-      "ref_prob": 53.2,
-      "ref_odds": 1.76,
-      "ref_edge": -0.036,
-      "conf": 0.069,
-      "tier": 3,
       "recommended": false
     },
     {
@@ -345,15 +189,15 @@
       "away_cn": "廣島鯉魚",
       "home_cn": "埼玉西武獅",
       "league": "NPB",
-      "game_date": "2026-06-09",
+      "game_date": "2026-06-10",
       "game_time": "17:00",
       "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.531,
-      "away_win_prob": 0.469,
+      "home_win_prob": 0.547,
+      "away_win_prob": 0.453,
       "away_sp": {},
       "home_sp": {},
-      "market_home_prob": 44.3,
+      "market_home_prob": 44.6,
       "value_gap": 0.0,
       "curr_home_odds": 2.142,
       "curr_away_odds": 1.715,
@@ -411,10 +255,10 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
         },
         "defense": {
           "label": "守備能力",
@@ -433,18 +277,18 @@
           "curr_away_odds": 0,
           "total_line": 8.5,
           "signals": [],
-          "market_home_prob": 44.3
+          "market_home_prob": 44.6
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.5302,
-        "std_dev": 0.4577,
+        "mean_prob": 0.5537,
+        "std_dev": 0.4615,
         "ci_90": [
           0.0,
           1.0
         ],
-        "home_win_pct": 0.5302,
+        "home_win_pct": 0.5537,
         "norm_cdf_prob": 0.5316,
         "uncertain": true,
         "conf_boost": -0.05,
@@ -452,7 +296,7 @@
         "away_exp_runs": 3.19
       },
       "ensemble": {
-        "prob": 0.5306,
+        "prob": 0.5471,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -460,10 +304,10 @@
         },
         "model_probs": {
           "elo": 0.4447,
-          "ml": 0.4434,
-          "mc": 0.5302,
+          "ml": 0.4455,
+          "mc": 0.5537,
           "norm_cdf": 0.5316,
-          "market": 0.443
+          "market": 0.446
         },
         "bayesian_adj": 1.0
       },
@@ -488,77 +332,75 @@
         "away": 0.0
       },
       "ref_label": "埼玉西武獅 勝算較高",
-      "ref_prob": 53.1,
+      "ref_prob": 54.7,
       "ref_odds": 2.14,
-      "ref_edge": 0.0637,
-      "conf": 0.063,
+      "ref_edge": 0.0802,
+      "conf": 0.059,
       "tier": 3,
       "recommended": false
     },
     {
-      "away": "CND",
-      "home": "LTT",
-      "away_cn": "中日龍",
-      "home_cn": "千葉羅德水手",
+      "away": "GNT",
+      "home": "RKT",
+      "away_cn": "讀賣巨人",
+      "home_cn": "東北樂天金鷹",
       "league": "NPB",
-      "game_date": "2026-06-09",
+      "game_date": "2026-06-10",
       "game_time": "17:00",
       "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.517,
-      "away_win_prob": 0.483,
+      "home_win_prob": 0.472,
+      "away_win_prob": 0.528,
       "away_sp": {},
       "home_sp": {},
-      "market_home_prob": 50.4,
-      "value_gap": 9.4,
-      "curr_home_odds": 1.93,
-      "curr_away_odds": 1.96,
+      "market_home_prob": 44.2,
+      "value_gap": 0.0,
+      "curr_home_odds": 2.074,
+      "curr_away_odds": 1.761,
       "market_total": 8.5,
-      "signals": [
-        "📈 模型比市場高估主隊 9% (Value)"
-      ],
+      "signals": [],
       "factors": {
         "starter": {
           "label": "先發投手",
-          "home_score": 65.07204999999998,
-          "away_score": 67.57419999999999,
-          "advantage": -2.5021500000000145,
-          "detail": "主隊 未定（輪值平均 ERA 2.881 FIP 3.458 K/9 7.209） | 客隊 未定（輪值平均 ERA 2.529 FIP 2.864 K/9 7.669）"
+          "home_score": 60.771449999999994,
+          "away_score": 69.69324999999998,
+          "advantage": -8.921799999999983,
+          "detail": "主隊 未定（輪值平均 ERA 3.65 FIP 3.815 K/9 7.55） | 客隊 未定（輪值平均 ERA 2.756 FIP 3.094 K/9 8.212）"
         },
         "lineup": {
           "label": "打線強度",
-          "home_score": 50.636500000000005,
-          "away_score": 48.785999999999994,
-          "advantage": 1.850500000000011,
-          "detail": "主隊 OPS 0.754 wOBA 0.322 wRC+ 99 近7OPS 0.768 | 客隊 OPS 0.743 wOBA 0.318 wRC+ 97 近7OPS 0.758"
+          "home_score": 52.205,
+          "away_score": 54.448499999999996,
+          "advantage": -2.2434999999999974,
+          "detail": "主隊 OPS 0.763 wOBA 0.325 wRC+ 101 近7OPS 0.778 | 客隊 OPS 0.767 wOBA 0.328 wRC+ 103 近7OPS 0.788"
         },
         "bullpen": {
           "label": "牛棚戰力",
-          "home_score": 58.28199999999999,
-          "away_score": 60.401999999999994,
-          "advantage": -2.1200000000000045,
-          "detail": "主隊牛棚 ERA 3.25 WHIP 1.22 疲勞 38 終結者連出 0天 | 客隊牛棚 ERA 3.22 WHIP 1.2 疲勞 32 終結者連出 0天"
+          "home_score": 61.89,
+          "away_score": 61.6,
+          "advantage": 0.28999999999999915,
+          "detail": "主隊牛棚 ERA 3.15 WHIP 1.18 疲勞 32 終結者連出 0天 | 客隊牛棚 ERA 3.12 WHIP 1.18 疲勞 35 終結者連出 0天"
         },
         "home_away": {
           "label": "主客場",
-          "home_score": 55.78947368421053,
-          "away_score": 44.21052631578947,
-          "advantage": 11.578947368421053,
-          "detail": "主隊主場 20勝20敗 | 客隊客場 17勝21敗 |  run_factor=1.0 "
+          "home_score": 55.60526315789474,
+          "away_score": 44.39473684210526,
+          "advantage": 11.210526315789476,
+          "detail": "主隊主場 22勝18敗 | 客隊客場 20勝18敗 |  run_factor=1.0 "
         },
         "recent_form": {
           "label": "近期狀態",
-          "home_score": 53.2,
-          "away_score": 42.0,
-          "advantage": 11.200000000000003,
-          "detail": "主隊近5場 ○●○●● 近10場 ○○●○●○●●○● 得失分差 -8 出賽密度 3/7天 | 客隊近5場 ○●○●○ 近10場 ○●○○●○●○○● 得失分差 -15 出賽密度 3/7天"
+          "home_score": 57.7,
+          "away_score": 70.8,
+          "advantage": -13.099999999999994,
+          "detail": "主隊近5場 ●○●●○ 近10場 ●●○●○●○●●○ 得失分差 +12 出賽密度 3/7天 | 客隊近5場 ●●○●● 近10場 ●●○●●○●○●● 得失分差 +38 出賽密度 2/7天"
         },
         "h2h": {
           "label": "對戰紀錄",
-          "home_score": 47.0,
-          "away_score": 53.0,
-          "advantage": -5.999999999999998,
-          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
+          "home_score": 53.0,
+          "away_score": 47.0,
+          "advantage": 5.999999999999998,
+          "detail": "本季對戰：客隊 4 勝 主隊 6 勝（主隊勝率 60%）"
         },
         "injuries": {
           "label": "傷兵狀況",
@@ -569,81 +411,59 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
         },
         "defense": {
           "label": "守備能力",
-          "home_score": 52.7,
-          "away_score": 51.550000000000004,
-          "advantage": 1.1499999999999986,
-          "detail": "主隊 守備率 0.98 DRS +3 UZR +2.2 失誤 32 | 客隊 守備率 0.98 DRS +2 UZR +1.5 失誤 32"
+          "home_score": 55.4,
+          "away_score": 61.4,
+          "advantage": -6.0,
+          "detail": "主隊 守備率 0.981 DRS +4 UZR +2.8 失誤 30 | 客隊 守備率 0.982 DRS +8 UZR +5.2 失誤 28"
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 66.9,
-          "away_score": 33.1,
-          "advantage": 16.9,
-          "detail": "主隊賠率 1.93 (開 1.93) | 客隊賠率 1.96 (開 1.96) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports",
-          "analysis": {
-            "market_home_prob": 50.4,
-            "value_gap": 9.4,
-            "h_movement": 0.0,
-            "a_movement": 0.0,
-            "rlm_for_home": false,
-            "rlm_against_home": false,
-            "signals": [
-              "📈 模型比市場高估主隊 9% (Value)"
-            ],
-            "advantage": 16.9,
-            "detail": "主隊賠率 1.93 (開 1.93) | 客隊賠率 1.96 (開 1.96) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports"
-          },
-          "curr_home_odds": 1.93,
-          "curr_away_odds": 1.96,
-          "open_home_odds": 1.93,
-          "open_away_odds": 1.96,
-          "run_line": null,
-          "total_line": null,
-          "over_odds": null,
-          "under_odds": null,
-          "public_home_pct": 50,
-          "public_away_pct": 50,
-          "market_home_prob": 50.4,
-          "signals": [
-            "📈 模型比市場高估主隊 9% (Value)"
-          ]
+          "home_score": 50,
+          "away_score": 50,
+          "advantage": 0,
+          "detail": "無賠率資料",
+          "curr_home_odds": 0,
+          "curr_away_odds": 0,
+          "total_line": 8.5,
+          "signals": [],
+          "market_home_prob": 44.2
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.5218,
-        "std_dev": 0.4576,
+        "mean_prob": 0.4728,
+        "std_dev": 0.4603,
         "ci_90": [
           0.0,
           1.0
         ],
-        "home_win_pct": 0.5218,
-        "norm_cdf_prob": 0.5048,
+        "home_win_pct": 0.4728,
+        "norm_cdf_prob": 0.4694,
         "uncertain": true,
         "conf_boost": -0.05,
-        "home_exp_runs": 3.28,
-        "away_exp_runs": 3.25
+        "home_exp_runs": 3.29,
+        "away_exp_runs": 3.52
       },
       "ensemble": {
-        "prob": 0.5167,
+        "prob": 0.4718,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
           "ml": 0.0
         },
         "model_probs": {
-          "elo": 0.5955,
-          "ml": 0.5976,
-          "mc": 0.5218,
-          "norm_cdf": 0.5048,
-          "market": 0.504
+          "elo": 0.4593,
+          "ml": 0.4424,
+          "mc": 0.4728,
+          "norm_cdf": 0.4694,
+          "market": 0.442
         },
         "bayesian_adj": 1.0
       },
@@ -667,11 +487,11 @@
         "home": 0.0,
         "away": 0.0
       },
-      "ref_label": "千葉羅德水手 勝算較高",
-      "ref_prob": 51.7,
-      "ref_odds": 1.93,
-      "ref_edge": -0.0014,
-      "conf": 0.145,
+      "ref_label": "讀賣巨人 勝算較高",
+      "ref_prob": 52.8,
+      "ref_odds": 1.76,
+      "ref_edge": -0.0397,
+      "conf": 0.065,
       "tier": 3,
       "recommended": false
     },
@@ -681,18 +501,18 @@
       "away_cn": "阪神虎",
       "home_cn": "福岡軟銀鷹",
       "league": "NPB",
-      "game_date": "2026-06-09",
+      "game_date": "2026-06-10",
       "game_time": "17:00",
       "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.516,
-      "away_win_prob": 0.484,
+      "home_win_prob": 0.521,
+      "away_win_prob": 0.479,
       "away_sp": {},
       "home_sp": {},
-      "market_home_prob": 53.4,
-      "value_gap": 14.6,
+      "market_home_prob": 53.3,
+      "value_gap": 14.9,
       "curr_home_odds": 1.83,
-      "curr_away_odds": 2.1,
+      "curr_away_odds": 2.09,
       "market_total": 8.5,
       "signals": [
         "📈 模型比市場高估主隊 15% (Value)"
@@ -749,10 +569,10 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
         },
         "defense": {
           "label": "守備能力",
@@ -763,13 +583,13 @@
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 72.1,
-          "away_score": 27.9,
-          "advantage": 22.1,
-          "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.1 (開 2.1) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports",
+          "home_score": 72.4,
+          "away_score": 27.6,
+          "advantage": 22.4,
+          "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.09 (開 2.09) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports",
           "analysis": {
-            "market_home_prob": 53.4,
-            "value_gap": 14.6,
+            "market_home_prob": 53.3,
+            "value_gap": 14.9,
             "h_movement": 0.0,
             "a_movement": 0.0,
             "rlm_for_home": false,
@@ -777,20 +597,20 @@
             "signals": [
               "📈 模型比市場高估主隊 15% (Value)"
             ],
-            "advantage": 22.1,
-            "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.1 (開 2.1) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports"
+            "advantage": 22.4,
+            "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.09 (開 2.09) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports"
           },
           "curr_home_odds": 1.83,
-          "curr_away_odds": 2.1,
+          "curr_away_odds": 2.09,
           "open_home_odds": 1.83,
-          "open_away_odds": 2.1,
+          "open_away_odds": 2.09,
           "run_line": null,
           "total_line": null,
           "over_odds": null,
           "under_odds": null,
           "public_home_pct": 50,
           "public_away_pct": 50,
-          "market_home_prob": 53.4,
+          "market_home_prob": 53.3,
           "signals": [
             "📈 模型比市場高估主隊 15% (Value)"
           ]
@@ -798,13 +618,13 @@
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.512,
-        "std_dev": 0.4633,
+        "mean_prob": 0.5192,
+        "std_dev": 0.4583,
         "ci_90": [
           0.0,
           1.0
         ],
-        "home_win_pct": 0.512,
+        "home_win_pct": 0.5192,
         "norm_cdf_prob": 0.5266,
         "uncertain": true,
         "conf_boost": -0.05,
@@ -812,7 +632,7 @@
         "away_exp_runs": 3.19
       },
       "ensemble": {
-        "prob": 0.5164,
+        "prob": 0.5214,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -820,10 +640,10 @@
         },
         "model_probs": {
           "elo": 0.661,
-          "ml": 0.6804,
-          "mc": 0.512,
+          "ml": 0.6825,
+          "mc": 0.5192,
           "norm_cdf": 0.5266,
-          "market": 0.534
+          "market": 0.533
         },
         "bayesian_adj": 1.0
       },
@@ -848,10 +668,10 @@
         "away": 0.0
       },
       "ref_label": "福岡軟銀鷹 勝算較高",
-      "ref_prob": 51.6,
+      "ref_prob": 52.1,
       "ref_odds": 1.83,
-      "ref_edge": -0.03,
-      "conf": 0.311,
+      "ref_edge": -0.025,
+      "conf": 0.315,
       "tier": 3,
       "recommended": false
     },
@@ -861,22 +681,20 @@
       "away_cn": "橫濱DeNA海星",
       "home_cn": "北海道火腿鬥士",
       "league": "NPB",
-      "game_date": "2026-06-09",
+      "game_date": "2026-06-10",
       "game_time": "17:00",
       "time": "17:00",
       "venue": "",
-      "home_win_prob": 0.515,
-      "away_win_prob": 0.485,
+      "home_win_prob": 0.521,
+      "away_win_prob": 0.479,
       "away_sp": {},
       "home_sp": {},
-      "market_home_prob": 59.7,
-      "value_gap": -8.0,
-      "curr_home_odds": 1.63,
-      "curr_away_odds": 2.41,
+      "market_home_prob": 57.4,
+      "value_gap": -5.5,
+      "curr_home_odds": 1.71,
+      "curr_away_odds": 2.3,
       "market_total": 8.5,
-      "signals": [
-        "📉 市場比模型更看好主隊 8%"
-      ],
+      "signals": [],
       "factors": {
         "starter": {
           "label": "先發投手",
@@ -929,10 +747,10 @@
         },
         "weather": {
           "label": "天氣",
-          "home_score": 45.0,
-          "away_score": 55.0,
-          "advantage": -10.0,
-          "detail": "未知 氣溫 24°C 風速 - km/h 濕度 90%"
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
         },
         "defense": {
           "label": "守備能力",
@@ -943,48 +761,44 @@
         },
         "odds": {
           "label": "盤口 / 賠率",
-          "home_score": 49.5,
-          "away_score": 50.5,
-          "advantage": -0.5,
-          "detail": "主隊賠率 1.63 (開 1.63) | 客隊賠率 2.41 (開 2.41) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports",
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 2.0,
+          "detail": "主隊賠率 1.71 (開 1.71) | 客隊賠率 2.3 (開 2.3) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports",
           "analysis": {
-            "market_home_prob": 59.7,
-            "value_gap": -8.0,
+            "market_home_prob": 57.4,
+            "value_gap": -5.5,
             "h_movement": 0.0,
             "a_movement": 0.0,
             "rlm_for_home": false,
             "rlm_against_home": false,
-            "signals": [
-              "📉 市場比模型更看好主隊 8%"
-            ],
-            "advantage": -0.5,
-            "detail": "主隊賠率 1.63 (開 1.63) | 客隊賠率 2.41 (開 2.41) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Unibet, Pinnacle, Betway via The Odds API | 來源：the-odds-api  莊家：William Hill, Betway, BoyleSports"
+            "signals": [],
+            "advantage": 2.0,
+            "detail": "主隊賠率 1.71 (開 1.71) | 客隊賠率 2.3 (開 2.3) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports"
           },
-          "curr_home_odds": 1.63,
-          "curr_away_odds": 2.41,
-          "open_home_odds": 1.63,
-          "open_away_odds": 2.41,
+          "curr_home_odds": 1.71,
+          "curr_away_odds": 2.3,
+          "open_home_odds": 1.71,
+          "open_away_odds": 2.3,
           "run_line": null,
           "total_line": null,
           "over_odds": null,
           "under_odds": null,
           "public_home_pct": 50,
           "public_away_pct": 50,
-          "market_home_prob": 59.7,
-          "signals": [
-            "📉 市場比模型更看好主隊 8%"
-          ]
+          "market_home_prob": 57.4,
+          "signals": []
         }
       },
       "mc": {
         "n": 2000,
-        "mean_prob": 0.5185,
-        "std_dev": 0.4582,
+        "mean_prob": 0.5265,
+        "std_dev": 0.4548,
         "ci_90": [
           0.0,
           1.0
         ],
-        "home_win_pct": 0.5185,
+        "home_win_pct": 0.5265,
         "norm_cdf_prob": 0.5069,
         "uncertain": true,
         "conf_boost": -0.05,
@@ -992,7 +806,7 @@
         "away_exp_runs": 3.2
       },
       "ensemble": {
-        "prob": 0.515,
+        "prob": 0.5206,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1000,10 +814,10 @@
         },
         "model_probs": {
           "elo": 0.5214,
-          "ml": 0.5164,
-          "mc": 0.5185,
+          "ml": 0.5185,
+          "mc": 0.5265,
           "norm_cdf": 0.5069,
-          "market": 0.597
+          "market": 0.574
         },
         "bayesian_adj": 1.0
       },
@@ -1028,10 +842,184 @@
         "away": 0.0
       },
       "ref_label": "北海道火腿鬥士 勝算較高",
+      "ref_prob": 52.1,
+      "ref_odds": 1.71,
+      "ref_edge": -0.0642,
+      "conf": -0.013,
+      "tier": 3,
+      "recommended": false
+    },
+    {
+      "away": "CND",
+      "home": "LTT",
+      "away_cn": "中日龍",
+      "home_cn": "千葉羅德水手",
+      "league": "NPB",
+      "game_date": "2026-06-10",
+      "game_time": "17:00",
+      "time": "17:00",
+      "venue": "",
+      "home_win_prob": 0.515,
+      "away_win_prob": 0.485,
+      "away_sp": {},
+      "home_sp": {},
+      "market_home_prob": 54.9,
+      "value_gap": 5.0,
+      "curr_home_odds": 1.83,
+      "curr_away_odds": 2.23,
+      "market_total": 8.5,
+      "signals": [],
+      "factors": {
+        "starter": {
+          "label": "先發投手",
+          "home_score": 65.07204999999998,
+          "away_score": 67.57419999999999,
+          "advantage": -2.5021500000000145,
+          "detail": "主隊 未定（輪值平均 ERA 2.881 FIP 3.458 K/9 7.209） | 客隊 未定（輪值平均 ERA 2.529 FIP 2.864 K/9 7.669）"
+        },
+        "lineup": {
+          "label": "打線強度",
+          "home_score": 50.636500000000005,
+          "away_score": 48.785999999999994,
+          "advantage": 1.850500000000011,
+          "detail": "主隊 OPS 0.754 wOBA 0.322 wRC+ 99 近7OPS 0.768 | 客隊 OPS 0.743 wOBA 0.318 wRC+ 97 近7OPS 0.758"
+        },
+        "bullpen": {
+          "label": "牛棚戰力",
+          "home_score": 58.28199999999999,
+          "away_score": 60.401999999999994,
+          "advantage": -2.1200000000000045,
+          "detail": "主隊牛棚 ERA 3.25 WHIP 1.22 疲勞 38 終結者連出 0天 | 客隊牛棚 ERA 3.22 WHIP 1.2 疲勞 32 終結者連出 0天"
+        },
+        "home_away": {
+          "label": "主客場",
+          "home_score": 55.78947368421053,
+          "away_score": 44.21052631578947,
+          "advantage": 11.578947368421053,
+          "detail": "主隊主場 20勝20敗 | 客隊客場 17勝21敗 |  run_factor=1.0 "
+        },
+        "recent_form": {
+          "label": "近期狀態",
+          "home_score": 53.2,
+          "away_score": 42.0,
+          "advantage": 11.200000000000003,
+          "detail": "主隊近5場 ○●○●● 近10場 ○○●○●○●●○● 得失分差 -8 出賽密度 3/7天 | 客隊近5場 ○●○●○ 近10場 ○●○○●○●○○● 得失分差 -15 出賽密度 3/7天"
+        },
+        "h2h": {
+          "label": "對戰紀錄",
+          "home_score": 47.0,
+          "away_score": 53.0,
+          "advantage": -5.999999999999998,
+          "detail": "本季對戰：客隊 6 勝 主隊 4 勝（主隊勝率 40%）"
+        },
+        "injuries": {
+          "label": "傷兵狀況",
+          "home_score": 50.0,
+          "away_score": 50.0,
+          "advantage": 0.0,
+          "detail": "主隊：無傷兵 | 客隊：無傷兵"
+        },
+        "weather": {
+          "label": "天氣",
+          "home_score": 52.0,
+          "away_score": 48.0,
+          "advantage": 4.0,
+          "detail": "未知 氣溫 31°C 風速 - km/h 濕度 61%"
+        },
+        "defense": {
+          "label": "守備能力",
+          "home_score": 52.7,
+          "away_score": 51.550000000000004,
+          "advantage": 1.1499999999999986,
+          "detail": "主隊 守備率 0.98 DRS +3 UZR +2.2 失誤 32 | 客隊 守備率 0.98 DRS +2 UZR +1.5 失誤 32"
+        },
+        "odds": {
+          "label": "盤口 / 賠率",
+          "home_score": 62.5,
+          "away_score": 37.5,
+          "advantage": 12.5,
+          "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.23 (開 2.23) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports",
+          "analysis": {
+            "market_home_prob": 54.9,
+            "value_gap": 5.0,
+            "h_movement": 0.0,
+            "a_movement": 0.0,
+            "rlm_for_home": false,
+            "rlm_against_home": false,
+            "signals": [],
+            "advantage": 12.5,
+            "detail": "主隊賠率 1.83 (開 1.83) | 客隊賠率 2.23 (開 2.23) | 讓分 -1.5 | 大小 None | 公眾 主50% 客50% | 來源：Betway, Pinnacle, Unibet via The Odds API | 來源：the-odds-api  莊家：BetOnline.ag, PMU (FR), BoyleSports"
+          },
+          "curr_home_odds": 1.83,
+          "curr_away_odds": 2.23,
+          "open_home_odds": 1.83,
+          "open_away_odds": 2.23,
+          "run_line": null,
+          "total_line": null,
+          "over_odds": null,
+          "under_odds": null,
+          "public_home_pct": 50,
+          "public_away_pct": 50,
+          "market_home_prob": 54.9,
+          "signals": []
+        }
+      },
+      "mc": {
+        "n": 2000,
+        "mean_prob": 0.5188,
+        "std_dev": 0.4602,
+        "ci_90": [
+          0.0,
+          1.0
+        ],
+        "home_win_pct": 0.5188,
+        "norm_cdf_prob": 0.5048,
+        "uncertain": true,
+        "conf_boost": -0.05,
+        "home_exp_runs": 3.28,
+        "away_exp_runs": 3.25
+      },
+      "ensemble": {
+        "prob": 0.5146,
+        "weights": {
+          "mc": 0.7,
+          "norm_cdf": 0.3,
+          "ml": 0.0
+        },
+        "model_probs": {
+          "elo": 0.5955,
+          "ml": 0.5997,
+          "mc": 0.5188,
+          "norm_cdf": 0.5048,
+          "market": 0.549
+        },
+        "bayesian_adj": 1.0
+      },
+      "matchup": {
+        "label": "投打匹配",
+        "home_bat_adv": 0.0,
+        "away_bat_adv": 0.0,
+        "net_advantage": 0.0,
+        "home_pitcher_type": "unknown",
+        "away_pitcher_type": "unknown",
+        "detail": "主隊打線 vs 客隊先發: 投手未定 / 無法分析 | 客隊打線 vs 主隊先發: 投手未定 / 無法分析"
+      },
+      "market_signal": {
+        "sharp_signal": null,
+        "line_move": 0.0,
+        "public_home_pct": 50.0,
+        "signals": [],
+        "ev_boost": 0.0
+      },
+      "fatigue": {
+        "home": 0.0,
+        "away": 0.0
+      },
+      "ref_label": "千葉羅德水手 勝算較高",
       "ref_prob": 51.5,
-      "ref_odds": 1.63,
-      "ref_edge": -0.0985,
-      "conf": -0.017,
+      "ref_odds": 1.83,
+      "ref_edge": -0.0318,
+      "conf": 0.149,
       "tier": 3,
       "recommended": false
     }
@@ -1042,12 +1030,12 @@
   "recent_history": [],
   "game_preds": {
     "LTT|CND": {
-      "home_win_prob": 0.517,
+      "home_win_prob": 0.515,
       "market_total": 8.5,
-      "mc_mean": 0.5218,
-      "mc_std": 0.4576,
+      "mc_mean": 0.5188,
+      "mc_std": 0.4602,
       "ensemble": {
-        "prob": 0.5167,
+        "prob": 0.5146,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1055,10 +1043,10 @@
         },
         "model_probs": {
           "elo": 0.5955,
-          "ml": 0.5976,
-          "mc": 0.5218,
+          "ml": 0.5997,
+          "mc": 0.5188,
           "norm_cdf": 0.5048,
-          "market": 0.504
+          "market": 0.549
         },
         "bayesian_adj": 1.0
       },
@@ -1073,12 +1061,12 @@
       }
     },
     "SBH|HNS": {
-      "home_win_prob": 0.516,
+      "home_win_prob": 0.521,
       "market_total": 8.5,
-      "mc_mean": 0.512,
-      "mc_std": 0.4633,
+      "mc_mean": 0.5192,
+      "mc_std": 0.4583,
       "ensemble": {
-        "prob": 0.5164,
+        "prob": 0.5214,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1086,10 +1074,10 @@
         },
         "model_probs": {
           "elo": 0.661,
-          "ml": 0.6804,
-          "mc": 0.512,
+          "ml": 0.6825,
+          "mc": 0.5192,
           "norm_cdf": 0.5266,
-          "market": 0.534
+          "market": 0.533
         },
         "bayesian_adj": 1.0
       },
@@ -1104,12 +1092,12 @@
       }
     },
     "SEI|HRC": {
-      "home_win_prob": 0.531,
+      "home_win_prob": 0.547,
       "market_total": 8.5,
-      "mc_mean": 0.5302,
-      "mc_std": 0.4577,
+      "mc_mean": 0.5537,
+      "mc_std": 0.4615,
       "ensemble": {
-        "prob": 0.5306,
+        "prob": 0.5471,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1117,10 +1105,10 @@
         },
         "model_probs": {
           "elo": 0.4447,
-          "ml": 0.4434,
-          "mc": 0.5302,
+          "ml": 0.4455,
+          "mc": 0.5537,
           "norm_cdf": 0.5316,
-          "market": 0.443
+          "market": 0.446
         },
         "bayesian_adj": 1.0
       },
@@ -1135,12 +1123,12 @@
       }
     },
     "HAM|YDB": {
-      "home_win_prob": 0.515,
+      "home_win_prob": 0.521,
       "market_total": 8.5,
-      "mc_mean": 0.5185,
-      "mc_std": 0.4582,
+      "mc_mean": 0.5265,
+      "mc_std": 0.4548,
       "ensemble": {
-        "prob": 0.515,
+        "prob": 0.5206,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1148,10 +1136,10 @@
         },
         "model_probs": {
           "elo": 0.5214,
-          "ml": 0.5164,
-          "mc": 0.5185,
+          "ml": 0.5185,
+          "mc": 0.5265,
           "norm_cdf": 0.5069,
-          "market": 0.597
+          "market": 0.574
         },
         "bayesian_adj": 1.0
       },
@@ -1166,12 +1154,12 @@
       }
     },
     "ORX|YKL": {
-      "home_win_prob": 0.64,
+      "home_win_prob": 0.65,
       "market_total": 8.5,
-      "mc_mean": 0.6438,
-      "mc_std": 0.4396,
+      "mc_mean": 0.6577,
+      "mc_std": 0.4336,
       "ensemble": {
-        "prob": 0.6404,
+        "prob": 0.6501,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1179,10 +1167,10 @@
         },
         "model_probs": {
           "elo": 0.7912,
-          "ml": 0.8665,
-          "mc": 0.6438,
+          "ml": 0.8686,
+          "mc": 0.6577,
           "norm_cdf": 0.6324,
-          "market": 0.551
+          "market": 0.569
         },
         "bayesian_adj": 1.0
       },
@@ -1197,12 +1185,12 @@
       }
     },
     "RKT|GNT": {
-      "home_win_prob": 0.468,
+      "home_win_prob": 0.472,
       "market_total": 8.5,
-      "mc_mean": 0.4675,
-      "mc_std": 0.4612,
+      "mc_mean": 0.4728,
+      "mc_std": 0.4603,
       "ensemble": {
-        "prob": 0.4681,
+        "prob": 0.4718,
         "weights": {
           "mc": 0.7,
           "norm_cdf": 0.3,
@@ -1210,10 +1198,10 @@
         },
         "model_probs": {
           "elo": 0.4593,
-          "ml": 0.4403,
-          "mc": 0.4675,
+          "ml": 0.4424,
+          "mc": 0.4728,
           "norm_cdf": 0.4694,
-          "market": 0.44
+          "market": 0.442
         },
         "bayesian_adj": 1.0
       },
